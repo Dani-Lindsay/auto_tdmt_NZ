@@ -98,6 +98,35 @@ def predicted_displacement(
     }
 
 
+def fault_outline(fault: dict) -> dict:
+    """Surface projection of the modelled rectangle, in local east/north km
+    (fault centred on the epicentre, as in predicted_displacement).
+
+    Returns {outline_x_km, outline_y_km (closed polygon), top_x_km,
+    top_y_km (the up-dip edge, drawn bold by convention)}.
+    """
+    length_km = fault["length_km"]
+    width_km = fault["width_km"]
+    phi = np.radians(fault["strike"])
+    delta = np.radians(fault["dip"])
+    # strike unit vector (east, north); dip direction is 90 deg clockwise
+    s = np.array([np.sin(phi), np.cos(phi)])
+    d = np.array([np.cos(phi), -np.sin(phi)])
+    half_l = 0.5 * length_km * s
+    half_w = 0.5 * width_km * np.cos(delta) * d
+    corners = [
+        -half_l - half_w, half_l - half_w, half_l + half_w, -half_l + half_w,
+        -half_l - half_w,
+    ]
+    top = [-half_l - half_w, half_l - half_w]  # up-dip edge
+    return {
+        "outline_x_km": [c[0] for c in corners],
+        "outline_y_km": [c[1] for c in corners],
+        "top_x_km": [c[0] for c in top],
+        "top_y_km": [c[1] for c in top],
+    }
+
+
 def forward_both_planes(solution: dict) -> dict:
     """Run the forward model for both nodal planes of a solution.json dict."""
     pref = solution["preferred"]

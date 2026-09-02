@@ -28,7 +28,7 @@ GeoNet quake API (poll, 10 min cron)
      Wells & Coppersmith dimensions) -> predicted peak
      surface displacement
   -> NISAR last/next pass at epicentre (CMR)               nisar_dates.py
-  -> share figure (PyGMT)                                  figure.py
+  -> figures (matplotlib/cartopy + mttime fits)            figure.py
   -> publication gates (our Mw >= 5.0 OR predicted         trigger.py
      displacement >= 1 cm; aftershock throttle; daily cap)
   -> email to the list (SMTP secrets)                      publish.py
@@ -87,8 +87,7 @@ subscriber addresses never live in this public repo).
 doi:10.1785/gssrl.79.3.400 — the same models GeoNet's regional CMT analysis
 was built on, so solutions are directly comparable to
 [GeoNet's CMT catalogue](https://github.com/GeoNet/data/tree/main/moment-tensor)
-(note their MT elements are in 1e20 dyne-cm). `gil7_interim_california.d` is
-kept only for comparison tests.
+(note their MT elements are in 1e20 dyne-cm).
 
 ## Data sources
 

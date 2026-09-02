@@ -133,7 +133,10 @@ def process_event(public_id: str, debug: bool = False,
 
     fig_path = figure.make_share_figure(
         best, forward, passes, event_dir / "share_figure.jpg")
-    print(f"share figure: {fig_path}")
+    bbwaves = sorted((event_dir / best_tag).glob("bbwaves.*.jpg"))
+    outward = figure.compose_outward(
+        bbwaves, fig_path, event_dir / "outward_figure.jpg")
+    print(f"outward figure: {outward}")
 
     history = json.loads(config.STATE_FILE.read_text())["published"] \
         if config.STATE_FILE.exists() else []

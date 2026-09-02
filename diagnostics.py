@@ -95,43 +95,35 @@ def plot_stages(
 def plot_station_map(
     event: dict, used: list[dict], dropped_ids: list[str], out_dir: Path
 ) -> Path:
-    """PyGMT map with coastline: epicentre + stations used."""
-    import pygmt
+    """Cartopy station-geometry QC map in the house style."""
+    import cartopy.crs as ccrs
+
+    import map_style
 
     out_dir.mkdir(parents=True, exist_ok=True)
-    lons = [r["longitude"] for r in used] + [event["longitude"]]
-    lats = [r["latitude"] for r in used] + [event["latitude"]]
-    pad = 0.6
-    region = [
-        min(lons) - pad, max(lons) + pad, min(lats) - pad, max(lats) + pad,
-    ]
-    fig = pygmt.Figure()
-    fig.basemap(region=region, projection="M16c", frame=["af", "WSen"])
-    fig.coast(
-        land="grey92", water="lightblue", shorelines="1/0.5p,black",
-        resolution="i",
-    )
-    fig.plot(
-        x=[r["longitude"] for r in used], y=[r["latitude"] for r in used],
-        style="t0.45c", fill="darkgreen", pen="0.5p,black",
+    region = map_style.event_region(event, used, pad_deg=0.5)
+
+    fig = plt.figure(figsize=(8.5, 8.5))
+    ax = map_style.geo_axes(fig, [0.07, 0.05, 0.88, 0.88], region)
+    ax.plot(
+        [r["longitude"] for r in used], [r["latitude"] for r in used],
+        "^", color="forestgreen", markeredgecolor="black",
+        markeredgewidth=0.4, markersize=10, transform=ccrs.PlateCarree(),
     )
     for r in used:
-        fig.text(
-            x=r["longitude"], y=r["latitude"], text=r["station"],
-            font="9p,Helvetica-Bold,black", justify="TL", offset="0.2c/-0.2c",
+        ax.annotate(
+            f"{r['station']} ({r['distance_km']:.0f} km)",
+            (r["longitude"], r["latitude"]),
+            xytext=(5, -5), textcoords="offset points", fontsize=7,
         )
-    fig.plot(
-        x=event["longitude"], y=event["latitude"], style="a0.8c",
-        fill="red", pen="1p,black",
-    )
-    title = (
-        f"{event['public_id']} M{event['prelim_mag']:.1f} "
+    ax.plot(event["longitude"], event["latitude"], "*", color="firebrick",
+            markeredgecolor="black", markersize=20,
+            transform=ccrs.PlateCarree())
+    ax.set_title(
+        f"{event['public_id']} M{event['prelim_mag']:.1f}: "
         f"{len(used)} stations used, {len(dropped_ids)} dropped"
     )
-    fig.text(
-        position="TC", text=title, font="12p,Helvetica-Bold,black",
-        offset="0/0.5c", no_clip=True,
-    )
     path = out_dir / "04_station_map.jpg"
-    fig.savefig(str(path), dpi=150)
+    fig.savefig(path, dpi=150)
+    plt.close(fig)
     return path

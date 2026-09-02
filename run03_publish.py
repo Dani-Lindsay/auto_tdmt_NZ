@@ -32,9 +32,8 @@ def publish_event(public_id: str, state: dict | None = None,
     draft = (event_dir / "draft_email.txt").read_text()
     subject, _, body = draft.partition("\n\n")
 
-    attachments = [event_dir / "share_figure.jpg"]
     band_dir = event_dir / solution["chosen_band"]
-    attachments += sorted(band_dir.glob("bbwaves.*.jpg"))
+    attachments = [event_dir / "outward_figure.jpg"]
     attachments += sorted(band_dir.glob("depth.*.jpg"))
 
     publish.send_email(subject, body.rstrip("\n"), attachments)

@@ -98,8 +98,10 @@ def band_tag(band_hz: tuple[float, float]) -> str:
 
 # Stations whose individual variance reduction falls below this after the
 # first inversion pass are rejected and the inversion is rerun (EPS207 §3.1:
-# drop persistently low-VR stations).
-STATION_VR_FLOOR = 0.0
+# drop persistently low-VR stations). With the SNR gate at Ristau's
+# permissive 2.0, this is the filter that removes marginal stations that
+# passed SNR but do not actually fit — keeping them dilutes %DC.
+STATION_VR_FLOOR = 10.0
 
 # Preferred-solution rule (EPS207 §3.3: VR alone is a weak depth
 # discriminator; %DC is more diagnostic): among solutions whose VR is within
@@ -122,10 +124,11 @@ FILTER_CORNERS = 3  # obspy corners, zerophase=True; notebook-02 values, applied
 # Response-removal pre-filter (Hz), from mttime example notebook 01.
 RESPONSE_PRE_FILT = (0.004, 0.007, 10.0, 20.0)
 
-# SNR gate: ratio of RMS in the signal window to RMS in the pre-event noise
-# window, measured in the inversion passband. Below this the trace is dropped
-# (loudly, recorded in provenance).
-MIN_SNR = 3.0
+# SNR gate: min over components of RMS(signal, origin..+200 s) /
+# RMS(noise, -120..-10 s), measured in the inversion passband. Ristau (2008):
+# "a SNR higher than 2 is normally required to calculate a reliable moment
+# tensor" — stations below this are dropped (loudly, recorded in provenance).
+MIN_SNR = 2.0
 
 # ---------------------------------------------------------------------------
 # Green's function library grid
@@ -136,7 +139,6 @@ GF_DEPTHS_KM = list(range(2, 31, 2)) + list(range(34, 61, 4))
 # Velocity models (models/<name>.d, citation inside each file):
 # Ristau (2008) SRL 79(3) Table 1 — the models GeoNet's own regional CMT
 # analysis was built on, so our solutions are directly comparable.
-# gil7_interim_california is kept only for comparison tests.
 GF_MODELS = ("nz_south_ristau2008", "nz_north_ristau2008")
 
 

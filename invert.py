@@ -175,6 +175,13 @@ def summarize(inv, event: Event, stations: list[dict], dropped: list[dict],
             "tensor_dyne_cm": {
                 k: float(v) for k, v in pref.get_tensor_elements().items()
             },
+            # Harvard/GCMT r,theta,phi convention — feeds psmeca -Sz so the
+            # plotted beachball is the TRUE deviatoric mechanism (CLVD
+            # included), not just the closest double couple
+            "tensor_rtp_dyne_cm": {
+                k: float(v)
+                for k, v in pref.get_tensor_elements(basis="RTP").items()
+            },
         },
         "depth_search": rows,
         # EPS207 §3.3: %DC max can be more diagnostic than VR max; flag when
@@ -221,7 +228,11 @@ def quality_gates(solution: dict) -> dict:
         "min_stations": n_used >= config.MIN_STATIONS_USED,
         "vr_floor": pref["vr"] >= config.MIN_VR_PUBLISH,
         "az_gap_ok": az_gap <= config.MAX_AZ_GAP_DEG,
-        "depth_not_at_grid_edge": pref["depth_km"] not in (
+    }
+    # warnings are recorded but do not block: a shallow crustal event
+    # legitimately prefers the shallowest grid depth
+    warnings = {
+        "depth_at_grid_edge": pref["depth_km"] in (
             min(config.GF_DEPTHS_KM), max(config.GF_DEPTHS_KM),
         ),
     }
@@ -229,6 +240,7 @@ def quality_gates(solution: dict) -> dict:
         "n_stations_used": n_used,
         "azimuthal_gap_deg": round(az_gap, 1),
         "checks": checks,
+        "warnings": warnings,
         "passed": all(checks.values()),
     }
 
