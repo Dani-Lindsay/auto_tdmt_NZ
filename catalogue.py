@@ -4,7 +4,7 @@ Regenerates events/catalogue.csv from every events/<publicID>/solution.json
 after each processed event — the CSV is always derived from the archived
 sidecars (single source of truth), never edited by hand.
 
-Column conventions follow GeoNet's manual CMT catalogue
+Column conventions follow the published NZ regional CMT solutions CSV
 (GeoNet/data moment-tensor/GeoNet_CMT_solutions.csv) where they overlap so
 the two are directly comparable; note their (and our) MT elements are in
 units of 1e20 dyne-cm.

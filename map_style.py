@@ -37,6 +37,23 @@ def event_region(event: dict, stations: list[dict], pad_deg: float = 0.4) -> lis
     return [lon0, lon1, lat0, lat1]
 
 
+def square_region(region: list) -> list:
+    """Expand the shorter side so the region draws square in Mercator
+    (width ~ dlon, height ~ dlat/cos(mid_lat)) — used so panels with
+    different content still render at identical drawn size."""
+    lon0, lon1, lat0, lat1 = region
+    mid = 0.5 * (lat0 + lat1)
+    w = lon1 - lon0
+    h = (lat1 - lat0) / np.cos(np.radians(mid))
+    if w > h:
+        extra = (w - h) * np.cos(np.radians(mid)) / 2.0
+        lat0, lat1 = lat0 - extra, lat1 + extra
+    else:
+        extra = (h - w) / 2.0
+        lon0, lon1 = lon0 - extra, lon1 + extra
+    return [lon0, lon1, lat0, lat1]
+
+
 def geo_axes(fig, rect, region, labels=True):
     """Cartopy Mercator axes at an explicit figure rect [x, y, w, h]
     (manual placement: cartopy's fixed aspect fights layout engines)."""

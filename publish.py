@@ -44,7 +44,15 @@ def draft_text(solution: dict, forward: dict, passes: list[dict]) -> tuple[str, 
         f"Velocity model: {solution['provenance']['velocity_model']}",
         f"Nodal plane 1 (strike/dip/rake): {p1['strike']:.0f}/{p1['dip']:.0f}/{p1['rake']:.0f}",
         f"Nodal plane 2 (strike/dip/rake): {p2['strike']:.0f}/{p2['dip']:.0f}/{p2['rake']:.0f}",
-        f"Stations used: {solution['quality']['n_stations_used']}",
+        f"Stations used: {solution['quality']['n_stations_used']}  |  "
+        f"Azimuthal gap: {solution['quality']['azimuthal_gap_deg']:.0f} deg  |  "
+        f"Quality grade: {solution['quality'].get('grade', '?')}",
+        "",
+        "LIMITATIONS: deviatoric-only inversion (no isotropic component) - "
+        "these mechanisms must not be interpreted in volcanic or geothermal "
+        "settings, where real isotropic components are forced into DC/CLVD. "
+        "Large misfit (low VR or grade C-D) indicates the automated result "
+        "is unreliable and additional processing is required.",
         "",
     ]
     if forward["detectable"]:

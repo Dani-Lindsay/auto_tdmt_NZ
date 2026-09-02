@@ -129,6 +129,12 @@ RESPONSE_PRE_FILT = (0.004, 0.007, 10.0, 20.0)
 # "a SNR higher than 2 is normally required to calculate a reliable moment
 # tensor" — stations below this are dropped (loudly, recorded in provenance).
 MIN_SNR = 2.0
+# Tiered acceptance: when fewer than TIER_TARGET_STATIONS pass MIN_SNR,
+# stations down to SNR_TIER_LOW are admitted (tagged snr_tier="low") so
+# sparse/coda-contaminated events keep azimuthal coverage; the letter
+# quality grade, not a hard gate, then tells the reader what it is worth.
+SNR_TIER_LOW = 1.2
+TIER_TARGET_STATIONS = 5
 
 # ---------------------------------------------------------------------------
 # Green's function library grid

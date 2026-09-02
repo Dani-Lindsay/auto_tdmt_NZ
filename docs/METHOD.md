@@ -9,14 +9,21 @@ covers the science choices, module by module, and worked examples from the
 
 ## 1. Motivation and scope
 
-GeoNet computes regional moment tensors manually and publishes them in a
-CSV updated roughly monthly ([GeoNet/data moment-tensor](https://github.com/GeoNet/data/tree/main/moment-tensor));
-there is no automated or near-real-time MT product for New Zealand. This
-pipeline produces PRELIMINARY automated solutions minutes-to-hours after an
-event, using the same class of method (Dreger-style time-domain MT with 1-D
-Green's functions) and the same velocity models (Ristau 2008) as GeoNet's
-own regional CMT analysis, so solutions are directly comparable to the
-manual catalogue when it appears.
+This is a personal, external project. Its purpose is rapid InSAR response:
+within minutes of a New Zealand earthquake, decide whether it has likely
+produced measurable surface displacement and whether action is needed
+(acquisition tasking, processing preparation, checking the next NISAR
+pass). A moment tensor is the prerequisite for that displacement forecast,
+so the pipeline produces PRELIMINARY automated solutions
+minutes-to-hours after an event using the Dreger-style time-domain method
+with 1-D Green's functions and the published Ristau (2008) NZ velocity
+models; solutions are therefore directly comparable to the published NZ
+regional CMT solutions
+([GeoNet/data moment-tensor](https://github.com/GeoNet/data/tree/main/moment-tensor)),
+which serve as the validation reference. The MT solutions are a useful
+by-product for other scientists; the displacement field is the point.
+The project makes no representation about any organisation's internal or
+operational systems.
 
 The inversion engine is **mttime** (Chiang, LLNL;
 github.com/LLNL/mttime) — the Python implementation of Dreger's TDMT used
@@ -220,7 +227,7 @@ Key observations:
   components will be forced deviatoric.
 - Single-pass station rejection; no jackknife uncertainty yet (the EPS207
   jackknife scheme is the natural next addition).
-- Validation against GeoNet's manual CMT catalogue is implemented as a
+- Validation against the published NZ CMT solutions is implemented as a
   comparison hook but awaits their solutions for overlapping events
   (their CSV updates ~monthly; note their MT units are 1e20 dyne-cm).
 

@@ -44,12 +44,13 @@ def make_share_figure(
     ev = solution["event"]
     pref = solution["preferred"]
     lon0, lat0 = ev["longitude"], ev["latitude"]
-    roi = map_style.event_region(ev, solution["stations_used"], pad_deg=0.6)
+    roi = map_style.square_region(
+        map_style.event_region(ev, solution["stations_used"], pad_deg=0.6))
 
     fig = plt.figure(figsize=(17.5, 11.2))
 
     # ---- panel a: stations + full-MT beachball over the station ROI -------
-    ax = map_style.geo_axes(fig, [0.03, 0.565, 0.19, 0.365], roi)
+    ax = map_style.geo_axes(fig, [0.015, 0.565, 0.22, 0.365], roi)
     map_style.draw_context(ax, roi, ccrs, gnss=False)
     map_style.scale_bar(ax, roi, ccrs)
     # candidates that were dropped: grey; used stations: coloured by the
@@ -254,20 +255,24 @@ def plot_depth_sensitivity(solution: dict, out_path: Path) -> Path:
     # strip: ~7 mechanisms pinned to the key depths (GeoNet, max VR,
     # windowed max DC, preferred) with neighbours of the preferred depth
     # filled in, to make the depth trade-off around the solution visual
-    key_depths = {geonet_depth, vr_max_depth, dc_win_depth,
+    # always include the GLOBAL max-DC depth (the teal reference line must
+    # have its ball in the strip), plus GeoNet, max VR and the preferred
+    key_depths = {geonet_depth, vr_max_depth, dc_max_depth, dc_win_depth,
                   pref["depth_km"]}
     i_pref = depths.index(pref["depth_km"])
     step = 1
-    while len(key_depths) < min(7, len(depths)):
+    limit = min(8, len(depths))
+    while len(key_depths) < limit:
         for j in (i_pref - step, i_pref + step):
-            if 0 <= j < len(depths) and len(key_depths) < 7:
+            if 0 <= j < len(depths) and len(key_depths) < limit:
                 key_depths.add(depths[j])
         step += 1
     window = [r for r in rows if r["depth_km"] in key_depths]
     window.sort(key=lambda r: r["depth_km"])
     # rim colours match the reference lines; preferred wins a collision
     edge_for = {geonet_depth: c_geonet, vr_max_depth: c_vr,
-                dc_win_depth: c_dc, pref["depth_km"]: "black"}
+                dc_max_depth: c_dc, dc_win_depth: c_dc,
+                pref["depth_km"]: "black"}
 
     with plt.style.context("default"):
         fig, axes = plt.subplots(1, 3, figsize=(11, 6))

@@ -43,8 +43,11 @@ def publish_decision(solution: dict, forward: dict,
     ev = solution["event"]
     reasons = []
 
+    grade = solution["quality"].get("grade", "?")
     if not solution["quality"]["passed"]:
-        reasons.append(f"quality gates failed: {solution['quality']['checks']}")
+        reasons.append(
+            f"quality grade {grade} (email requires A or B): "
+            f"{solution['quality']['checks']}")
 
     mw_ok = pref["mw"] >= config.PUBLISH_MIN_MW
     disp_ok = forward["peak_abs_m"] >= config.PUBLISH_MIN_PRED_DISP_M

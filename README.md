@@ -1,14 +1,25 @@
 # auto_tdmt_NZ
 
-Automated regional moment tensor pipeline for New Zealand. GeoNet publishes
-no automated MT solutions (their CMT catalogue is manual, ~monthly); this
+**A personal tool for rapid InSAR response.** When a New Zealand earthquake
+happens, the question I need answered within minutes is: *has this event
+likely produced measurable surface displacement, and do I need to act as an
+InSAR scientist* (task acquisitions, prepare processing, look at the next
+NISAR/Sentinel-1 pass)? Answering that requires a moment tensor, so this
 pipeline watches the GeoNet quake feed, runs a Dreger-style time-domain
-moment tensor inversion ([LLNL mttime](https://github.com/LLNL/mttime)) with
-CPS Green's functions and the Ristau (2008) NZ velocity models, forward-models
-the predicted surface displacement (Okada), reports NISAR acquisition timing
-over the epicentre, and emails solutions to a distribution list.
+moment tensor inversion ([LLNL mttime](https://github.com/LLNL/mttime))
+with CPS Green's functions and the Ristau (2008) NZ velocity models,
+forward-models the predicted surface displacement for both nodal planes
+(Okada), reports NISAR acquisition timing over the epicentre, and emails
+the result to a small list. The moment tensor solutions are a useful
+by-product for other scientists; the displacement field is the point.
 
-**All solutions are PRELIMINARY and produced without human review.**
+This is a personal, external project by Danielle Lindsay, not an
+operational product of any agency, and it makes no representation about
+any organisation's internal systems.
+
+**All solutions are PRELIMINARY, deviatoric-only, and produced without
+human review** — do not interpret mechanisms in volcanic/geothermal
+settings from these solutions.
 
 ## How it works
 
@@ -87,10 +98,10 @@ subscriber addresses never live in this public repo).
 ## Velocity models
 
 `models/nz_{north,south}_ristau2008.d` — Ristau (2008), SRL 79(3) Table 1,
-doi:10.1785/gssrl.79.3.400 — the same models GeoNet's regional CMT analysis
-was built on, so solutions are directly comparable to
-[GeoNet's CMT catalogue](https://github.com/GeoNet/data/tree/main/moment-tensor)
-(note their MT elements are in 1e20 dyne-cm).
+doi:10.1785/gssrl.79.3.400 — so solutions are directly comparable to the
+published NZ regional CMT solutions
+([GeoNet/data moment-tensor](https://github.com/GeoNet/data/tree/main/moment-tensor);
+their MT elements are in 1e20 dyne-cm).
 
 ## Data sources
 

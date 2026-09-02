@@ -185,9 +185,10 @@ def fetch_and_process(
             corners=config.FILTER_CORNERS, zerophase=True,
         )
         snr = _snr(snr_st, origin)
-        if snr < config.MIN_SNR:
-            _drop(f"SNR {snr:.1f} < {config.MIN_SNR}")
+        if snr < config.SNR_TIER_LOW:
+            _drop(f"SNR {snr:.1f} < {config.SNR_TIER_LOW} (low tier floor)")
             continue
+        row["snr_tier"] = "ok" if snr >= config.MIN_SNR else "low"
 
         if stages is not None:
             for src, key in ((raw_copy, "raw"), (st.copy(), "displacement")):
@@ -246,8 +247,34 @@ def fetch_and_process(
         row["filter_hz"] = [fmin, fmax]
         used.append(row)
 
-    assert used, f"all {len(rows)} candidate stations dropped: {dropped}"
-    return used, dropped
+    # tiered selection: prefer SNR >= MIN_SNR; top up with low-tier
+    # stations (down to SNR_TIER_LOW) only when coverage is thin, so sparse
+    # or coda-contaminated events keep azimuthal coverage. The quality
+    # grade reports what the solution is worth; the tier is recorded.
+    ok_rows = [r for r in used if r["snr_tier"] == "ok"]
+    low_rows = sorted((r for r in used if r["snr_tier"] == "low"),
+                      key=lambda r: -r["snr"])
+    if len(ok_rows) >= config.TIER_TARGET_STATIONS:
+        keep = ok_rows
+        surplus = low_rows
+    else:
+        need = config.TIER_TARGET_STATIONS - len(ok_rows)
+        keep = ok_rows + low_rows[:need]
+        surplus = low_rows[need:]
+    for r in surplus:
+        sid = f"{r['network']}.{r['station']}.{r['location']}"
+        for comp in "ZRT":
+            (workdir / f"{sid}.{comp}.dat").unlink(missing_ok=True)
+        dropped.append({
+            "station": sid,
+            "reason": f"SNR {r['snr']:.1f} < {config.MIN_SNR} "
+                      f"(low tier, coverage already sufficient)",
+            "latitude": r["latitude"], "longitude": r["longitude"],
+            "distance_km": round(r["distance_km"], 1),
+        })
+    keep.sort(key=lambda r: r["distance_km"])
+    assert keep, f"all {len(rows)} candidate stations dropped: {dropped}"
+    return keep, dropped
 
 
 def _snr(st: Stream, origin: UTCDateTime) -> float:

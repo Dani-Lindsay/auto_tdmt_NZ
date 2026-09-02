@@ -121,11 +121,12 @@ def test_processing_floor():
     assert not trigger.passes_processing_floor(_event(lat=-20.0))[0]  # Tonga
 
 
-def _solution(mw=5.2, vr=70.0, passed=True):
+def _solution(mw=5.2, vr=70.0, grade="A"):
     return {
         "event": {"public_id": "t", "latitude": -44.4, "longitude": 168.3},
         "preferred": {"mw": mw, "vr": vr},
-        "quality": {"passed": passed, "checks": {}},
+        "quality": {"passed": grade in ("A", "B"), "grade": grade,
+                    "checks": {}},
     }
 
 
@@ -139,8 +140,33 @@ def test_publish_gates():
     assert d["publish"], "displacement gate alone should publish"
     d = trigger.publish_decision(_solution(mw=4.6), fwd_none, [])
     assert not d["publish"]
-    d = trigger.publish_decision(_solution(mw=5.2, passed=False), fwd_big, [])
-    assert not d["publish"], "quality-gate failure blocks publication"
+    d = trigger.publish_decision(_solution(mw=5.2, grade="C"), fwd_big, [])
+    assert not d["publish"], "grade C/D blocks publication"
+    d = trigger.publish_decision(_solution(mw=5.2, grade="B"), fwd_none, [])
+    assert d["publish"], "grade B is emailable"
+
+
+def test_quality_grades():
+    gates = invert.quality_gates
+    def sol(vr, stations, azimuths):
+        return {
+            "preferred": {"vr": vr, "depth_km": 10.0},
+            "stations_used": [
+                {"azimuth": a} for a in azimuths[:stations]
+            ],
+        }
+    # A: strong VR, good coverage
+    q = gates(sol(75, 6, [0, 60, 120, 180, 240, 300]))
+    assert q["grade"] == "A" and q["passed"]
+    # B: decent VR, 3 stations, wide gap
+    q = gates(sol(65, 3, [0, 90, 180]))
+    assert q["grade"] == "B" and q["passed"]
+    # C: 2 stations
+    q = gates(sol(80, 2, [0, 90]))
+    assert q["grade"] == "C" and not q["passed"]
+    # D: single station
+    q = gates(sol(90, 1, [0]))
+    assert q["grade"] == "D" and not q["passed"]
 
 
 def test_aftershock_throttle():

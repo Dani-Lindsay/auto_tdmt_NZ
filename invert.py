@@ -269,6 +269,18 @@ def quality_gates(solution: dict) -> dict:
     ]
     az_gap = max(gaps) if gaps else 360.0
 
+    # BSL-style letter grade: one glance tells a scientist what the
+    # solution is worth. A/B are emailed; C/D are archived for specialists.
+    vr = pref["vr"]
+    if vr >= 70 and n_used >= 5 and az_gap <= 180:
+        grade = "A"
+    elif vr >= 60 and n_used >= 3 and az_gap <= 270:
+        grade = "B"
+    elif vr >= 50 and n_used >= 2:
+        grade = "C"
+    else:
+        grade = "D"
+
     checks = {
         "min_stations": n_used >= config.MIN_STATIONS_USED,
         "vr_floor": pref["vr"] >= config.MIN_VR_PUBLISH,
@@ -284,9 +296,10 @@ def quality_gates(solution: dict) -> dict:
     return {
         "n_stations_used": n_used,
         "azimuthal_gap_deg": round(az_gap, 1),
+        "grade": grade,
         "checks": checks,
         "warnings": warnings,
-        "passed": all(checks.values()),
+        "passed": grade in ("A", "B"),
     }
 
 
