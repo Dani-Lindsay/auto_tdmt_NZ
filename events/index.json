@@ -42,9 +42,9 @@
     "2026p646525": {
       "status": "failed",
       "error": "every filter band failed",
-      "attempts": 2,
+      "attempts": 3,
       "prelim_mag": 4.268721882555337,
-      "run_utc": "2026-09-02T18:43:42.084441+00:00"
+      "run_utc": "2026-09-02T21:26:12.730311+00:00"
     },
     "2026p639238": {
       "status": "ok",
@@ -67,9 +67,9 @@
     "2026p614475": {
       "status": "failed",
       "error": "every filter band failed",
-      "attempts": 2,
+      "attempts": 3,
       "prelim_mag": 4.233027235234066,
-      "run_utc": "2026-09-02T18:45:08.159129+00:00"
+      "run_utc": "2026-09-02T21:27:51.772972+00:00"
     },
     "2026p600722": {
       "status": "ok",
@@ -92,9 +92,9 @@
     "2026p593592": {
       "status": "failed",
       "error": "every filter band failed",
-      "attempts": 2,
+      "attempts": 3,
       "prelim_mag": 4.141035841234685,
-      "run_utc": "2026-09-02T18:46:33.870407+00:00"
+      "run_utc": "2026-09-02T21:29:29.972000+00:00"
     },
     "2026p588884": {
       "status": "ok",
