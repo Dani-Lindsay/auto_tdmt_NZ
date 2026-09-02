@@ -39,6 +39,9 @@ def draft_text(solution: dict, forward: dict, passes: list[dict]) -> tuple[str, 
         f"Mw: {pref['mw']:.2f}",
         f"Centroid depth: {pref['depth_km']:g} km (GeoNet initial: {ev['depth_km']:g} km)",
         f"Variance reduction: {pref['vr']:.0f}%  |  DC {pref['pdc']:.0f}% / CLVD {pref['pclvd']:.0f}%",
+        f"Filter band: {1/solution['filter_band_hz'][1]:.0f}-"
+        f"{1/solution['filter_band_hz'][0]:.0f} s  |  "
+        f"Velocity model: {solution['provenance']['velocity_model']}",
         f"Nodal plane 1 (strike/dip/rake): {p1['strike']:.0f}/{p1['dip']:.0f}/{p1['rake']:.0f}",
         f"Nodal plane 2 (strike/dip/rake): {p2['strike']:.0f}/{p2['dip']:.0f}/{p2['rake']:.0f}",
         f"Stations used: {solution['quality']['n_stations_used']}",

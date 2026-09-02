@@ -47,6 +47,7 @@ def make_share_figure(
 
     # ---- panel a: stations + full-MT beachball over the station ROI -------
     ax = map_style.geo_axes(fig, [0.035, 0.30, 0.24, 0.60], roi)
+    map_style.draw_context(ax, roi, ccrs)
     ax.plot(
         [r["longitude"] for r in solution["stations_used"]],
         [r["latitude"] for r in solution["stations_used"]],
@@ -94,6 +95,7 @@ def make_share_figure(
             glon, glat, u_plot, cmap=map_style.vik(), vmin=-vmax, vmax=vmax,
             transform=ccrs.PlateCarree(), alpha=0.9, shading="auto", zorder=3,
         )
+        map_style.draw_context(axi, model_region, ccrs, gnss_labels=(i == 0))
         # surface projection of the modelled plane (bold edge = up-dip)
         axi.plot(olon, olat, "--", color="black", linewidth=1.2,
                  transform=ccrs.PlateCarree(), zorder=10)
@@ -103,6 +105,10 @@ def make_share_figure(
                  markersize=9, transform=ccrs.PlateCarree(), zorder=11)
         map_style.panel_label(
             axi, f"{name}  (peak {np.abs(u_cm).max():.2f} cm)")
+
+    # which nodal plane the forward model used, highlighted on a DC ball
+    map_style.inset_dc_ball(
+        fig, [0.855, 0.315, 0.075, 0.20], pref["plane1"], pref["plane2"])
 
     cax = fig.add_axes([0.955, 0.34, 0.011, 0.52])
     cb = fig.colorbar(pm, cax=cax, orientation="vertical")
@@ -128,10 +134,14 @@ def make_share_figure(
                          for p in passes[:3]))
     else:
         lines.append("No NISAR coverage found at the epicentre yet.")
+    band_hz = solution.get("filter_band_hz")
+    band_txt = (f"{1/band_hz[1]:.0f}-{1/band_hz[0]:.0f} s"
+                if band_hz else "n/a")
     lines.append(
         f"PRELIMINARY automated solution - model {prov['velocity_model']}, "
-        f"mttime {prov['mttime_version']}, VR {pref['vr']:.0f}%, "
-        f"DC {pref['pdc']:.0f}% / CLVD {pref['pclvd']:.0f}%"
+        f"filter {band_txt}, mttime {prov['mttime_version']}, "
+        f"VR {pref['vr']:.0f}%, DC {pref['pdc']:.0f}% / "
+        f"CLVD {pref['pclvd']:.0f}%"
     )
     for i, line in enumerate(lines):
         fig.text(0.035, 0.175 - 0.055 * i, line, fontsize=8.5,
@@ -156,9 +166,6 @@ def plot_depth_sensitivity(solution: dict, out_path: Path) -> Path:
         ("Variance Reduction", "VR (%)", [r["vr"] for r in rows]),
         ("Percent DC", "DC (%)", [r["pdc"] for r in rows]),
         ("Moment Magnitude", "Mw", [r["mw"] for r in rows]),
-        ("Strike", "Strike (deg)", [r["plane1"]["strike"] for r in rows]),
-        ("Rake", "Rake (deg)", [r["plane1"]["rake"] for r in rows]),
-        ("Dip", "Dip (deg)", [r["plane1"]["dip"] for r in rows]),
     ]
     ev = solution["event"]
     pref = solution["preferred"]
@@ -191,7 +198,7 @@ def plot_depth_sensitivity(solution: dict, out_path: Path) -> Path:
                 pref["depth_km"]: "black"}
 
     with plt.style.context("default"):
-        fig, axes = plt.subplots(2, 3, figsize=(11, 9))
+        fig, axes = plt.subplots(1, 3, figsize=(11, 6))
         for (title, ylabel, values), ax in zip(series, axes.ravel()):
             handles = [
                 ax.axvline(d, color=c, lw=1.5, label=lab)
@@ -201,21 +208,24 @@ def plot_depth_sensitivity(solution: dict, out_path: Path) -> Path:
             ax.set_title(title, fontsize=11)
             ax.set_ylabel(ylabel, fontsize=9)
             ax.tick_params(labelsize=8)
-        for ax in axes[1]:
+        for ax in axes:
             ax.set_xlabel("Depth (km)", fontsize=9)
+        band_hz = solution.get("filter_band_hz")
+        band_txt = (f",  Filter: {1/band_hz[1]:.0f}-{1/band_hz[0]:.0f} s"
+                    if band_hz else "")
         fig.suptitle(
             f"Depth Sensitivity - {ev['public_id']}  "
-            f"{ev['origin_time'][:16]},  Stations: {stations}",
+            f"{ev['origin_time'][:16]}{band_txt},  Stations: {stations}",
             fontsize=11,
         )
         fig.legend(handles=handles, loc="lower center",
                    ncol=len(ref_lines), fontsize=9, frameon=True,
-                   bbox_to_anchor=(0.5, 0.185))
-        fig.tight_layout(rect=[0, 0.24, 1, 1])
+                   bbox_to_anchor=(0.5, 0.30))
+        fig.tight_layout(rect=[0, 0.38, 1, 1])
 
         # mechanism strip: solutions across the selection window (VR within
         # tolerance of max), where VR is flat but the mechanism can swing
-        axb = fig.add_axes([0.06, 0.01, 0.88, 0.17])
+        axb = fig.add_axes([0.06, 0.02, 0.88, 0.26])
         axb.set_xlim(0, max(len(window), 1))
         axb.set_ylim(0, 1.5)
         axb.set_aspect("equal")
