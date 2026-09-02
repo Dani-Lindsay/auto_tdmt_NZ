@@ -134,8 +134,14 @@ MIN_SNR = 2.0
 # Green's function library grid
 # ---------------------------------------------------------------------------
 GF_DIST_KM = list(range(10, 505, 5))
-# 2 km spacing through the crust, 4 km below 30 km (Fiordland slab events).
-GF_DEPTHS_KM = list(range(2, 31, 2)) + list(range(34, 61, 4))
+# Fine near the surface where depth discrimination happens (0.5 km to 5 km,
+# 1 km to 10 km), 2 km through the crust, 4 km below 30 km (Fiordland slab).
+GF_DEPTHS_KM = (
+    [i * 0.5 for i in range(2, 11)]      # 1.0-5.0 km @ 0.5
+    + list(range(6, 11))                 # 6-10 km @ 1
+    + list(range(12, 31, 2))             # 12-30 km @ 2
+    + list(range(34, 61, 4))             # 34-58 km @ 4
+)
 # Velocity models (models/<name>.d, citation inside each file):
 # Ristau (2008) SRL 79(3) Table 1 — the models GeoNet's own regional CMT
 # analysis was built on, so our solutions are directly comparable.

@@ -35,6 +35,15 @@ from obspy import read
 
 import config
 
+# The ten Herrmann & Wang (1985) fundamental-source time series. This set,
+# its names, and its ORDER are a fixed convention shared by CPS (f96tosac -B
+# writes B<dist><j><name>.sac with j=01..10 in exactly this sequence) and by
+# mttime's green="herrmann" reader — not a tunable parameter. Z/R/T =
+# vertical/radial/transverse; DD = 45-deg dip-slip, DS = 90-deg dip-slip,
+# SS = vertical strike-slip, EX = explosion. TDD/TEX do not exist because
+# those sources are azimuthally symmetric (no transverse motion). If CPS
+# ever changed the convention, build_depth's file-existence assert fails
+# loudly rather than mis-assigning a component.
 GREENS = ("ZDD", "RDD", "ZDS", "RDS", "TDS", "ZSS", "RSS", "TSS", "ZEX", "REX")
 
 

@@ -36,7 +36,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: gf_cache
-          key: gf-${{ hashFiles('models/*.d') }}-v1
+          key: gf-${{ hashFiles('models/*.d', 'config.py') }}-v1
 
       - name: Fetch GF libraries from release
         if: steps.gf.outputs.cache-hit != 'true'

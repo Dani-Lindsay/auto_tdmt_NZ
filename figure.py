@@ -43,11 +43,12 @@ def make_share_figure(
     lon0, lat0 = ev["longitude"], ev["latitude"]
     roi = map_style.event_region(ev, solution["stations_used"], pad_deg=0.6)
 
-    fig = plt.figure(figsize=(15.0, 6.4))
+    fig = plt.figure(figsize=(17.5, 6.4))
 
     # ---- panel a: stations + full-MT beachball over the station ROI -------
-    ax = map_style.geo_axes(fig, [0.035, 0.30, 0.24, 0.60], roi)
-    map_style.draw_context(ax, roi, ccrs)
+    ax = map_style.geo_axes(fig, [0.03, 0.30, 0.19, 0.60], roi)
+    map_style.draw_context(ax, roi, ccrs, gnss=False)
+    map_style.scale_bar(ax, roi, ccrs)
     ax.plot(
         [r["longitude"] for r in solution["stations_used"]],
         [r["latitude"] for r in solution["stations_used"]],
@@ -88,14 +89,19 @@ def make_share_figure(
         u_cm = u_m * 100.0
         u_plot = np.ma.masked_where(np.abs(u_cm) < 0.02 * vmax, u_cm)
         axi = map_style.geo_axes(
-            fig, [0.315 + 0.215 * i, 0.30, 0.19, 0.60], model_region,
+            fig, [0.245 + 0.23 * i, 0.30, 0.22, 0.60], model_region,
             labels=(i == 0),
         )
         pm = axi.pcolormesh(
             glon, glat, u_plot, cmap=map_style.vik(), vmin=-vmax, vmax=vmax,
             transform=ccrs.PlateCarree(), alpha=0.9, shading="auto", zorder=3,
         )
-        map_style.draw_context(axi, model_region, ccrs, gnss_labels=(i == 0))
+        n_gnss = map_style.draw_context(axi, model_region, ccrs,
+                                        gnss_labels=(i == 0))
+        if i == 0 and n_gnss == 0:
+            axi.text(0.02, 0.03, "no operating GNSS marks in frame",
+                     transform=axi.transAxes, fontsize=7.5, color="#0173B2")
+        map_style.scale_bar(axi, model_region, ccrs)
         # surface projection of the modelled plane (bold edge = up-dip)
         axi.plot(olon, olat, "--", color="black", linewidth=1.2,
                  transform=ccrs.PlateCarree(), zorder=10)
@@ -108,9 +114,9 @@ def make_share_figure(
 
     # which nodal plane the forward model used, highlighted on a DC ball
     map_style.inset_dc_ball(
-        fig, [0.855, 0.315, 0.075, 0.20], pref["plane1"], pref["plane2"])
+        fig, [0.875, 0.015, 0.075, 0.24], pref["plane1"], pref["plane2"])
 
-    cax = fig.add_axes([0.955, 0.34, 0.011, 0.52])
+    cax = fig.add_axes([0.945, 0.34, 0.009, 0.52])
     cb = fig.colorbar(pm, cax=cax, orientation="vertical")
     cb.set_label("predicted displacement [cm]", fontsize=9)
     cb.ax.tick_params(labelsize=8)
@@ -189,13 +195,28 @@ def plot_depth_sensitivity(solution: dict, out_path: Path) -> Path:
 
     stations = "_".join(r["station"] for r in solution["stations_used"])
     vr_max = max(r["vr"] for r in rows)
-    window = [r for r in rows
-              if r["vr"] >= vr_max - config.PREFER_DC_VR_TOLERANCE]
-    if len(window) > 8:  # keep the strip readable
-        idx = np.linspace(0, len(window) - 1, 8).round().astype(int)
-        window = [window[i] for i in sorted(set(idx))]
-    edge_for = {vr_max_depth: c_vr, dc_max_depth: c_dc,
-                pref["depth_km"]: "black"}
+    in_window = [r for r in rows
+                 if r["vr"] >= vr_max - config.PREFER_DC_VR_TOLERANCE]
+    dc_win_depth = max(in_window, key=lambda r: r["pdc"])["depth_km"]
+    geonet_depth = min(depths, key=lambda d: abs(d - ev["depth_km"]))
+
+    # strip: ~7 mechanisms pinned to the key depths (GeoNet, max VR,
+    # windowed max DC, preferred) with neighbours of the preferred depth
+    # filled in, to make the depth trade-off around the solution visual
+    key_depths = {geonet_depth, vr_max_depth, dc_win_depth,
+                  pref["depth_km"]}
+    i_pref = depths.index(pref["depth_km"])
+    step = 1
+    while len(key_depths) < min(7, len(depths)):
+        for j in (i_pref - step, i_pref + step):
+            if 0 <= j < len(depths) and len(key_depths) < 7:
+                key_depths.add(depths[j])
+        step += 1
+    window = [r for r in rows if r["depth_km"] in key_depths]
+    window.sort(key=lambda r: r["depth_km"])
+    # rim colours match the reference lines; preferred wins a collision
+    edge_for = {geonet_depth: c_geonet, vr_max_depth: c_vr,
+                dc_win_depth: c_dc, pref["depth_km"]: "black"}
 
     with plt.style.context("default"):
         fig, axes = plt.subplots(1, 3, figsize=(11, 6))
@@ -248,8 +269,9 @@ def plot_depth_sensitivity(solution: dict, out_path: Path) -> Path:
             axb.text(i + 0.5, 0.22, f"DC {r['pdc']:.0f}%", ha="center",
                      va="top", fontsize=8, color="0.35")
         axb.text(0.0, 1.45,
-                 f"mechanism vs depth across the selection window "
-                 f"(VR within {config.PREFER_DC_VR_TOLERANCE:g}% of max)",
+                 "deviatoric mechanism vs depth around the solution "
+                 "(rims: blue=GeoNet, orange=max VR, teal=max DC, "
+                 "black=preferred)",
                  fontsize=9, va="top")
 
     out_path.parent.mkdir(parents=True, exist_ok=True)

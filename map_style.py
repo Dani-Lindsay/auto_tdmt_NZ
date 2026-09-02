@@ -131,8 +131,26 @@ def load_gnss_marks():
     return df[df["End Date"].str.startswith("9999")]
 
 
-def draw_context(ax, region, ccrs, gnss_labels=False):
-    """Active faults + operating GNSS marks clipped to the region."""
+def scale_bar(ax, region, ccrs):
+    """Simple km scale bar, bottom-left."""
+    lon0, lon1, lat0, lat1 = region
+    mid_lat = 0.5 * (lat0 + lat1)
+    span_km = (lon1 - lon0) * 111.32 * np.cos(np.radians(mid_lat))
+    km = min([1, 2, 5, 10, 20, 50, 100, 200],
+             key=lambda k: abs(k - 0.25 * span_km))
+    dlon = km / (111.32 * np.cos(np.radians(mid_lat)))
+    x0 = lon0 + 0.05 * (lon1 - lon0)
+    y = lat0 + 0.06 * (lat1 - lat0)
+    ax.plot([x0, x0 + dlon], [y, y], "-", color="black", linewidth=3,
+            transform=ccrs.PlateCarree(), zorder=15,
+            solid_capstyle="butt")
+    ax.text(x0 + 0.5 * dlon, y + 0.015 * (lat1 - lat0), f"{km} km",
+            ha="center", va="bottom", fontsize=8,
+            transform=ccrs.PlateCarree(), zorder=15)
+
+
+def draw_context(ax, region, ccrs, gnss=True, gnss_labels=False):
+    """Active faults (+ optionally operating GNSS marks) in the region."""
     lon0, lon1, lat0, lat1 = region
     for lons, lats in load_faults():
         if (lons.max() < lon0 or lons.min() > lon1
@@ -140,6 +158,8 @@ def draw_context(ax, region, ccrs, gnss_labels=False):
             continue
         ax.plot(lons, lats, "-", color="#8B3A3A", linewidth=0.6, alpha=0.8,
                 transform=ccrs.PlateCarree(), zorder=4)
+    if not gnss:
+        return 0
     marks = load_gnss_marks()
     inside = marks[
         (marks.Longitude >= lon0) & (marks.Longitude <= lon1)

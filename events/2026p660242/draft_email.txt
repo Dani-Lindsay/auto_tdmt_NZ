@@ -1,4 +1,4 @@
-[auto-MT NZ] Mw 5.0 35 km north-east of Milford Sound (2026p660242), depth 8 km
+[auto-MT NZ] Mw 5.0 35 km north-east of Milford Sound (2026p660242), depth 7 km
 
 Automated regional moment tensor solution — PRELIMINARY
 
@@ -7,13 +7,14 @@ Location: 35 km north-east of Milford Sound (-44.449, 168.304)
 GeoNet preliminary magnitude: M 5.6
 
 Mw: 5.03
-Centroid depth: 8 km (GeoNet initial: 5 km)
-Variance reduction: 84%  |  DC 84% / CLVD 16%
-Nodal plane 1 (strike/dip/rake): 360/57/34
-Nodal plane 2 (strike/dip/rake): 249/62/142
+Centroid depth: 7 km (GeoNet initial: 5 km)
+Variance reduction: 85%  |  DC 97% / CLVD 3%
+Filter band: 30-100 s  |  Velocity model: nz_south_ristau2008
+Nodal plane 1 (strike/dip/rake): 359/55/31
+Nodal plane 2 (strike/dip/rake): 250/65/140
 Stations used: 6
 
-Predicted peak surface displacement 0.36 cm — no detectable surface deformation expected.
+Predicted peak surface displacement 0.47 cm — no detectable surface deformation expected.
 
 NISAR passes over the epicentre:
   track 145 D: last 2026-07-06 06:47Z, next ~2026-09-04 06:47Z

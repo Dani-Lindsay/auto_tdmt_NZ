@@ -46,7 +46,7 @@ def predicted_displacement(
     # window scales with the source so the fault plane and its near-field
     # lobes fill the plot at any magnitude (capped for very large events)
     if halfwidth_km is None:
-        halfwidth_km = float(np.clip(4.0 * length_m / 1e3, 10.0, 150.0))
+        halfwidth_km = float(np.clip(8.0 * length_m / 1e3, 20.0, 200.0))
     step_km = step_km or 2.0 * halfwidth_km / 120.0
     m0_nm = m0_dyne_cm_to_nm(m0_dyne_cm)
     slip_m = m0_nm / (config.SHEAR_MODULUS_PA * length_m * width_m)
