@@ -1,4 +1,15 @@
-"""Moment tensor inversion via mttime: mtinv.in generation, depth search,
+"""Inversion driver — attribution and provenance.
+
+This module was compiled with Claude (Anthropic) assistance. The mtinv.in
+format and inversion invocation follow the mttime example notebooks by
+Andrea Chiang (LLNL): https://github.com/LLNL/mttime (LLNL-CODE-814839).
+
+Deviations: automated depth search over the GF library grid; low-VR
+station rejection pass; preferred-solution rule (contiguous VR plateau,
+then max %DC) replacing manual inspection; machine-readable solution.json
+with full provenance.
+
+Moment tensor inversion via mttime: mtinv.in generation, depth search,
 quality gates, and solution serialization.
 
 The mtinv.in file (exactly the format of the mttime example notebooks) is
@@ -74,14 +85,31 @@ def write_mtinv(
     return path
 
 
-def pick_preferred(vr_pdc: list[tuple[float, float]]) -> int:
-    """Index of the preferred solution: among candidates with VR within
-    PREFER_DC_VR_TOLERANCE of the maximum, take the highest %DC."""
-    vr_max = max(vr for vr, _ in vr_pdc)
-    cands = [
-        i for i, (vr, _) in enumerate(vr_pdc)
-        if vr >= vr_max - config.PREFER_DC_VR_TOLERANCE
-    ]
+def pick_preferred(vr_pdc: list[tuple[float, float]],
+                   contiguous: bool = True) -> int:
+    """Index of the preferred solution.
+
+    Hierarchy: VR first — candidates are the depths within
+    PREFER_DC_VR_TOLERANCE of the VR maximum; among those, take the highest
+    %DC. With ``contiguous=True`` (the depth search, where entries are
+    ordered by depth) candidates are restricted to the CONTIGUOUS plateau
+    containing the VR maximum: a bimodal VR curve must not let a
+    disconnected deep lobe that grazes the tolerance steal the pick on DC.
+    Band selection passes ``contiguous=False`` (few, unordered candidates).
+    """
+    vrs = [vr for vr, _ in vr_pdc]
+    i_max = max(range(len(vrs)), key=lambda i: vrs[i])
+    floor = vrs[i_max] - config.PREFER_DC_VR_TOLERANCE
+    if contiguous:
+        lo = i_max
+        while lo > 0 and vrs[lo - 1] >= floor:
+            lo -= 1
+        hi = i_max
+        while hi < len(vrs) - 1 and vrs[hi + 1] >= floor:
+            hi += 1
+        cands = list(range(lo, hi + 1))
+    else:
+        cands = [i for i, vr in enumerate(vrs) if vr >= floor]
     return max(cands, key=lambda i: vr_pdc[i][1])
 
 
@@ -169,6 +197,17 @@ def summarize(inv, event: Event, stations: list[dict], dropped: list[dict],
             },
         )
 
+    # per-station solved time shifts (zcor) and individual VR at the
+    # preferred depth — the audit trail for velocity-model error absorption
+    pref_mt = inv.moment_tensors[inv.preferred_tensor_id]
+    table = {r.station: r for r in pref_mt.station_table.itertuples()}
+    for st in stations:
+        sid = f"{st['network']}.{st['station']}.{st['location']}"
+        row = table.get(sid)
+        if row is not None:
+            st["zcor_s"] = float((row.ts - config.TIME_BEFORE_S) * config.DT)
+            st["station_vr"] = float(row.VR)
+
     rows = [_mt_row(mt) for mt in inv.moment_tensors]
     best_vr = max(rows, key=lambda r: r["vr"])
     best_dc = max(rows, key=lambda r: r["pdc"])
@@ -210,8 +249,8 @@ def summarize(inv, event: Event, stations: list[dict], dropped: list[dict],
             "npts": config.INV_NPTS,
             "dt_s": config.DT,
             "preferred_rule": (
-                f"max %DC among solutions with VR within "
-                f"{config.PREFER_DC_VR_TOLERANCE:g} points of VR max"
+                f"max %DC on the contiguous depth plateau within "
+                f"{config.PREFER_DC_VR_TOLERANCE:g} VR points of the maximum"
             ),
         },
     }

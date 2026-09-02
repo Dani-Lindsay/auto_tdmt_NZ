@@ -119,9 +119,13 @@ waveforms".
   stations that passed SNR 2.0 but do not actually fit are removed here
   rather than being allowed to dilute the %DC. Rejections are recorded
   with reasons.
-- **Preferred solution rule**: among solutions (depths; and then bands)
-  whose total VR is within 5 percentage points of the maximum, take the
-  highest %DC. Rationale: VR is a weak discriminator with depth (it often
+- **Preferred solution rule** (hierarchy: VR first, then DC): candidates
+  are the depths whose total VR is within 5 percentage points of the VR
+  maximum, restricted to the contiguous plateau containing the maximum (a
+  bimodal VR curve must not let a disconnected lobe that grazes the
+  tolerance steal the pick); among candidates, take the highest %DC. Band
+  selection applies the same windowed rule without the contiguity
+  restriction (few, unordered candidates). Rationale: VR is a weak discriminator with depth (it often
   climbs monotonically) while spurious CLVD grows where the depth/model is
   wrong; pure VR-max picks produced solutions with implausible ~70% CLVD
   that the %DC-aware rule resolves (see worked examples). Both the VR-max

@@ -100,7 +100,8 @@ def process_event(public_id: str, debug: bool = False,
     tags = passing if passing else list(solutions)
     best_tag = tags[invert.pick_preferred(
         [(solutions[t]["preferred"]["vr"], solutions[t]["preferred"]["pdc"])
-         for t in tags]
+         for t in tags],
+        contiguous=False,
     )]
     best = solutions[best_tag]
     best["chosen_band"] = best_tag

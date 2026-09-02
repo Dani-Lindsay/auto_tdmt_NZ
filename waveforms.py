@@ -1,4 +1,20 @@
-"""Waveform acquisition and pre-processing to mttime-ready SAC files.
+"""SAC preparation — attribution and provenance.
+
+This module was compiled with Claude (Anthropic) assistance. The processing
+chain follows the mttime example notebooks by Andrea Chiang (LLNL),
+specifically 01_Data_Processing and 02_Prepare_Data_and_Synthetics_For_
+Inversion: https://github.com/LLNL/mttime/tree/master/examples/notebooks
+(mttime: https://github.com/LLNL/mttime, LLNL-CODE-814839), implemented
+with ObsPy (https://github.com/obspy/obspy).
+
+Deviations from the original notebooks: GeoNet NRT/archive FDSN sources
+with retry logic; automated station selection (distance window, HH?>BH?
+priority, 3x-depth rule); per-station SNR gate (signal/pre-event noise in
+the inversion passband, threshold in config.py); magnitude-dependent
+filter-band menu applied per event rather than fixed corners; fail-loud
+drop accounting (every rejected station recorded with a reason).
+
+Waveform acquisition and pre-processing to mttime-ready SAC files.
 
 Chain (mttime example notebooks 01+02, matching the EPS207 recipe):
   inventory -> broadband selection -> download -> response removal to
@@ -107,13 +123,20 @@ def fetch_and_process(
         if len(used) >= config.MAX_STATIONS:
             break
         sid = f"{row['network']}.{row['station']}.{row['location']}"
+
+        def _drop(reason):
+            dropped.append({
+                "station": sid, "reason": reason,
+                "latitude": row["latitude"], "longitude": row["longitude"],
+                "distance_km": round(row["distance_km"], 1),
+            })
         # far-field / point-source guard: distance > 3x depth (skip for
         # placeholder depths, which are meaningless)
         if (
             event.depth_km not in config.PLACEHOLDER_DEPTHS_KM
             and row["distance_km"] < config.MIN_DIST_DEPTH_RATIO * event.depth_km
         ):
-            dropped.append({"station": sid, "reason": "distance < 3x source depth"})
+            _drop("distance < 3x source depth")
             continue
         try:
             st = client.get_waveforms(
@@ -126,12 +149,12 @@ def fetch_and_process(
                 attach_response=False,
             )
         except Exception as e:  # noqa: BLE001 - record and move on, loudly
-            dropped.append({"station": sid, "reason": f"download failed: {e}"})
+            _drop(f"download failed: {e}")
             continue
 
         st.merge(method=0)
         if any(hasattr(tr.data, "mask") for tr in st) or len(st) < 3:
-            dropped.append({"station": sid, "reason": "gaps or <3 components"})
+            _drop("gaps or <3 components")
             continue
 
         raw_copy = st.copy() if stages is not None else None
@@ -148,11 +171,11 @@ def fetch_and_process(
             st.detrend("demean")
             st._rotate_to_zne(inv, components=("ZNE", "Z12"))
         except Exception as e:  # noqa: BLE001
-            dropped.append({"station": sid, "reason": f"response/rotation failed: {e}"})
+            _drop(f"response/rotation failed: {e}")
             continue
 
         if len(st.select(component="Z")) != 1 or len(st) != 3:
-            dropped.append({"station": sid, "reason": "not exactly 3 ZNE components"})
+            _drop("not exactly 3 ZNE components")
             continue
 
         # SNR gate in the inversion passband: RMS(signal)/RMS(pre-event noise)
@@ -163,7 +186,7 @@ def fetch_and_process(
         )
         snr = _snr(snr_st, origin)
         if snr < config.MIN_SNR:
-            dropped.append({"station": sid, "reason": f"SNR {snr:.1f} < {config.MIN_SNR}"})
+            _drop(f"SNR {snr:.1f} < {config.MIN_SNR}")
             continue
 
         if stages is not None:
@@ -196,7 +219,7 @@ def fetch_and_process(
         npts = {tr.stats.npts for tr in st}
         expected = config.TIME_BEFORE_S + config.TIME_AFTER_S + 1
         if npts != {expected}:
-            dropped.append({"station": sid, "reason": f"trim gave npts {npts}, want {expected}"})
+            _drop(f"trim gave npts {npts}, want {expected}")
             continue
 
         for tr in st:

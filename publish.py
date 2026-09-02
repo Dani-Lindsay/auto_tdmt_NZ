@@ -76,7 +76,25 @@ def draft_text(solution: dict, forward: dict, passes: list[dict]) -> tuple[str, 
         "--",
         f"Automated solution (mttime {prov['mttime_version']}, "
         f"model {prov['velocity_model']}, GF {prov['gf_version']}). "
-        f"Not reviewed by a human. Solutions archived at the auto_tdmt_NZ repo.",
+        f"Not reviewed by a human.",
+        "",
+        "This workflow was compiled with Claude (Anthropic) assistance.",
+        "Credits: inversion by mttime, A. Chiang, LLNL "
+        "(github.com/LLNL/mttime); Green's functions by Computer Programs "
+        "in Seismology, R. B. Herrmann "
+        "(rbherrmann.github.io/ComputerProgramsSeismology); waveform "
+        "processing with ObsPy (obspy.org); waveforms and metadata from "
+        "GeoNet / Earth Sciences New Zealand (geonet.org.nz, CC BY 3.0 NZ); "
+        "velocity models from Ristau (2008), SRL 79(3); deformation "
+        "modelling after Okada (1992) via okada4py, R. Jolivet "
+        "(github.com/jolivetr/okada4py); fault dimensions from Wells & "
+        "Coppersmith (1994); active faults from the NZ Active Faults "
+        "Database, GNS Science (data.gns.cri.nz/af); GNSS marks from "
+        "GeoNet delta (github.com/GeoNet/delta); NISAR timing from NASA "
+        "CMR (cmr.earthdata.nasa.gov); colour maps by F. Crameri "
+        "(fabiocrameri.ch/colourmaps).",
+        "",
+        "Solutions archive: github.com/Dani-Lindsay/auto_tdmt_NZ",
     ]
     return subject, "\n".join(lines)
 

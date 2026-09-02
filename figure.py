@@ -36,6 +36,9 @@ def _local_km_to_geo(x_km, y_km, lon0: float, lat0: float):
 def make_share_figure(
     solution: dict, forward: dict, passes: list[dict], out_path: Path
 ) -> Path:
+    """Station map + Okada E/N/U displacement for BOTH nodal planes (the MT
+    cannot distinguish them; until geodesy arrives either could be the
+    fault), with faults/GNSS context, scale bars and provenance."""
     import cartopy.crs as ccrs
 
     ev = solution["event"]
@@ -43,19 +46,48 @@ def make_share_figure(
     lon0, lat0 = ev["longitude"], ev["latitude"]
     roi = map_style.event_region(ev, solution["stations_used"], pad_deg=0.6)
 
-    fig = plt.figure(figsize=(17.5, 6.4))
+    fig = plt.figure(figsize=(17.5, 11.2))
 
     # ---- panel a: stations + full-MT beachball over the station ROI -------
-    ax = map_style.geo_axes(fig, [0.03, 0.30, 0.19, 0.60], roi)
+    ax = map_style.geo_axes(fig, [0.03, 0.565, 0.19, 0.365], roi)
     map_style.draw_context(ax, roi, ccrs, gnss=False)
     map_style.scale_bar(ax, roi, ccrs)
-    ax.plot(
-        [r["longitude"] for r in solution["stations_used"]],
-        [r["latitude"] for r in solution["stations_used"]],
-        "^", color="forestgreen", markeredgecolor="black",
-        markeredgewidth=0.4, markersize=8, transform=ccrs.PlateCarree(),
-    )
-    for r in solution["stations_used"]:
+    # candidates that were dropped: grey; used stations: coloured by the
+    # velocity-model deviation dV% implied by their solved zcor
+    # (EPS207 velocity-model analysis; red = model fast, blue = slow)
+    import config as _config
+    grey = [d for d in solution["stations_dropped"] if "latitude" in d]
+    if grey:
+        ax.plot([d["longitude"] for d in grey], [d["latitude"] for d in grey],
+                "^", color="0.65", markeredgecolor="0.4",
+                markeredgewidth=0.3, markersize=6,
+                transform=ccrs.PlateCarree(), zorder=5)
+    used = solution["stations_used"]
+    dv = [
+        (r["zcor_s"] / (r["distance_km"] / _config.GROUP_VELOCITY_KMS)) * 100.0
+        if "zcor_s" in r else None
+        for r in used
+    ]
+    if any(v is not None for v in dv):
+        vals = [v for v in dv if v is not None]
+        dvmax = max(5.0, max(abs(v) for v in vals))
+        sc = ax.scatter(
+            [r["longitude"] for r in used], [r["latitude"] for r in used],
+            c=[v if v is not None else 0.0 for v in dv],
+            cmap="coolwarm", vmin=-dvmax, vmax=dvmax, marker="^", s=90,
+            edgecolors="black", linewidths=0.5,
+            transform=ccrs.PlateCarree(), zorder=7,
+        )
+        caxa = fig.add_axes([0.055, 0.535, 0.13, 0.011])
+        cba = fig.colorbar(sc, cax=caxa, orientation="horizontal")
+        cba.set_label("dV% from zcor (red = model fast)", fontsize=7)
+        cba.ax.tick_params(labelsize=6)
+    else:
+        ax.plot([r["longitude"] for r in used], [r["latitude"] for r in used],
+                "^", color="forestgreen", markeredgecolor="black",
+                markeredgewidth=0.4, markersize=8,
+                transform=ccrs.PlateCarree(), zorder=7)
+    for r in used:
         ax.annotate(
             r["station"], (r["longitude"], r["latitude"]),
             xytext=(4, -4), textcoords="offset points", fontsize=6.5,
@@ -66,57 +98,73 @@ def make_share_figure(
         ax, f"(a) {ev['public_id']}  Mw {pref['mw']:.1f}  "
             f"depth {pref['depth_km']:g} km")
 
-    # ---- panels b-d: E/N/U predicted displacement over the modelled area --
-    fw = forward["plane1"]
-    fault = fw["fault"]
-    outline = okada_forward.fault_outline(fault)
-    olon, olat = _local_km_to_geo(
-        np.array(outline["outline_x_km"]), np.array(outline["outline_y_km"]),
-        lon0, lat0)
-    tlon, tlat = _local_km_to_geo(
-        np.array(outline["top_x_km"]), np.array(outline["top_y_km"]),
-        lon0, lat0)
-    glon, glat = _local_km_to_geo(fw["x_km"], fw["y_km"], lon0, lat0)
-    model_region = [float(glon.min()), float(glon.max()),
-                    float(glat.min()), float(glat.max())]
-    comps = [("(b) east", fw["ue_m"]), ("(c) north", fw["un_m"]),
-             ("(d) up", fw["uz_m"])]
+    # ---- two rows of E/N/U panels: nodal plane 1 (top), plane 2 (bottom) --
+    plane_colors = {"plane1": "#0173B2", "plane2": "#029E73"}
     vmax = max(
-        0.1, max(float(np.abs(u).max()) for _, u in comps) * 100.0)
-
+        0.1,
+        max(float(np.abs(forward[p][c]).max())
+            for p in ("plane1", "plane2")
+            for c in ("ue_m", "un_m", "uz_m")) * 100.0,
+    )
     pm = None
-    for i, (name, u_m) in enumerate(comps):
-        u_cm = u_m * 100.0
-        u_plot = np.ma.masked_where(np.abs(u_cm) < 0.02 * vmax, u_cm)
-        axi = map_style.geo_axes(
-            fig, [0.245 + 0.23 * i, 0.30, 0.22, 0.60], model_region,
-            labels=(i == 0),
-        )
-        pm = axi.pcolormesh(
-            glon, glat, u_plot, cmap=map_style.vik(), vmin=-vmax, vmax=vmax,
-            transform=ccrs.PlateCarree(), alpha=0.9, shading="auto", zorder=3,
-        )
-        n_gnss = map_style.draw_context(axi, model_region, ccrs,
-                                        gnss_labels=(i == 0))
-        if i == 0 and n_gnss == 0:
-            axi.text(0.02, 0.03, "no operating GNSS marks in frame",
-                     transform=axi.transAxes, fontsize=7.5, color="#0173B2")
-        map_style.scale_bar(axi, model_region, ccrs)
-        # surface projection of the modelled plane (bold edge = up-dip)
-        axi.plot(olon, olat, "--", color="black", linewidth=1.2,
-                 transform=ccrs.PlateCarree(), zorder=10)
-        axi.plot(tlon, tlat, "-", color="black", linewidth=2.6,
-                 transform=ccrs.PlateCarree(), zorder=10)
-        axi.plot(lon0, lat0, "*", color="yellow", markeredgecolor="black",
-                 markersize=9, transform=ccrs.PlateCarree(), zorder=11)
-        map_style.panel_label(
-            axi, f"{name}  (peak {np.abs(u_cm).max():.2f} cm)")
+    panel = iter("bcdefg")
+    for row, plane in enumerate(("plane1", "plane2")):
+        fw = forward[plane]
+        fault = fw["fault"]
+        outline = okada_forward.fault_outline(fault)
+        olon, olat = _local_km_to_geo(
+            np.array(outline["outline_x_km"]),
+            np.array(outline["outline_y_km"]), lon0, lat0)
+        tlon, tlat = _local_km_to_geo(
+            np.array(outline["top_x_km"]), np.array(outline["top_y_km"]),
+            lon0, lat0)
+        glon, glat = _local_km_to_geo(fw["x_km"], fw["y_km"], lon0, lat0)
+        model_region = [float(glon.min()), float(glon.max()),
+                        float(glat.min()), float(glat.max())]
+        y0 = 0.565 - row * 0.455
+        for i, (comp, u_m) in enumerate(
+                (("east", fw["ue_m"]), ("north", fw["un_m"]),
+                 ("up", fw["uz_m"]))):
+            u_cm = u_m * 100.0
+            u_plot = np.ma.masked_where(np.abs(u_cm) < 0.02 * vmax, u_cm)
+            axi = map_style.geo_axes(
+                fig, [0.245 + 0.23 * i, y0, 0.22, 0.365], model_region,
+                labels=(i == 0),
+            )
+            n_gnss = map_style.draw_context(
+                axi, model_region, ccrs, gnss_labels=(i == 0))
+            if i == 0 and n_gnss == 0:
+                axi.text(0.02, 0.03, "no operating GNSS marks in frame",
+                         transform=axi.transAxes, fontsize=7.5,
+                         color="#0173B2")
+            map_style.scale_bar(axi, model_region, ccrs)
+            pm = axi.pcolormesh(
+                glon, glat, u_plot, cmap=map_style.vik(),
+                vmin=-vmax, vmax=vmax, transform=ccrs.PlateCarree(),
+                alpha=0.9, shading="auto", zorder=3,
+            )
+            axi.plot(olon, olat, "--", color=plane_colors[plane],
+                     linewidth=1.2, transform=ccrs.PlateCarree(), zorder=10)
+            axi.plot(tlon, tlat, "-", color=plane_colors[plane],
+                     linewidth=2.6, transform=ccrs.PlateCarree(), zorder=10)
+            axi.plot(lon0, lat0, "*", color="yellow",
+                     markeredgecolor="black", markersize=9,
+                     transform=ccrs.PlateCarree(), zorder=11)
+            map_style.panel_label(
+                axi, f"({next(panel)}) plane {row + 1} {comp}  "
+                     f"(peak {np.abs(u_cm).max():.2f} cm)")
 
-    # which nodal plane the forward model used, highlighted on a DC ball
-    map_style.inset_dc_ball(
-        fig, [0.875, 0.015, 0.075, 0.24], pref["plane1"], pref["plane2"])
+    # inset DC ball: both planes traced in their row colours
+    axb = map_style.inset_dc_ball(
+        fig, [0.045, 0.13, 0.115, 0.30], pref["plane1"], pref["plane2"])
+    x2, y2 = map_style.nodal_plane_arc(
+        pref["plane2"]["strike"], pref["plane2"]["dip"])
+    axb.plot(x2, y2, "-", color=plane_colors["plane2"], linewidth=2.2,
+             zorder=20, solid_capstyle="round")
+    axb.text(0, -1.6, "plane 2", ha="center", va="center", fontsize=7,
+             color=plane_colors["plane2"])
 
-    cax = fig.add_axes([0.945, 0.34, 0.009, 0.52])
+    cax = fig.add_axes([0.945, 0.30, 0.009, 0.45])
     cb = fig.colorbar(pm, cax=cax, orientation="vertical")
     cb.set_label("predicted displacement [cm]", fontsize=9)
     cb.ax.tick_params(labelsize=8)
@@ -125,12 +173,15 @@ def make_share_figure(
     detect = ("potentially InSAR detectable" if forward["detectable"]
               else "below InSAR detection")
 
-    # ---- footer: NISAR passes + provenance --------------------------------
+    # ---- footer: planes, NISAR passes, provenance -------------------------
     prov = solution["provenance"]
+    p1f = forward["plane1"]["fault"]
+    p2f = forward["plane2"]["fault"]
     lines = [
-        f"Okada forward model on NODAL PLANE 1 "
-        f"(strike/dip/rake {fault['strike']:.0f}/{fault['dip']:.0f}/"
-        f"{fault['rake']:.0f}, dashed outline, bold edge = up-dip): "
+        f"Okada forward models (dashed outline, bold edge = up-dip): "
+        f"plane 1 (blue) {p1f['strike']:.0f}/{p1f['dip']:.0f}/"
+        f"{p1f['rake']:.0f}, plane 2 (green) {p2f['strike']:.0f}/"
+        f"{p2f['dip']:.0f}/{p2f['rake']:.0f}; "
         f"peak |u| {peak_cm:.2f} cm - {detect}"]
     if passes:
         lines.append("NISAR passes at epicentre (last | predicted next):  "
@@ -150,7 +201,7 @@ def make_share_figure(
         f"CLVD {pref['pclvd']:.0f}%"
     )
     for i, line in enumerate(lines):
-        fig.text(0.035, 0.175 - 0.055 * i, line, fontsize=8.5,
+        fig.text(0.03, 0.075 - 0.028 * i, line, fontsize=8.5,
                  family="monospace", va="top")
 
     out_path.parent.mkdir(parents=True, exist_ok=True)

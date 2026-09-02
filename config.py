@@ -168,6 +168,11 @@ MAX_AZ_GAP_DEG = 270.0  # flag (not fail) beyond this
 DEPTH_SEARCH_MARGIN_KM = 20.0
 PLACEHOLDER_DEPTHS_KM = {5.0, 12.0, 33.0}  # GeoNet fixed-depth values
 
+# Surface-wave group velocity used to convert per-station zcor into a
+# velocity-model deviation percentage, dV% = zcor / (dist / v_group) * 100
+# (EPS207 velocity-model analysis; ~Love-wave group velocity).
+GROUP_VELOCITY_KMS = 3.0
+
 # ---------------------------------------------------------------------------
 # Okada forward model
 # ---------------------------------------------------------------------------

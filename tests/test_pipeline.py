@@ -45,6 +45,16 @@ def test_pick_preferred_prefers_dc_within_tolerance():
     assert invert.pick_preferred([(80.0, 20.0), (70.0, 90.0)]) == 0
 
 
+def test_pick_preferred_bimodal_vr_stays_contiguous():
+    # deep lobe grazes the tolerance window but is disconnected from the
+    # VR maximum: it must NOT steal the pick on DC (2026p660272 case)
+    rows = [(91.0, 81.0), (90.0, 55.0), (88.0, 60.0), (30.0, 90.0),
+            (87.0, 97.0)]
+    assert invert.pick_preferred(rows) == 0
+    # band selection (unordered) still considers all within tolerance
+    assert invert.pick_preferred(rows, contiguous=False) == 4
+
+
 # --- Green's functions ------------------------------------------------------
 
 def test_nearest_grid_distance():

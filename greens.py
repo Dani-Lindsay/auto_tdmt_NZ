@@ -1,4 +1,20 @@
-"""Green's function library: one-time CPS build (local) + runtime lookup.
+"""Green's functions — attribution and provenance.
+
+This module was compiled with Claude (Anthropic) assistance. The CPS
+computation chain (hprep96 | hspec96 | hpulse96 -D -i | f96tosac -B) is
+taken from mttime example notebook 02 by Andrea Chiang (LLNL):
+https://github.com/LLNL/mttime/tree/master/examples/notebooks, using
+Computer Programs in Seismology 3.30 by Robert Herrmann:
+https://rbherrmann.github.io/ComputerProgramsSeismology/ (see also the CPS
+Green's-function tutorial at
+https://www.eas.slu.edu/eqc/eqc_cps/TUTORIAL/GREEN/index.html).
+
+Deviations from the notebook: a precomputed distance x depth library per
+velocity model (built once, reused by nearest-distance lookup) instead of
+per-event GF computation; unfiltered storage with per-event band-pass;
+manifest with model SHA-256 for provenance.
+
+Green's function library: one-time CPS build (local) + runtime lookup.
 
 Build (local only, needs CPS binaries — never runs in CI):
     pixi run python greens.py --build
