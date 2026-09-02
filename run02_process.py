@@ -116,6 +116,17 @@ def process_event(public_id: str, debug: bool = False,
         }
         for tag, s in solutions.items()
     }
+    # leave-one-out jackknife at the preferred depth of the chosen band
+    band_dir = event_dir / best_tag
+    jk = invert.jackknife(
+        event, best["stations_used"], best["preferred"]["depth_km"],
+        band_dir, band_dir / "greens", best["preferred"]["plane1"])
+    best["jackknife"] = jk
+    if jk.get("n_subsets"):
+        print(f"jackknife (n={jk['n_subsets']}): Mw +/-{jk['mw_std']}, "
+              f"DC +/-{jk['dc_std']}%, max mechanism rotation "
+              f"{jk['max_tensor_rotation_deg']} deg")
+
     # forward model, NISAR timing, share figure, publish decision
     forward = okada_forward.forward_both_planes(best)
     best["forward_model"] = {

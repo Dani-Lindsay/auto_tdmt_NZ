@@ -47,9 +47,11 @@ NRT_WINDOW_DAYS = 8
 # floor is processed and archived, publication is decided later on OUR Mw)
 # ---------------------------------------------------------------------------
 PROCESS_MIN_PRELIM_MAG = 4.0
-# Deep slab events cannot deform the surface (the purpose of this tool) and
-# exceed the GF library's 58 km depth ceiling — skip them at the floor.
-MAX_PROCESS_DEPTH_KM = 70.0
+# Events deeper than this cannot produce measurable surface displacement
+# at these magnitudes (the purpose of this tool). GeoNet PLACEHOLDER depths
+# (incl. 33 km) are exempt: their true depth is unknown and often shallow,
+# so they are processed and the depth search decides.
+MAX_PROCESS_DEPTH_KM = 30.0
 # The distance > 3x depth far-field guard is a SHALLOW-source rule; beyond
 # this depth every station is far-field and the rule is skipped.
 DIST_DEPTH_RULE_MAX_DEPTH_KM = 40.0

@@ -169,6 +169,72 @@ def invert_with_rejection(
     return run_inversion(mtinv_path), keep, rejected
 
 
+def dc_tensor(strike: float, dip: float, rake: float) -> np.ndarray:
+    """Unit-moment DC tensor in NED (Aki & Richards 1980 eqs 4.84-4.89)."""
+    p, d, r = np.radians([strike, dip, rake])
+    sp, cp = np.sin(p), np.cos(p)
+    sd, cd = np.sin(d), np.cos(d)
+    sr, cr = np.sin(r), np.cos(r)
+    s2p, c2p = np.sin(2 * p), np.cos(2 * p)
+    s2d, c2d = np.sin(2 * d), np.cos(2 * d)
+    mnn = -(sd * cr * s2p + s2d * sr * sp**2)
+    mee = sd * cr * s2p - s2d * sr * cp**2
+    mdd = -(mnn + mee)
+    mne = sd * cr * c2p + 0.5 * s2d * sr * s2p
+    mnd = -(cd * cr * cp + c2d * sr * sp)
+    med = -(cd * cr * sp - c2d * sr * cp)
+    return np.array([[mnn, mne, mnd], [mne, mee, med], [mnd, med, mdd]])
+
+
+def tensor_angle_deg(a, b) -> float:
+    """Angle between two DC tensors (nodal-plane-choice independent)."""
+    m1, m2 = dc_tensor(*a), dc_tensor(*b)
+    cos = np.sum(m1 * m2) / (np.linalg.norm(m1) * np.linalg.norm(m2))
+    return float(np.degrees(np.arccos(np.clip(cos, -1.0, 1.0))))
+
+
+def jackknife(event: Event, stations: list[dict], depth: float,
+              band_dir: Path, green_dir: Path, full_plane1: dict) -> dict:
+    """Leave-one-station-out stability test at the preferred depth (EPS207
+    §3.2 in spirit; single-depth for speed). Mechanism stability is
+    measured as the DC-tensor rotation of each subset solution relative to
+    the full solution — immune to nodal-plane ordering flips between
+    subsets. Rewrites mtinv.in per subset and restores it afterwards."""
+    if len(stations) < 4:
+        return {"n_subsets": 0,
+                "note": "fewer than 4 stations; jackknife skipped"}
+    ref = (full_plane1["strike"], full_plane1["dip"], full_plane1["rake"])
+    subsets = []
+    try:
+        for i in range(len(stations)):
+            subset = stations[:i] + stations[i + 1:]
+            mtinv = write_mtinv(event, subset, [depth], band_dir, green_dir)
+            mt = run_inversion(mtinv).moment_tensors[0]
+            fps = np.asarray(mt.fps, dtype=float)
+            subsets.append({
+                "left_out": stations[i]["station"],
+                "mw": round(float(mt.mw), 3),
+                "pdc": round(float(mt.pdc), 1),
+                "vr": round(float(mt.total_VR), 1),
+                "tensor_rotation_deg": round(
+                    tensor_angle_deg(ref, tuple(fps[0])), 1),
+            })
+    finally:
+        # restore the full-station mtinv.in for reproducibility
+        write_mtinv(event, stations, [depth], band_dir, green_dir)
+    mws = [s["mw"] for s in subsets]
+    dcs = [s["pdc"] for s in subsets]
+    rots = [s["tensor_rotation_deg"] for s in subsets]
+    return {
+        "n_subsets": len(subsets),
+        "mw_std": round(float(np.std(mws)), 3),
+        "dc_std": round(float(np.std(dcs)), 1),
+        "max_tensor_rotation_deg": round(max(rots), 1),
+        "mean_tensor_rotation_deg": round(float(np.mean(rots)), 1),
+        "subsets": subsets,
+    }
+
+
 def summarize(inv, event: Event, stations: list[dict], dropped: list[dict],
               model: str) -> dict:
     """Serialize the depth search + preferred solution with provenance."""

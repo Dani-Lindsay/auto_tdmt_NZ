@@ -24,6 +24,61 @@ import pandas as pd
 
 import config
 from geonet import load_geonet_cmt
+from invert import tensor_angle_deg
+
+USGS_URL = ("https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson"
+            "&starttime=2026-01-01&minmagnitude=4.5&minlatitude=-50.5"
+            "&maxlatitude=-33&minlongitude=164&maxlongitude=182.5"
+            "&producttype=moment-tensor")
+
+
+def load_usgs():
+    """USGS/NEIC events with moment-tensor products for the NZ box.
+    Returns list of (UTCDateTime, lat, lon, detail_url); [] on failure."""
+    import requests
+    from obspy import UTCDateTime
+
+    try:
+        r = requests.get(USGS_URL, timeout=120,
+                         headers={"User-Agent": config.USER_AGENT})
+        r.raise_for_status()
+        out = []
+        for f in r.json()["features"]:
+            lon, lat = f["geometry"]["coordinates"][:2]
+            out.append((UTCDateTime(f["properties"]["time"] / 1000.0),
+                        lat, lon, f["properties"]["detail"]))
+        return out
+    except Exception as e:  # noqa: BLE001
+        print(f"USGS query failed: {e}")
+        return []
+
+
+def match_usgs(usgs, origin_time, lat, lon):
+    """USGS moment-tensor properties for the matching event, else None."""
+    import requests
+    from obspy import UTCDateTime
+
+    t0 = UTCDateTime(origin_time)
+    for t, la, lo, detail in usgs:
+        if abs(t - t0) < 90 and abs(la - lat) < 1.5 \
+                and abs((lo - lon + 180) % 360 - 180) < 1.5:
+            try:
+                d = requests.get(detail, timeout=60).json()
+                mt = d["properties"]["products"]["moment-tensor"][0]
+                p = mt["properties"]
+                return {
+                    "Mw": float(p["derived-magnitude"]),
+                    "depth": float(p.get("derived-depth",
+                                         p.get("depth"))),
+                    "strike": float(p["nodal-plane-1-strike"]),
+                    "dip": float(p["nodal-plane-1-dip"]),
+                    "rake": float(p["nodal-plane-1-rake"]),
+                }
+            except Exception as e:  # noqa: BLE001
+                print(f"USGS detail parse failed: {e}")
+                return None
+    return None
+
 
 GCMT_BASE = "https://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog"
 
@@ -68,31 +123,9 @@ def match_gcmt(cat, origin_time, lat, lon):
     return best
 
 
-def dc_tensor(strike: float, dip: float, rake: float) -> np.ndarray:
-    """Unit-moment DC tensor in NED (Aki & Richards 1980 eqs 4.84-4.89)."""
-    p, d, r = np.radians([strike, dip, rake])
-    sp, cp = np.sin(p), np.cos(p)
-    sd, cd = np.sin(d), np.cos(d)
-    sr, cr = np.sin(r), np.cos(r)
-    s2p, c2p = np.sin(2 * p), np.cos(2 * p)
-    s2d, c2d = np.sin(2 * d), np.cos(2 * d)
-    mnn = -(sd * cr * s2p + s2d * sr * sp**2)
-    mee = sd * cr * s2p - s2d * sr * cp**2
-    mdd = -(mnn + mee)
-    mne = sd * cr * c2p + 0.5 * s2d * sr * s2p
-    mnd = -(cd * cr * cp + c2d * sr * sp)
-    med = -(cd * cr * sp - c2d * sr * cp)
-    return np.array([[mnn, mne, mnd], [mne, mee, med], [mnd, med, mdd]])
-
-
-def tensor_angle_deg(a, b) -> float:
-    """Angle between two DC tensors (plane-choice independent)."""
-    m1, m2 = dc_tensor(*a), dc_tensor(*b)
-    cos = np.sum(m1 * m2) / (np.linalg.norm(m1) * np.linalg.norm(m2))
-    return float(np.degrees(np.arccos(np.clip(cos, -1.0, 1.0))))
-
-
 def main() -> None:
+    usgs = load_usgs()
+    print(f"USGS/NEIC: {len(usgs)} candidate events with MT products")
     gcmt = load_gcmt_2026()
     print(f"Global CMT: {len(gcmt) if gcmt else 0} events loaded")
     cmt = load_geonet_cmt()
@@ -132,6 +165,19 @@ def main() -> None:
                     (float(ref["strike1"]), float(ref["dip1"]),
                      float(ref["rake1"]))), 1),
             })
+        u = match_usgs(usgs, ev["origin_time"], ev["latitude"],
+                       ev["longitude"])
+        if u is not None:
+            rows.append({
+                **base, "reference": "USGS_NEIC",
+                "ref_Mw": round(u["Mw"], 2),
+                "dMw": round(pref["mw"] - u["Mw"], 2),
+                "ref_depth": round(u["depth"], 1),
+                "dDepth": round(pref["depth_km"] - u["depth"], 1),
+                "tensor_angle_deg": round(tensor_angle_deg(
+                    (p1["strike"], p1["dip"], p1["rake"]),
+                    (u["strike"], u["dip"], u["rake"])), 1),
+            })
         g = match_gcmt(gcmt, ev["origin_time"], ev["latitude"],
                        ev["longitude"])
         if g is not None:
@@ -158,7 +204,7 @@ def main() -> None:
     assert rows, ("no common events with the reference catalogue yet — "
                   "rerun after it next updates")
     df = pd.DataFrame(rows).sort_values("PublicID")
-    out_dir = config.OUTPUT_BASE / "validation"
+    out_dir = config.REPO_DIR / "events" / "validation"
     out_dir.mkdir(parents=True, exist_ok=True)
     df.to_csv(out_dir / "comparison.csv", index=False)
 
@@ -172,7 +218,8 @@ def main() -> None:
         print(f"  mechanism: median tensor angle "
               f"{sub.tensor_angle_deg.median():.0f} deg")
 
-    colors = {"NZ_CMT_Ristau": "#0173B2", "GlobalCMT": "#DE8F05"}
+    colors = {"NZ_CMT_Ristau": "#0173B2", "GlobalCMT": "#DE8F05",
+              "USGS_NEIC": "#029E73"}
     fig, axes = plt.subplots(2, 2, figsize=(10, 9))
     for ref, sub in df.groupby("reference"):
         c = colors.get(ref, "black")

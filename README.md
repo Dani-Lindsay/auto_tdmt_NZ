@@ -109,8 +109,68 @@ published NZ regional CMT solutions
 ([GeoNet/data moment-tensor](https://github.com/GeoNet/data/tree/main/moment-tensor);
 their MT elements are in 1e20 dyne-cm).
 
+## Operating thresholds
+
+| Stage | Rule |
+|---|---|
+| **Triggers** | GeoNet preliminary magnitude >= 4.0, inside the NZ box (33-50.5 S, 164 E-177.5 W), event type "earthquake", depth <= 30 km (GeoNet fixed placeholder depths 5/12/33 km are exempt: true depth unknown, the depth search decides) |
+| **Station selection** | NZ broadbands (HH? preferred over BH?), 20-400 km; SNR >= 2.0 in the inversion band, topped up to SNR >= 1.2 when fewer than 5 stations pass; stations with individual VR < 10% rejected after a first pass |
+| **Depth search** | 1-5 km at 0.5 km, to 10 km at 1 km, to 30 km at 2 km, to 58 km at 4 km; full grid for placeholder depths, else +/-20 km of the GeoNet depth |
+| **Rated** | A: VR >= 70, >= 5 stations, azimuthal gap <= 180. B: VR >= 60, >= 3 stations, gap <= 270. C: VR >= 50, >= 2 stations. D: below |
+| **Publishes** | grade A or B AND (our Mw >= 5.0 OR Okada-predicted peak displacement >= 1 cm); max 3 emails/day; aftershock throttle (within 75 km/14 d of a published event, must be within 0.5 Mw of it or above the Mw gate) |
+| **Preferred solution** | highest %DC on the contiguous depth plateau within 5 VR points of the VR maximum; per-band, then across the magnitude-dependent band menu |
+
 ## Data sources
 
-- GeoNet quake API + FDSN (NRT + archive), CC BY 3.0 NZ. Polling is polite:
-  one request per 10-minute cron tick, gzip, descriptive User-Agent.
+- GeoNet (Earth Sciences New Zealand) quake API + FDSN (NRT + archive):
+  event detection, all original hypocentres, waveforms and station
+  metadata. CC BY 3.0 NZ. Polling is polite: one request per 10-minute
+  cron tick, gzip, descriptive User-Agent.
 - NASA CMR for NISAR GSLC granule timing.
+- NZ Active Faults Database (GNS Science) and GeoNet delta GNSS marks for
+  map context.
+
+## References
+
+Software:
+
+- Chiang, A. — **MTtime**, Time Domain Moment Tensor Inversion in Python,
+  LLNL-CODE-814839, https://github.com/LLNL/mttime. Methodology after
+  Dreger & Helmberger (1993), Dreger (2003) and Minson & Dreger (2008).
+- Herrmann, R. B. (2013). Computer Programs in Seismology: an evolving
+  tool for instruction and research. *Seism. Res. Lett.* 84, 1081-1088.
+  https://rbherrmann.github.io/ComputerProgramsSeismology/
+- Beyreuther, M., R. Barsch, L. Krischer, T. Megies, Y. Behr &
+  J. Wassermann (2010). ObsPy: a Python toolbox for seismology.
+  *Seism. Res. Lett.* 81(3), 530-533. https://github.com/obspy/obspy
+- Jolivet, R. — **okada4py**, Python/C implementation of Okada (1992),
+  https://github.com/jolivetr/okada4py
+- Crameri, F. — Scientific colour maps,
+  https://www.fabiocrameri.ch/colourmaps/ (via cmcrameri).
+
+Method:
+
+- Dreger, D. S., & D. V. Helmberger (1993). Determination of source
+  parameters at regional distances with three-component sparse network
+  data. *J. Geophys. Res.* 98, 8107-8125.
+- Dreger, D. S. (2003). TDMT_INV: Time Domain Seismic Moment Tensor
+  INVersion. *International Handbook of Earthquake and Engineering
+  Seismology* 81B, 1627.
+- Minson, S. E., & D. S. Dreger (2008). Stable inversions for complete
+  moment tensors. *Geophys. J. Int.* 174, 585-592.
+- Ristau, J. (2008). Implementation of routine regional moment tensor
+  analysis in New Zealand. *Seism. Res. Lett.* 79(3), 400-415.
+  doi:10.1785/gssrl.79.3.400 (velocity models, Table 1).
+- Okada, Y. (1985). Surface deformation due to shear and tensile faults
+  in a half-space. *Bull. Seism. Soc. Am.* 75(4), 1135-1154.
+- Okada, Y. (1992). Internal deformation due to shear and tensile faults
+  in a half-space. *Bull. Seism. Soc. Am.* 82(2), 1018-1040.
+- Wells, D. L., & K. J. Coppersmith (1994). New empirical relationships
+  among magnitude, rupture length, rupture width, rupture area, and
+  surface displacement. *Bull. Seism. Soc. Am.* 84(4), 974-1002.
+- Aki, K., & P. G. Richards (1980). *Quantitative Seismology*. W.H.
+  Freeman (double-couple tensor construction used in validation).
+
+This workflow was compiled with Claude (Anthropic) assistance under the
+direction of Danielle Lindsay; the science stands on the shoulders of the
+authors above — cite them, not this repository, for the methods.

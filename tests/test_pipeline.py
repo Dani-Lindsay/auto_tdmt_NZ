@@ -120,7 +120,10 @@ def test_processing_floor():
     assert not trigger.passes_processing_floor(_event(quality="deleted"))[0]
     assert not trigger.passes_processing_floor(_event(lat=-20.0))[0]  # Tonga
     assert not trigger.passes_processing_floor(_event(depth=150.0))[0]  # slab
-    assert trigger.passes_processing_floor(_event(depth=60.0))[0]
+    assert not trigger.passes_processing_floor(_event(depth=45.0))[0]  # > cap
+    assert trigger.passes_processing_floor(_event(depth=25.0))[0]
+    # GeoNet placeholder depths are exempt: true depth unknown
+    assert trigger.passes_processing_floor(_event(depth=33.0))[0]
 
 
 def _solution(mw=5.2, vr=70.0, grade="A"):

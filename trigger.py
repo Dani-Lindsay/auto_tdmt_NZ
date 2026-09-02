@@ -25,7 +25,8 @@ def passes_processing_floor(event: Event) -> tuple[bool, str]:
         return False, (
             f"prelim M{event.prelim_mag:.1f} < {config.PROCESS_MIN_PRELIM_MAG}"
         )
-    if event.depth_km > config.MAX_PROCESS_DEPTH_KM:
+    if (event.depth_km > config.MAX_PROCESS_DEPTH_KM
+            and event.depth_km not in config.PLACEHOLDER_DEPTHS_KM):
         return False, (
             f"depth {event.depth_km:g} km > {config.MAX_PROCESS_DEPTH_KM:g} "
             f"km (below GF library; no surface displacement possible)"

@@ -51,6 +51,15 @@ def draft_text(solution: dict, forward: dict, passes: list[dict]) -> tuple[str, 
         f"Azimuthal gap: {solution['quality']['azimuthal_gap_deg']:.0f} deg  |  "
         f"Quality grade: {solution['quality'].get('grade', '?')}",
         "",
+        (lambda jk: (
+            f"Stability (leave-one-out jackknife, n={jk['n_subsets']}): "
+            f"Mw +/-{jk['mw_std']}  |  DC {pref['pdc']:.0f} "
+            f"+/-{jk['dc_std']}%  |  mechanism rotation <= "
+            f"{jk['max_tensor_rotation_deg']} deg"
+        ) if jk.get("n_subsets") else
+            "Stability: jackknife skipped (fewer than 4 stations)"
+        )(solution.get("jackknife", {})),
+        "",
         "LIMITATIONS: deviatoric-only inversion (no isotropic component) - "
         "these mechanisms must not be interpreted in volcanic or geothermal "
         "settings, where real isotropic components are forced into DC/CLVD. "

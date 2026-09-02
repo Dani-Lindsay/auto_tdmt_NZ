@@ -47,7 +47,9 @@ def list_events(start: str) -> list[tuple[str, str, float]]:
             f = line.split("|")
             if f[-1].strip() != "earthquake":
                 continue
-            if float(f[4]) > config.MAX_PROCESS_DEPTH_KM:
+            depth = float(f[4])
+            if (depth > config.MAX_PROCESS_DEPTH_KM
+                    and depth not in config.PLACEHOLDER_DEPTHS_KM):
                 continue
             rows.append((f[0], f[1], float(f[10])))
     rows.sort(key=lambda x: x[1])
