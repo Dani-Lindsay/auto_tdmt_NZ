@@ -1,0 +1,2 @@
+PublicID,Date,Latitude,Longitude,strike1,dip1,rake1,strike2,dip2,rake2,Mprelim,Mw,Mo,CD,NS,DC,CLVD,VR,Mxx,Mxy,Mxz,Myy,Myz,Mzz,band,model,gates_passed,published
+2026p660242,2026-09-02T06:57:11.231Z,-44.449,168.3039,359.6,56.7,33.8,249.4,62.3,141.6,5.58,5.03,3.887e+23,8.0,6,83.8,16.2,84.4,24.4732,2695.5752,-1524.1822,-2000.8982,-662.9122,1976.425,band_30-100s,nz_south_ristau2008,True,False

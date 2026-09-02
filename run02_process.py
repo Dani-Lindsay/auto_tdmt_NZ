@@ -13,6 +13,7 @@ import json
 import os
 from pathlib import Path
 
+import catalogue
 import config
 import diagnostics
 import figure
@@ -146,6 +147,7 @@ def process_event(public_id: str, debug: bool = False,
     (event_dir / "draft_email.txt").write_text(f"{subject}\n\n{body}\n")
 
     out = invert.save_solution(best, event_dir)
+    catalogue.build_catalogue()
 
     pref = best["preferred"]
     print(
