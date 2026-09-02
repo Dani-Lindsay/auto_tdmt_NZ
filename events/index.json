@@ -1,5 +1,17 @@
 {
-  "processed": {},
+  "processed": {
+    "2026p660242": {
+      "status": "ok",
+      "mw": 5.03,
+      "depth_km": 8.0,
+      "vr": 84.4,
+      "pdc": 83.8,
+      "publish": true,
+      "published": true,
+      "run_utc": "2026-09-02T10:55:00+00:00",
+      "note": "processed via CI test + emailed manually; seeded to prevent duplicate"
+    }
+  },
   "published": [
     {
       "public_id": "2026p660242",
