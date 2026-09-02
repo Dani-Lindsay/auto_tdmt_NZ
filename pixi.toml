@@ -1,0 +1,43 @@
+# auto_tdmt_NZ — automated regional moment tensor pipeline for New Zealand
+#
+# Fresh machine bootstrap:
+#   curl -fsSL https://pixi.sh/install.sh | bash   # if pixi missing
+#   pixi install
+#   pixi run test
+# CPS (Green's function build, LOCAL ONLY, not needed in CI):
+#   brew install gcc   # gfortran
+#   see greens.py --help
+[workspace]
+authors = ["dani-lindsay <d.lindsay@gns.cri.nz>"]
+channels = ["conda-forge"]
+name = "auto_tdmt_NZ"
+platforms = ["osx-arm64", "linux-64"]
+version = "0.1.0"
+
+[tasks]
+watch = "python run01_watch.py"
+process = "python run02_process.py"
+publish = "python run03_publish.py"
+test = "pytest -q"
+
+[dependencies]
+python = "3.12.*"
+numpy = ">=2"
+# pandas<3: mttime 1.1.0 issue #15 (read-only .values view crashes correlate)
+pandas = ">=2.2,<3"
+obspy = ">=1.5"
+pygmt = "*"
+matplotlib = "*"
+requests = "*"
+pytest = ">=8"
+pip = "*"
+# compilers so pypi source builds (okada4py meson) work identically on
+# osx-arm64 and linux-64 without relying on system toolchains
+c-compiler = "*"
+meson-python = "*"
+
+[pypi-dependencies]
+mttime = { git = "https://github.com/LLNL/mttime.git" }
+okada4py = { git = "https://github.com/jolivetr/okada4py.git" }
+atproto = "*"
+asf-search = "*"

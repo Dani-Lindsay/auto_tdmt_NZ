@@ -1,0 +1,14 @@
+# pixi environment
+.pixi/
+
+# CI working dirs (results are committed via events/ only)
+outputs_ci/
+gf_cache/
+
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# macOS
+.DS_Store

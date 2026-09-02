@@ -1,0 +1,67 @@
+name: watch-geonet
+# Poll GeoNet every 10 minutes; process any new event above the floor and
+# email solutions that pass the publication gates. Results + state are
+# committed back to the repo (public archive).
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: watch
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      # outputs go into the checkout so they can be committed
+      AUTO_TDMT_OUTPUT: ${{ github.workspace }}/outputs_ci
+      AUTO_TDMT_EVENTS: ${{ github.workspace }}/events
+      AUTO_TDMT_GF: ${{ github.workspace }}/gf_cache
+      SMTP_HOST: ${{ secrets.SMTP_HOST }}
+      SMTP_PORT: ${{ secrets.SMTP_PORT }}
+      SMTP_USER: ${{ secrets.SMTP_USER }}
+      SMTP_PASS: ${{ secrets.SMTP_PASS }}
+      MAIL_FROM: ${{ secrets.MAIL_FROM }}
+      MAIL_TO: ${{ secrets.MAIL_TO }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: prefix-dev/setup-pixi@v0.8.11
+        with:
+          cache: true
+
+      - name: Restore Green's function libraries
+        id: gf
+        uses: actions/cache@v4
+        with:
+          path: gf_cache
+          key: gf-${{ hashFiles('models/*.d') }}-v1
+
+      - name: Fetch GF libraries from release
+        if: steps.gf.outputs.cache-hit != 'true'
+        run: |
+          gh release download gf-latest --pattern 'gf_library.tar.zst' --output - \
+            | tar --zstd -xf - -C .
+          test -d gf_cache
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Poll and process
+        run: pixi run python run01_watch.py --process
+
+      - name: Commit results
+        run: |
+          git config user.name "auto-tdmt-bot"
+          git config user.email "actions@github.com"
+          git add events/
+          git diff --cached --quiet && exit 0
+          git commit -m "auto: solutions $(date -u +%Y-%m-%dT%H:%MZ)"
+          git pull --rebase origin ${{ github.ref_name }}
+          git push

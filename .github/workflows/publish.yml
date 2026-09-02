@@ -1,0 +1,51 @@
+name: publish-event
+# Email one processed event's solution to the list (manual trigger).
+
+on:
+  workflow_dispatch:
+    inputs:
+      event_id:
+        description: "GeoNet publicID"
+        required: true
+      force:
+        description: "send even if publication gates failed"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      AUTO_TDMT_OUTPUT: ${{ github.workspace }}/outputs_ci
+      AUTO_TDMT_EVENTS: ${{ github.workspace }}/events
+      SMTP_HOST: ${{ secrets.SMTP_HOST }}
+      SMTP_PORT: ${{ secrets.SMTP_PORT }}
+      SMTP_USER: ${{ secrets.SMTP_USER }}
+      SMTP_PASS: ${{ secrets.SMTP_PASS }}
+      MAIL_FROM: ${{ secrets.MAIL_FROM }}
+      MAIL_TO: ${{ secrets.MAIL_TO }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: prefix-dev/setup-pixi@v0.8.11
+        with:
+          cache: true
+
+      - name: Publish
+        run: |
+          pixi run python run03_publish.py --event "${{ inputs.event_id }}" \
+            ${{ inputs.force && '--force' || '' }}
+
+      - name: Commit state
+        run: |
+          git config user.name "auto-tdmt-bot"
+          git config user.email "actions@github.com"
+          git add events/index.json
+          git diff --cached --quiet && exit 0
+          git commit -m "auto: published ${{ inputs.event_id }}"
+          git pull --rebase origin ${{ github.ref_name }}
+          git push
