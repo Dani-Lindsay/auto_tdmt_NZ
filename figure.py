@@ -6,9 +6,10 @@ deviatoric moment tensor beachball, (b) Okada-predicted vertical surface
 displacement (cmcrameri 'vik') — with a NISAR pass table + provenance
 footer.
 
-compose_outward: stacks mttime's waveform-fit page(s) (DC+CLVD
-decomposition, per-station fits) above the map panels into the single
-figure the email carries.
+plot_depth_sensitivity: seaborn-styled VR/%DC/Mw vs depth summary
+(replaces mttime's depth.bbmw plot). The email carries three separate
+figures: the untouched mttime waveform fits, the modelling maps, and the
+depth-sensitivity summary.
 """
 
 from __future__ import annotations
@@ -142,28 +143,72 @@ def make_share_figure(
     return out_path
 
 
-def compose_outward(
-    bbwaves_paths: list[Path], maps_path: Path, out_path: Path
-) -> Path:
-    """Stack the station-map/forward-model panel above mttime's
-    waveform-fit page(s) (full DC+CLVD decomposition and per-station fits)
-    into one outward figure for the email."""
-    from PIL import Image
+def plot_depth_sensitivity(solution: dict, out_path: Path) -> Path:
+    """Depth-sensitivity summary (replaces mttime's depth.bbmw plot):
+    VR, %DC (+%CLVD) and Mw vs source depth, seaborn-style, with the
+    preferred depth and the VR-tolerance band of the selection rule shown.
+    """
+    import config
 
-    assert bbwaves_paths, "no waveform-fit figures to compose"
-    # maps on top, waveform modelling below
-    images = [Image.open(p) for p in [maps_path, *bbwaves_paths]]
-    width = max(im.width for im in images)
-    scaled = [
-        im.resize((width, int(im.height * width / im.width)))
-        if im.width != width else im
-        for im in images
-    ]
-    total_h = sum(im.height for im in scaled)
-    canvas = Image.new("RGB", (width, total_h), "white")
-    y = 0
-    for im in scaled:
-        canvas.paste(im, (0, y))
-        y += im.height
-    canvas.save(out_path, quality=90)
+    rows = sorted(solution["depth_search"], key=lambda r: r["depth_km"])
+    depths = [r["depth_km"] for r in rows]
+    vr = [r["vr"] for r in rows]
+    pdc = [r["pdc"] for r in rows]
+    pclvd = [r["pclvd"] for r in rows]
+    mw = [r["mw"] for r in rows]
+    pref = solution["preferred"]
+    ev = solution["event"]
+
+    # seaborn "deep" palette values
+    c_vr, c_dc, c_clvd, c_mw = "#4C72B0", "#DD8452", "#C44E52", "#55A868"
+
+    with plt.style.context("seaborn-v0_8-whitegrid"):
+        fig, axes = plt.subplots(
+            3, 1, figsize=(7.5, 8.5), sharex=True,
+            gridspec_kw={"hspace": 0.12},
+        )
+        ax_vr, ax_dc, ax_mw = axes
+
+        vr_max = max(vr)
+        ax_vr.axhspan(vr_max - config.PREFER_DC_VR_TOLERANCE, vr_max,
+                      color=c_vr, alpha=0.12,
+                      label=f"within {config.PREFER_DC_VR_TOLERANCE:g}% of "
+                            f"VR max (selection window)")
+        ax_vr.plot(depths, vr, "-o", color=c_vr, ms=5, lw=1.8)
+        ax_vr.set_ylabel("variance reduction [%]")
+        ax_vr.legend(loc="lower right", frameon=True, fontsize=9)
+
+        ax_dc.plot(depths, pdc, "-o", color=c_dc, ms=5, lw=1.8, label="DC")
+        ax_dc.plot(depths, pclvd, "--o", color=c_clvd, ms=4, lw=1.2,
+                   alpha=0.7, label="CLVD")
+        ax_dc.set_ylabel("source type [%]")
+        ax_dc.set_ylim(-3, 103)
+        ax_dc.legend(loc="upper right", frameon=True, fontsize=9)
+
+        ax_mw.plot(depths, mw, "-o", color=c_mw, ms=5, lw=1.8)
+        ax_mw.set_ylabel("Mw")
+        ax_mw.set_xlabel("source depth [km]")
+
+        for ax in axes:
+            ax.axvline(pref["depth_km"], color="0.25", lw=1.2, ls=":",
+                       zorder=1)
+        ax_vr.annotate(
+            f"preferred: {pref['depth_km']:g} km\n"
+            f"VR {pref['vr']:.1f}%  DC {pref['pdc']:.0f}%  "
+            f"Mw {pref['mw']:.2f}",
+            xy=(pref["depth_km"], pref["vr"]),
+            xytext=(10, -35), textcoords="offset points", fontsize=9,
+            bbox=dict(facecolor="white", edgecolor="0.6",
+                      boxstyle="round,pad=0.35"),
+        )
+        band = solution.get("chosen_band", "").replace("band_", "")
+        ax_vr.set_title(
+            f"{ev['public_id']}  depth sensitivity  ({band}, "
+            f"{solution['quality']['n_stations_used']} stations)",
+            fontsize=11,
+        )
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
     return out_path

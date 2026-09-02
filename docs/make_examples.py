@@ -38,13 +38,13 @@ def main(event_ids: list[str]) -> None:
             f"{sol['forward_model']['peak_abs_cm']:.2f} cm | "
             f"{'YES' if d['publish'] else 'no — ' + d['reasons'][0][:60]} |"
         )
-        for name in ("outward_figure.jpg", "share_figure.jpg"):
+        for name in ("share_figure.jpg", "depth_sensitivity.jpg"):
             src = ev_dir / name
             if src.exists():
                 shutil.copy(src, OUT / f"{pid}_{name}")
-        depth_figs = sorted((ev_dir / sol["chosen_band"]).glob("depth.*.jpg"))
-        if depth_figs:
-            shutil.copy(depth_figs[0], OUT / f"{pid}_depth_search.jpg")
+        bb = sorted((ev_dir / sol["chosen_band"]).glob("bbwaves.*.jpg"))
+        if bb:
+            shutil.copy(bb[0], OUT / f"{pid}_waveform_fits.jpg")
 
     header = (
         "# Worked examples — Fiordland sequence, 2026-09-02\n\n"
@@ -59,10 +59,11 @@ def main(event_ids: list[str]) -> None:
         "|---|---|---|---|---|---|---|---|---|---|\n"
     )
     footer = (
-        "\n`<publicID>_outward_figure.jpg` is the composite the email\n"
-        "carries: mttime waveform fits with the Deviatoric = DC + CLVD\n"
-        "decomposition, then station map + Okada-predicted displacement +\n"
-        "NISAR pass table.\n"
+        "\nPer event, the email carries three figures (copied here):\n"
+        "`*_waveform_fits.jpg` (mttime fits with the Deviatoric = DC + CLVD\n"
+        "decomposition), `*_share_figure.jpg` (station map + Okada E/N/U\n"
+        "predicted displacement + NISAR passes), and\n"
+        "`*_depth_sensitivity.jpg` (VR/%DC/Mw vs depth).\n"
     )
     (OUT / "README.md").write_text(header + "\n".join(rows) + "\n" + footer)
     print(f"wrote {OUT / 'README.md'} and {len(list(OUT.glob('*.jpg')))} figures")

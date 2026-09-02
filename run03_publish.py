@@ -33,8 +33,9 @@ def publish_event(public_id: str, state: dict | None = None,
     subject, _, body = draft.partition("\n\n")
 
     band_dir = event_dir / solution["chosen_band"]
-    attachments = [event_dir / "outward_figure.jpg"]
-    attachments += sorted(band_dir.glob("depth.*.jpg"))
+    attachments = sorted(band_dir.glob("bbwaves.*.jpg"))  # waveform fits
+    attachments += [event_dir / "share_figure.jpg",
+                    event_dir / "depth_sensitivity.jpg"]
 
     publish.send_email(subject, body.rstrip("\n"), attachments)
 

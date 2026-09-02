@@ -61,8 +61,6 @@ def process_band(event, band: tuple[float, float], band_dir: Path,
         inv, kept, rejected = invert.invert_with_rejection(
             event, used, depths, band_dir, green_dir)
         inv.plot(view="waveform", option="preferred", format="jpg", show=False)
-        if len(depths) > 1:
-            inv.plot(view="depth", format="jpg", show=False)
     finally:
         os.chdir(cwd)
 
@@ -134,10 +132,9 @@ def process_event(public_id: str, debug: bool = False,
 
     fig_path = figure.make_share_figure(
         best, forward, passes, event_dir / "share_figure.jpg")
-    bbwaves = sorted((event_dir / best_tag).glob("bbwaves.*.jpg"))
-    outward = figure.compose_outward(
-        bbwaves, fig_path, event_dir / "outward_figure.jpg")
-    print(f"outward figure: {outward}")
+    depth_fig = figure.plot_depth_sensitivity(
+        best, event_dir / "depth_sensitivity.jpg")
+    print(f"figures: {fig_path}, {depth_fig}")
 
     history = json.loads(config.STATE_FILE.read_text())["published"] \
         if config.STATE_FILE.exists() else []

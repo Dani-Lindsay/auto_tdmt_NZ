@@ -13,7 +13,8 @@ figures, per-band results) are under `events/<publicID>/`.
 | 2026p660272 | M4.8 / 5 km | **5.03** / 58 km | 87% | 97/3 | 272/72/156 | 1 | 20-100s | 0.01 cm | no — quality gates failed: {'min_stations': False, 'vr_floor': Tr |
 | 2026p660321 | M4.6 / 5 km | **4.09** / 4 km | 80% | 94/6 | 279/68/-174 | 8 | 20-50s | 0.03 cm | no — Mw 4.09 < 5.0 and predicted displacement 0.03 cm < 1 cm |
 
-`<publicID>_outward_figure.jpg` is the composite the email
-carries: mttime waveform fits with the Deviatoric = DC + CLVD
-decomposition, then station map + Okada-predicted displacement +
-NISAR pass table.
+Per event, the email carries three figures (copied here):
+`*_waveform_fits.jpg` (mttime fits with the Deviatoric = DC + CLVD
+decomposition), `*_share_figure.jpg` (station map + Okada E/N/U
+predicted displacement + NISAR passes), and
+`*_depth_sensitivity.jpg` (VR/%DC/Mw vs depth).

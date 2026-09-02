@@ -157,15 +157,17 @@ Calibration anchors: Mw 5.5 at 10 km ≈ 1.6 cm peak |u|; Mw 4.0 at 5 km ≈
 ## 8. Outputs and figures (`figure.py`, `diagnostics.py`)
 
 Per event: `solution.json` (all numbers + provenance), `draft_email.txt`,
-mttime waveform-fit and depth-search figures, and an outward composite for
-the email: mttime's waveform-fit page (full Deviatoric = DC + CLVD
-decomposition, per-station fits, VR/%DC) stacked above two same-region
-matplotlib/cartopy map panels — (a) stations + the moment tensor beachball
-drawn from the actual tensor elements (obspy/mopad full-MT rendering, the
-same as the waveform figure, so any CLVD is represented honestly rather
-than collapsed to the closest DC), (b) predicted vertical displacement in
-the cmcrameri 'vik' diverging palette — with the NISAR last/next pass
-table and a provenance line. All plotting is matplotlib (one stack; maps
+mttime waveform-fit and depth-search figures, and three outward figures for
+the email: (1) mttime's waveform-fit page, untouched (full Deviatoric =
+DC + CLVD decomposition, per-station fits, VR/%DC); (2) the modelling
+figure — Mercator map panels of the station geometry with the moment
+tensor beachball drawn from the actual tensor elements (obspy/mopad
+full-MT rendering, so any CLVD is represented honestly rather than
+collapsed to the closest DC) and the Okada-predicted E/N/U displacement
+over the modelled area (cmcrameri 'vik', modelled nodal plane outlined),
+with the NISAR pass table and provenance line; (3) a depth-sensitivity
+summary (VR, %DC/%CLVD, Mw vs depth) that also displays the
+selection-rule window. All plotting is matplotlib (one stack; maps
 via cartopy with ocean/land/coastline features and gridlines).
 
 `--debug` additionally saves stage-by-stage QC figures per band: raw
