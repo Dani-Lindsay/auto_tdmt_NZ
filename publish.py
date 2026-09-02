@@ -33,6 +33,9 @@ def draft_text(solution: dict, forward: dict, passes: list[dict]) -> tuple[str, 
         f"Automated regional moment tensor solution — PRELIMINARY",
         "",
         f"Event: {ev['public_id']}  {ev['origin_time']}",
+        "Triggered from the GeoNet rapid earthquake solution; origin time, "
+        "location, preliminary magnitude and initial depth are GeoNet's "
+        "(geonet.org.nz).",
         f"Location: {ev['locality']} ({ev['latitude']:.3f}, {ev['longitude']:.3f})",
         f"GeoNet preliminary magnitude: M {ev['prelim_mag']:.1f}",
         "",

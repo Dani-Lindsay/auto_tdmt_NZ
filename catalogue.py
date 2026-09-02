@@ -4,6 +4,11 @@ Regenerates events/catalogue.csv from every events/<publicID>/solution.json
 after each processed event — the CSV is always derived from the archived
 sidecars (single source of truth), never edited by hand.
 
+Event detection and original hypocentres (time, location, preliminary
+magnitude, initial depth) are sourced from GeoNet; the GeoNet_M and
+GeoNet_depth columns carry that original solution alongside our inverted
+Mw and centroid depth (CD) so the revision is explicit per event.
+
 Column conventions follow the published NZ regional CMT solutions CSV
 (GeoNet/data moment-tensor/GeoNet_CMT_solutions.csv) where they overlap so
 the two are directly comparable; note their (and our) MT elements are in
@@ -21,7 +26,7 @@ import config
 COLUMNS = [
     "PublicID", "Date", "Latitude", "Longitude",
     "strike1", "dip1", "rake1", "strike2", "dip2", "rake2",
-    "Mprelim", "Mw", "Mo", "CD", "NS", "DC", "CLVD", "VR",
+    "GeoNet_M", "GeoNet_depth", "Mw", "Mo", "CD", "NS", "DC", "CLVD", "VR",
     "Mxx", "Mxy", "Mxz", "Myy", "Myz", "Mzz",
     "band", "model", "gates_passed", "published",
 ]
@@ -58,7 +63,8 @@ def build_catalogue(events_dir: Path | None = None) -> Path | None:
             "strike2": round(p["plane2"]["strike"], 1),
             "dip2": round(p["plane2"]["dip"], 1),
             "rake2": round(p["plane2"]["rake"], 1),
-            "Mprelim": round(ev["prelim_mag"], 2),
+            "GeoNet_M": round(ev["prelim_mag"], 2),
+            "GeoNet_depth": ev["depth_km"],
             "Mw": round(p["mw"], 2),
             # Mo in dyne-cm; MT elements in 1e20 dyne-cm (GeoNet convention)
             "Mo": f"{p['m0_dyne_cm']:.3e}",

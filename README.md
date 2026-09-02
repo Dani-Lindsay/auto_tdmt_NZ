@@ -13,6 +13,12 @@ forward-models the predicted surface displacement for both nodal planes
 the result to a small list. The moment tensor solutions are a useful
 by-product for other scientists; the displacement field is the point.
 
+Event detection and every original hypocentre (time, location, preliminary
+magnitude, initial depth) come from GeoNet; this project adds the moment
+tensor, the revised centroid depth, and the displacement forecast on top
+of that origin, and records both the GeoNet values and the revisions in
+[`events/catalogue.csv`](events/catalogue.csv).
+
 This is a personal, external project by Danielle Lindsay, not an
 operational product of any agency, and it makes no representation about
 any organisation's internal systems.
