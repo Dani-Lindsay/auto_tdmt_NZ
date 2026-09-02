@@ -1,0 +1,25 @@
+[auto-MT NZ] Mw 5.1 40 km north-east of Milford Sound (2026p660160), depth 8 km
+
+Automated regional moment tensor solution — PRELIMINARY
+
+Event: 2026p660160  2026-09-02T06:13:32.546Z
+Location: 40 km north-east of Milford Sound (-44.442, 168.323)
+GeoNet preliminary magnitude: M 5.5
+
+Mw: 5.07
+Centroid depth: 8 km (GeoNet initial: 5 km)
+Variance reduction: 72%  |  DC 66% / CLVD 34%
+Filter band: 10-50 s  |  Velocity model: nz_south_ristau2008
+Nodal plane 1 (strike/dip/rake): 7/45/46
+Nodal plane 2 (strike/dip/rake): 241/59/125
+Stations used: 10
+
+Predicted peak surface displacement 0.50 cm — no detectable surface deformation expected.
+
+NISAR passes over the epicentre:
+  track 145 D: last 2026-07-06 06:47Z, next ~2026-09-04 06:47Z
+  track 152 A: last 2026-08-23 18:52Z, next ~2026-09-04 18:52Z
+  track 044 D: last 2026-08-28 06:39Z, next ~2026-09-09 06:39Z
+
+--
+Automated solution (mttime 1.1.dev0, model nz_south_ristau2008, GF v1). Not reviewed by a human. Solutions archived at the auto_tdmt_NZ repo.

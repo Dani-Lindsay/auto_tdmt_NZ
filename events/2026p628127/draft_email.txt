@@ -1,0 +1,23 @@
+[auto-MT NZ] Mw 4.3 125 km west of Snares Islands (2026p628127), depth 42 km
+
+Automated regional moment tensor solution — PRELIMINARY
+
+Event: 2026p628127  2026-08-21T09:46:14.541Z
+Location: 125 km west of Snares Islands (-48.329, 164.958)
+GeoNet preliminary magnitude: M 4.7
+
+Mw: 4.33
+Centroid depth: 42 km (GeoNet initial: 33 km)
+Variance reduction: 21%  |  DC 95% / CLVD 5%
+Filter band: 10-50 s  |  Velocity model: nz_south_ristau2008
+Nodal plane 1 (strike/dip/rake): 92/83/173
+Nodal plane 2 (strike/dip/rake): 182/83/7
+Stations used: 2
+
+Predicted peak surface displacement 0.00 cm — no detectable surface deformation expected.
+
+NISAR passes over the epicentre:
+  track 145 D: last 2026-08-11 06:48Z, next ~2026-09-04 06:48Z
+
+--
+Automated solution (mttime 1.1.dev0, model nz_south_ristau2008, GF v1). Not reviewed by a human. Solutions archived at the auto_tdmt_NZ repo.
