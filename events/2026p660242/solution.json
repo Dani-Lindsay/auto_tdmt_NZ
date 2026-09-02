@@ -905,7 +905,9 @@
         0.01,
         0.033
       ],
-      "gf_distance_km": 70
+      "gf_distance_km": 70,
+      "zcor_s": 0.0,
+      "station_vr": 88.23071624653265
     },
     {
       "network": "NZ",
@@ -922,7 +924,9 @@
         0.01,
         0.033
       ],
-      "gf_distance_km": 150
+      "gf_distance_km": 150,
+      "zcor_s": 2.0,
+      "station_vr": 89.37492499623056
     },
     {
       "network": "NZ",
@@ -939,7 +943,9 @@
         0.01,
         0.033
       ],
-      "gf_distance_km": 160
+      "gf_distance_km": 160,
+      "zcor_s": 0.0,
+      "station_vr": 76.2445472697127
     },
     {
       "network": "NZ",
@@ -956,7 +962,9 @@
         0.01,
         0.033
       ],
-      "gf_distance_km": 195
+      "gf_distance_km": 195,
+      "zcor_s": 2.0,
+      "station_vr": 82.752332237073
     },
     {
       "network": "NZ",
@@ -973,7 +981,9 @@
         0.01,
         0.033
       ],
-      "gf_distance_km": 195
+      "gf_distance_km": 195,
+      "zcor_s": 2.0,
+      "station_vr": 79.80419599364224
     },
     {
       "network": "NZ",
@@ -990,45 +1000,74 @@
         0.01,
         0.033
       ],
-      "gf_distance_km": 215
+      "gf_distance_km": 215,
+      "zcor_s": 2.0,
+      "station_vr": 82.19509176195074
     }
   ],
   "stations_dropped": [
     {
       "station": "NZ.RDHZ.10",
-      "reason": "SNR 1.7 < 2.0"
+      "reason": "SNR 1.7 < 2.0",
+      "latitude": -44.24764,
+      "longitude": 168.356965,
+      "distance_km": 22.8
     },
     {
       "station": "NZ.MSZ.10",
-      "reason": "SNR 1.2 < 2.0"
+      "reason": "SNR 1.2 < 2.0",
+      "latitude": -44.673333781,
+      "longitude": 167.92639864,
+      "distance_km": 39.0
     },
     {
       "station": "NZ.JCZ.10",
-      "reason": "SNR 1.1 < 2.0"
+      "reason": "SNR 1.1 < 2.0",
+      "latitude": -44.07321036,
+      "longitude": 168.785473425,
+      "distance_km": 56.8
     },
     {
       "station": "NZ.MKTZ.10",
-      "reason": "response/rotation failed: The given directions are not linearly independent, at least within numerical precision. Determinant of the base change matrix: 0"
+      "reason": "response/rotation failed: The given directions are not linearly independent, at least within numerical precision. Determinant of the base change matrix: 0",
+      "latitude": -43.87061,
+      "longitude": 169.179505,
+      "distance_km": 95.1
     },
     {
       "station": "NZ.EAZ.10",
-      "reason": "SNR 1.1 < 2.0"
+      "reason": "SNR 1.1 < 2.0",
+      "latitude": -45.231053397,
+      "longitude": 169.308253387,
+      "distance_km": 117.7
     },
     {
       "station": "NZ.SLTZ.10",
-      "reason": "SNR 1.1 < 2.0"
+      "reason": "SNR 1.1 < 2.0",
+      "latitude": -43.90974,
+      "longitude": 169.59314,
+      "distance_km": 119.2
     },
     {
       "station": "NZ.FRNZ.10",
-      "reason": "SNR 0.5 < 2.0"
+      "reason": "SNR 0.5 < 2.0",
+      "latitude": -43.453086,
+      "longitude": 170.099275,
+      "distance_km": 181.7
     },
     {
       "station": "NZ.WHSZ.10",
-      "reason": "SNR 1.0 < 2.0"
+      "reason": "SNR 1.0 < 2.0",
+      "latitude": -43.29065,
+      "longitude": 170.40645,
+      "distance_km": 212.4
     },
     {
       "station": "NZ.PYZ.10",
-      "reason": "SNR 1.0 < 2.0"
+      "reason": "SNR 1.0 < 2.0",
+      "latitude": -46.166251683,
+      "longitude": 166.680692489,
+      "distance_km": 229.4
     },
     {
       "station": "NZ.HSPZ.10",
@@ -1065,7 +1104,7 @@
     "correlate": true,
     "npts": 150,
     "dt_s": 1.0,
-    "preferred_rule": "max %DC among solutions with VR within 5 points of VR max"
+    "preferred_rule": "max %DC on the contiguous depth plateau within 5 VR points of the maximum"
   },
   "quality": {
     "n_stations_used": 6,
@@ -1140,9 +1179,9 @@
     }
   ],
   "publish_decision": {
-    "publish": true,
+    "publish": false,
     "reasons": [
-      "passed all publication gates"
+      "daily cap 3 reached"
     ],
     "mw_gate": true,
     "displacement_gate": false,
