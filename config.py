@@ -36,7 +36,7 @@ GEONET_CMT_CSV = (
     "https://raw.githubusercontent.com/GeoNet/data/main/"
     "moment-tensor/GeoNet_CMT_solutions.csv"
 )
-USER_AGENT = "auto_tdmt_NZ/0.1 (research MT pipeline; d.lindsay@gns.cri.nz)"
+USER_AGENT = "auto_tdmt_NZ/0.1 (research MT pipeline; danielle.lindsay@earthsciences.nz)"
 
 # NRT window: events older than this must use the archive FDSN services.
 NRT_WINDOW_DAYS = 8

@@ -8,7 +8,7 @@
 #   brew install gcc   # gfortran
 #   see greens.py --help
 [workspace]
-authors = ["dani-lindsay <d.lindsay@gns.cri.nz>"]
+authors = ["dani-lindsay <danielle.lindsay@earthsciences.nz>"]
 channels = ["conda-forge"]
 name = "auto_tdmt_NZ"
 platforms = ["osx-arm64", "linux-64"]
