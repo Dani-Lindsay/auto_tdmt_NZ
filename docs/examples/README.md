@@ -15,6 +15,6 @@ figures, per-band results) are under `events/<publicID>/`.
 
 Per event, the email carries three figures (copied here):
 `*_waveform_fits.jpg` (mttime fits with the Deviatoric = DC + CLVD
-decomposition), `*_share_figure.jpg` (station map + Okada E/N/U
+decomposition), `*_stations_displacement_field.jpg` (station map + Okada E/N/U
 predicted displacement + NISAR passes), and
 `*_depth_sensitivity.jpg` (VR/%DC/Mw vs depth).

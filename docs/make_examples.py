@@ -38,13 +38,8 @@ def main(event_ids: list[str]) -> None:
             f"{sol['forward_model']['peak_abs_cm']:.2f} cm | "
             f"{'YES' if d['publish'] else 'no — ' + d['reasons'][0][:60]} |"
         )
-        for name in ("share_figure.jpg", "depth_sensitivity.jpg"):
-            src = ev_dir / name
-            if src.exists():
-                shutil.copy(src, OUT / f"{pid}_{name}")
-        bb = sorted((ev_dir / sol["chosen_band"]).glob("bbwaves.*.jpg"))
-        if bb:
-            shutil.copy(bb[0], OUT / f"{pid}_waveform_fits.jpg")
+        for src in sorted(ev_dir.glob(f"{pid}_*.jpg")):
+            shutil.copy(src, OUT / src.name)
 
     header = (
         "# Worked examples — Fiordland sequence, 2026-09-02\n\n"
@@ -61,7 +56,7 @@ def main(event_ids: list[str]) -> None:
     footer = (
         "\nPer event, the email carries three figures (copied here):\n"
         "`*_waveform_fits.jpg` (mttime fits with the Deviatoric = DC + CLVD\n"
-        "decomposition), `*_share_figure.jpg` (station map + Okada E/N/U\n"
+        "decomposition), `*_stations_displacement_field.jpg` (station map + Okada E/N/U\n"
         "predicted displacement + NISAR passes), and\n"
         "`*_depth_sensitivity.jpg` (VR/%DC/Mw vs depth).\n"
     )

@@ -130,10 +130,18 @@ def process_event(public_id: str, debug: bool = False,
         passes = []
     best["nisar_passes"] = passes
 
+    pid = event.public_id
     fig_path = figure.make_share_figure(
-        best, forward, passes, event_dir / "share_figure.jpg")
+        best, forward, passes,
+        event_dir / f"{pid}_stations_displacement_field.jpg")
     depth_fig = figure.plot_depth_sensitivity(
-        best, event_dir / "depth_sensitivity.jpg")
+        best, event_dir / f"{pid}_depth_sensitivity.jpg")
+    # waveform-fit pages (mttime output, untouched) copied up with
+    # descriptive event-ID names for the email attachments
+    import shutil
+    for i, bb in enumerate(
+            sorted((event_dir / best_tag).glob("bbwaves.*.jpg"))):
+        shutil.copy(bb, event_dir / f"{pid}_waveform_fits_{i:02d}.jpg")
     print(f"figures: {fig_path}, {depth_fig}")
 
     history = json.loads(config.STATE_FILE.read_text())["published"] \

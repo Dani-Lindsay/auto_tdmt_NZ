@@ -42,10 +42,12 @@ def predicted_displacement(
     """
     import okada4py
 
-    halfwidth_km = halfwidth_km or config.FORWARD_GRID_HALFWIDTH_KM
-    step_km = step_km or config.FORWARD_GRID_STEP_KM
-
     length_m, width_m = wells_coppersmith_lw(mw)
+    # window scales with the source so the fault plane and its near-field
+    # lobes fill the plot at any magnitude (capped for very large events)
+    if halfwidth_km is None:
+        halfwidth_km = float(np.clip(4.0 * length_m / 1e3, 10.0, 150.0))
+    step_km = step_km or 2.0 * halfwidth_km / 120.0
     m0_nm = m0_dyne_cm_to_nm(m0_dyne_cm)
     slip_m = m0_nm / (config.SHEAR_MODULUS_PA * length_m * width_m)
 

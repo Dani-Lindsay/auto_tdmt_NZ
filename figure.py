@@ -95,12 +95,12 @@ def make_share_figure(
             transform=ccrs.PlateCarree(), alpha=0.9, shading="auto", zorder=3,
         )
         # surface projection of the modelled plane (bold edge = up-dip)
-        axi.plot(olon, olat, "--", color="black", linewidth=0.9,
+        axi.plot(olon, olat, "--", color="black", linewidth=1.2,
                  transform=ccrs.PlateCarree(), zorder=10)
-        axi.plot(tlon, tlat, "-", color="black", linewidth=2.2,
+        axi.plot(tlon, tlat, "-", color="black", linewidth=2.6,
                  transform=ccrs.PlateCarree(), zorder=10)
         axi.plot(lon0, lat0, "*", color="yellow", markeredgecolor="black",
-                 markersize=13, transform=ccrs.PlateCarree(), zorder=11)
+                 markersize=9, transform=ccrs.PlateCarree(), zorder=11)
         map_style.panel_label(
             axi, f"{name}  (peak {np.abs(u_cm).max():.2f} cm)")
 
@@ -144,71 +144,62 @@ def make_share_figure(
 
 
 def plot_depth_sensitivity(solution: dict, out_path: Path) -> Path:
-    """Depth-sensitivity summary (replaces mttime's depth.bbmw plot):
-    VR, %DC (+%CLVD) and Mw vs source depth, seaborn-style, with the
-    preferred depth and the VR-tolerance band of the selection rule shown.
+    """Depth-sensitivity summary in the user's classic 2x3 layout
+    (replaces mttime's depth.bbmw plot): VR, %DC, Mw / strike, rake, dip of
+    nodal plane 1 vs source depth, black dots, with vertical reference
+    lines at the GeoNet depth, the max-VR depth, the max-DC depth and (when
+    distinct) the preferred depth from the selection rule.
     """
-    import config
-
     rows = sorted(solution["depth_search"], key=lambda r: r["depth_km"])
     depths = [r["depth_km"] for r in rows]
-    vr = [r["vr"] for r in rows]
-    pdc = [r["pdc"] for r in rows]
-    pclvd = [r["pclvd"] for r in rows]
-    mw = [r["mw"] for r in rows]
-    pref = solution["preferred"]
+    series = [
+        ("Variance Reduction", "VR (%)", [r["vr"] for r in rows]),
+        ("Percent DC", "DC (%)", [r["pdc"] for r in rows]),
+        ("Moment Magnitude", "Mw", [r["mw"] for r in rows]),
+        ("Strike", "Strike (deg)", [r["plane1"]["strike"] for r in rows]),
+        ("Rake", "Rake (deg)", [r["plane1"]["rake"] for r in rows]),
+        ("Dip", "Dip (deg)", [r["plane1"]["dip"] for r in rows]),
+    ]
     ev = solution["event"]
+    pref = solution["preferred"]
+    vr_max_depth = max(rows, key=lambda r: r["vr"])["depth_km"]
+    dc_max_depth = max(rows, key=lambda r: r["pdc"])["depth_km"]
 
-    # seaborn "deep" palette values
-    c_vr, c_dc, c_clvd, c_mw = "#4C72B0", "#DD8452", "#C44E52", "#55A868"
+    ref_lines = [
+        (ev["depth_km"], "tab:blue",
+         f"GeoNet depth {ev['depth_km']:g} km"),
+        (vr_max_depth, "tab:red", f"Max VR = {vr_max_depth:g} km"),
+        (dc_max_depth, "tab:olive", f"Max DC = {dc_max_depth:g} km"),
+    ]
+    if pref["depth_km"] not in (vr_max_depth, dc_max_depth):
+        ref_lines.append((pref["depth_km"], "black",
+                          f"Preferred = {pref['depth_km']:g} km"))
 
-    with plt.style.context("seaborn-v0_8-whitegrid"):
-        fig, axes = plt.subplots(
-            3, 1, figsize=(7.5, 8.5), sharex=True,
-            gridspec_kw={"hspace": 0.12},
-        )
-        ax_vr, ax_dc, ax_mw = axes
-
-        vr_max = max(vr)
-        ax_vr.axhspan(vr_max - config.PREFER_DC_VR_TOLERANCE, vr_max,
-                      color=c_vr, alpha=0.12,
-                      label=f"within {config.PREFER_DC_VR_TOLERANCE:g}% of "
-                            f"VR max (selection window)")
-        ax_vr.plot(depths, vr, "-o", color=c_vr, ms=5, lw=1.8)
-        ax_vr.set_ylabel("variance reduction [%]")
-        ax_vr.legend(loc="lower right", frameon=True, fontsize=9)
-
-        ax_dc.plot(depths, pdc, "-o", color=c_dc, ms=5, lw=1.8, label="DC")
-        ax_dc.plot(depths, pclvd, "--o", color=c_clvd, ms=4, lw=1.2,
-                   alpha=0.7, label="CLVD")
-        ax_dc.set_ylabel("source type [%]")
-        ax_dc.set_ylim(-3, 103)
-        ax_dc.legend(loc="upper right", frameon=True, fontsize=9)
-
-        ax_mw.plot(depths, mw, "-o", color=c_mw, ms=5, lw=1.8)
-        ax_mw.set_ylabel("Mw")
-        ax_mw.set_xlabel("source depth [km]")
-
-        for ax in axes:
-            ax.axvline(pref["depth_km"], color="0.25", lw=1.2, ls=":",
-                       zorder=1)
-        ax_vr.annotate(
-            f"preferred: {pref['depth_km']:g} km\n"
-            f"VR {pref['vr']:.1f}%  DC {pref['pdc']:.0f}%  "
-            f"Mw {pref['mw']:.2f}",
-            xy=(pref["depth_km"], pref["vr"]),
-            xytext=(10, -35), textcoords="offset points", fontsize=9,
-            bbox=dict(facecolor="white", edgecolor="0.6",
-                      boxstyle="round,pad=0.35"),
-        )
-        band = solution.get("chosen_band", "").replace("band_", "")
-        ax_vr.set_title(
-            f"{ev['public_id']}  depth sensitivity  ({band}, "
-            f"{solution['quality']['n_stations_used']} stations)",
+    stations = "_".join(r["station"] for r in solution["stations_used"])
+    with plt.style.context("default"):
+        fig, axes = plt.subplots(2, 3, figsize=(11, 7))
+        for (title, ylabel, values), ax in zip(series, axes.ravel()):
+            handles = [
+                ax.axvline(d, color=c, lw=1.5, label=lab)
+                for d, c, lab in ref_lines
+            ]
+            ax.plot(depths, values, "o", color="black", ms=4)
+            ax.set_title(title, fontsize=11)
+            ax.set_ylabel(ylabel, fontsize=9)
+            ax.tick_params(labelsize=8)
+        for ax in axes[1]:
+            ax.set_xlabel("Depth (km)", fontsize=9)
+        fig.suptitle(
+            f"Depth Sensitivity - {ev['public_id']}  "
+            f"{ev['origin_time'][:16]},  Stations: {stations}",
             fontsize=11,
         )
+        fig.legend(handles=handles, loc="lower center",
+                   ncol=len(ref_lines), fontsize=9, frameon=True,
+                   bbox_to_anchor=(0.5, 0.0))
+        fig.tight_layout(rect=[0, 0.05, 1, 1])
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out_path, dpi=150, bbox_inches="tight")
+    fig.savefig(out_path, dpi=150)
     plt.close(fig)
     return out_path
