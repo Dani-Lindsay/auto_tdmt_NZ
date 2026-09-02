@@ -64,7 +64,7 @@ def build_catalogue(events_dir: Path | None = None) -> Path | None:
             "dip2": round(p["plane2"]["dip"], 1),
             "rake2": round(p["plane2"]["rake"], 1),
             "GeoNet_M": round(ev["prelim_mag"], 2),
-            "GeoNet_depth": ev["depth_km"],
+            "GeoNet_depth": round(ev["depth_km"], 1),
             "Mw": round(p["mw"], 2),
             # our centroid depth beside our Mw: a large Mw revision is
             # often explained by the depth revision visible in the adjacent
