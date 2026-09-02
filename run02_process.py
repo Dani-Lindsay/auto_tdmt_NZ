@@ -166,6 +166,15 @@ def process_event(public_id: str, debug: bool = False,
     out = invert.save_solution(best, event_dir)
     catalogue.build_catalogue()
 
+    # working files (staged Green's functions, SAC data) are regenerable
+    # from solution.json + the GF release — delete unless debugging.
+    # mtinv.in, per-band solution.json and figures stay as provenance.
+    if not debug:
+        for band_dir_ in event_dir.glob("band_*"):
+            shutil.rmtree(band_dir_ / "greens", ignore_errors=True)
+            for dat in band_dir_.glob("*.dat"):
+                dat.unlink()
+
     pref = best["preferred"]
     print(
         f"predicted peak displacement: {forward['peak_abs_m']*100:.2f} cm "
