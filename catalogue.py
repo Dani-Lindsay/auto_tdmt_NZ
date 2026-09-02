@@ -26,7 +26,7 @@ import config
 COLUMNS = [
     "PublicID", "Date", "Latitude", "Longitude",
     "strike1", "dip1", "rake1", "strike2", "dip2", "rake2",
-    "GeoNet_M", "GeoNet_depth", "Mw", "Mo", "CD", "NS", "DC", "CLVD", "VR",
+    "GeoNet_M", "GeoNet_depth", "Mw", "Depth", "Mo", "NS", "DC", "CLVD", "VR",
     "Mxx", "Mxy", "Mxz", "Myy", "Myz", "Mzz",
     "band", "model", "gates_passed", "published",
 ]
@@ -66,9 +66,12 @@ def build_catalogue(events_dir: Path | None = None) -> Path | None:
             "GeoNet_M": round(ev["prelim_mag"], 2),
             "GeoNet_depth": ev["depth_km"],
             "Mw": round(p["mw"], 2),
+            # our centroid depth beside our Mw: a large Mw revision is
+            # often explained by the depth revision visible in the adjacent
+            # GeoNet_depth column
+            "Depth": p["depth_km"],
             # Mo in dyne-cm; MT elements in 1e20 dyne-cm (GeoNet convention)
             "Mo": f"{p['m0_dyne_cm']:.3e}",
-            "CD": p["depth_km"],
             "NS": s["quality"]["n_stations_used"],
             "DC": round(p["pdc"], 1),
             "CLVD": round(p["pclvd"], 1),
