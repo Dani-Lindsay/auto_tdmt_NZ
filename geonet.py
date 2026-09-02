@@ -105,9 +105,22 @@ def is_nrt(origin_time: UTCDateTime) -> bool:
 def fdsn_client(origin_time: UTCDateTime) -> Client:
     """NRT client for fresh events, archive client otherwise. The archive
     lags ~7 days behind real time, so for a young event NRT is the ONLY
-    source — never fall back silently."""
+    source — never fall back silently.
+
+    GeoNet's NRT server transiently serves an incomplete service document
+    ("client does not have a dataselect service"), so retry construction a
+    few times before failing loudly."""
+    import time
+
     base = config.FDSN_NRT if is_nrt(origin_time) else config.FDSN_ARCHIVE
-    return Client(base_url=base)
+    last_err = None
+    for attempt in range(3):
+        client = Client(base_url=base)
+        if "dataselect" in client.services and "station" in client.services:
+            return client
+        last_err = f"incomplete service document from {base}"
+        time.sleep(10 * (attempt + 1))
+    raise RuntimeError(f"FDSN client unusable after retries: {last_err}")
 
 
 def load_geonet_cmt() -> pd.DataFrame:

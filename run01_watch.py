@@ -33,11 +33,18 @@ def save_state(state: dict) -> None:
     config.STATE_FILE.write_text(json.dumps(state, indent=2))
 
 
+MAX_ATTEMPTS = 3
+
+
 def new_events(state: dict) -> list:
     events = []
     for ev in recent_quakes(mmi=3):
-        if ev.public_id in state["processed"]:
-            continue
+        prior = state["processed"].get(ev.public_id)
+        if prior is not None:
+            # retry transient failures (NRT hiccups) a bounded number of times
+            if not (prior.get("status") == "failed"
+                    and prior.get("attempts", 1) < MAX_ATTEMPTS):
+                continue
         ok, reason = trigger.passes_processing_floor(ev)
         if ok:
             events.append(ev)
@@ -64,8 +71,10 @@ def main(process: bool) -> None:
             solution = process_event(ev.public_id)
         except Exception as e:  # noqa: BLE001 - one bad event must not stop the rest
             print(f"{ev.public_id} FAILED: {e}")
+            prior = state["processed"].get(ev.public_id, {})
             state["processed"][ev.public_id] = {
                 "status": "failed", "error": str(e)[:500],
+                "attempts": prior.get("attempts", 0) + 1,
                 "prelim_mag": ev.prelim_mag,
                 "run_utc": datetime.now(timezone.utc).isoformat(),
             }

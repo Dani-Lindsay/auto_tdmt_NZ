@@ -70,7 +70,7 @@ def make_share_figure(
     fig.grdimage(grid=grid)
     fig.coast(shorelines="1/0.5p,black", resolution="i")
     fig.plot(x=lon0, y=lat0, style="a0.5c", fill="yellow", pen="0.8p,black")
-    fig.colorbar(frame='af+l"predicted vertical displacement [cm]"')
+    fig.colorbar(frame="af+lpredicted vertical displacement [cm]")
     label = ("peak |u| %.1f cm - potentially InSAR detectable"
              % (forward["peak_abs_m"] * 100.0)
              if forward["detectable"]
