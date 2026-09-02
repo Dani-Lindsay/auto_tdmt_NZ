@@ -3,6 +3,7 @@
 Automated regional moment tensor solution — PRELIMINARY
 
 Event: 2026p033598  2026-01-13T10:21:33.376Z
+Triggered from the GeoNet rapid earthquake solution; origin time, location, preliminary magnitude and initial depth are GeoNet's (geonet.org.nz).
 Location: 5 km west of Pongaroa (-40.575, 176.079)
 GeoNet preliminary magnitude: M 4.6
 
@@ -13,6 +14,8 @@ Filter band: 10-50 s  |  Velocity model: nz_north_ristau2008
 Nodal plane 1 (strike/dip/rake): 278/14/-178
 Nodal plane 2 (strike/dip/rake): 186/89/-76
 Stations used: 5  |  Azimuthal gap: 267 deg  |  Quality grade: B
+
+Stability (leave-one-out jackknife, n=5): Mw +/-0.007  |  DC 91 +/-6.0%  |  mechanism rotation <= 6.1 deg
 
 LIMITATIONS: deviatoric-only inversion (no isotropic component) - these mechanisms must not be interpreted in volcanic or geothermal settings, where real isotropic components are forced into DC/CLVD. Large misfit (low VR or grade C-D) indicates the automated result is unreliable and additional processing is required.
 

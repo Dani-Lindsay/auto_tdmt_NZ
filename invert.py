@@ -218,6 +218,10 @@ def jackknife(event: Event, stations: list[dict], depth: float,
                 "vr": round(float(mt.total_VR), 1),
                 "tensor_rotation_deg": round(
                     tensor_angle_deg(ref, tuple(fps[0])), 1),
+                "plane1": dict(zip(("strike", "dip", "rake"),
+                                   [round(float(v), 1) for v in fps[0]])),
+                "plane2": dict(zip(("strike", "dip", "rake"),
+                                   [round(float(v), 1) for v in fps[1]])),
             })
     finally:
         # restore the full-station mtinv.in for reproducibility

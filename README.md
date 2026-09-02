@@ -27,6 +27,8 @@ any organisation's internal systems.
 human review** — do not interpret mechanisms in volcanic/geothermal
 settings from these solutions.
 
+![All automated solutions to date](events/solutions_map.jpg)
+
 ## How it works
 
 ```

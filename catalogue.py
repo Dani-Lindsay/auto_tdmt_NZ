@@ -23,12 +23,30 @@ from pathlib import Path
 
 import config
 
+_FLAG_NAMES = {
+    "min_stations": "few_stations",
+    "vr_floor": "low_VR",
+    "az_gap_ok": "wide_az_gap",
+}
+
+
+def _quality_flag(quality: dict) -> str:
+    if quality.get("passed"):
+        return "True"
+    failed = [
+        _FLAG_NAMES.get(name, name)
+        for name, ok in quality.get("checks", {}).items() if not ok
+    ]
+    grade = quality.get("grade", "?")
+    return ";".join(failed) if failed else f"grade_{grade}"
+
+
 COLUMNS = [
     "PublicID", "Date", "Latitude", "Longitude",
     "strike1", "dip1", "rake1", "strike2", "dip2", "rake2",
     "GeoNet_M", "GeoNet_depth", "Mw", "Depth", "Mo", "NS", "DC", "CLVD", "VR",
     "Mxx", "Mxy", "Mxz", "Myy", "Myz", "Mzz",
-    "band", "model", "gates_passed", "published",
+    "band", "model", "quality_flag", "published",
 ]
 
 
@@ -82,7 +100,9 @@ def build_catalogue(events_dir: Path | None = None) -> Path | None:
             },
             "band": s.get("chosen_band", ""),
             "model": s["provenance"]["velocity_model"],
-            "gates_passed": s["quality"]["passed"],
+            # "True" when the solution passed, else the actual exit
+            # reason(s) so a reader can see WHY it fell short at a glance
+            "quality_flag": _quality_flag(s["quality"]),
             "published": ev["public_id"] in published_ids,
         })
 

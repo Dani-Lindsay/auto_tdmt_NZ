@@ -95,9 +95,17 @@ def make_share_figure(
             xycoords=ccrs.PlateCarree()._as_mpl_transform(ax),
         )
     map_style.add_beachball(ax, lon0, lat0, pref["tensor_rtp_dyne_cm"])
+    jk = solution.get("jackknife", {})
+    if jk.get("subsets"):
+        map_style.add_jackknife_planes(ax, lon0, lat0, jk["subsets"])
+        stab = (f"jackknife n={jk['n_subsets']}: rot <= "
+                f"{jk['max_tensor_rotation_deg']:g} deg")
+    else:
+        stab = None
     map_style.panel_label(
         ax, f"(a) {ev['public_id']}  Mw {pref['mw']:.1f}  "
-            f"depth {pref['depth_km']:g} km")
+            f"depth {pref['depth_km']:g} km"
+            + (f"\n{stab}" if stab else ""))
 
     # ---- two rows of E/N/U panels: nodal plane 1 (top), plane 2 (bottom) --
     plane_colors = {"plane1": "#0173B2", "plane2": "#029E73"}
@@ -207,6 +215,60 @@ def make_share_figure(
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=180)
+    plt.close(fig)
+    return out_path
+
+
+def make_overview_map(events_dir: Path, out_path: Path) -> Path:
+    """NZ map of every archived solution as its full-MT beachball —
+    the front-page view of the catalogue. A/B grades solid, C/D washed."""
+    import json
+
+    import cartopy.crs as ccrs
+
+    sols = []
+    for p in sorted(events_dir.glob("*/solution.json")):
+        try:
+            sols.append(json.loads(p.read_text()))
+        except Exception:  # noqa: BLE001 - one bad archive must not kill the map
+            continue
+    region = [164.0, 183.0, -49.5, -33.5]
+    fig = plt.figure(figsize=(9.5, 11))
+    ax = map_style.geo_axes(fig, [0.06, 0.05, 0.9, 0.88], region)
+    dates = []
+    for sol in sols:
+        ev = sol["event"]
+        pref = sol["preferred"]
+        lon = ev["longitude"] % 360.0
+        grade = sol["quality"].get("grade", "?")
+        width = 0.018 + 0.010 * max(0.0, pref["mw"] - 4.0)
+        try:
+            ball_args = (ax, lon, ev["latitude"],
+                         pref["tensor_rtp_dyne_cm"])
+        except KeyError:
+            continue
+        from obspy.imaging.beachball import beach
+
+        x, y = ax.projection.transform_point(lon, ev["latitude"],
+                                             ccrs.PlateCarree())
+        xe0, xe1, _, _ = ax.get_extent(crs=ax.projection)
+        rtp = pref["tensor_rtp_dyne_cm"]
+        fm = [rtp["MRR"], rtp["MTT"], rtp["MPP"],
+              rtp["MRT"], rtp["MRP"], rtp["MTP"]]
+        ball = beach(fm, xy=(x, y), width=width * (xe1 - xe0),
+                     linewidth=0.4, facecolor="firebrick")
+        if grade not in ("A", "B"):
+            ball.set_alpha(0.45)
+        ax.add_collection(ball)
+        dates.append(ev["origin_time"][:10])
+    ax.set_title(
+        f"auto_tdmt_NZ: {len(sols)} automated moment tensor solutions "
+        f"({min(dates)} to {max(dates)})\n"
+        f"solid = grade A/B, washed = C/D; size scales with Mw",
+        fontsize=10,
+    )
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=150)
     plt.close(fig)
     return out_path
 

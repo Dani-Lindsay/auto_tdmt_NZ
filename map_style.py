@@ -86,6 +86,25 @@ def vik():
     return cm.vik
 
 
+def add_jackknife_planes(ax, lon, lat, subsets, width_frac: float = 0.16,
+                         color: str = "0.15", alpha: float = 0.30) -> None:
+    """Thin nodal-plane arcs from jackknife subset solutions drawn over the
+    map beachball — the fan width shows the stability of the mechanism."""
+    import cartopy.crs as ccrs
+
+    x0, y0 = ax.projection.transform_point(lon, lat, ccrs.PlateCarree())
+    xe0, xe1, _, _ = ax.get_extent(crs=ax.projection)
+    radius = 0.5 * width_frac * (xe1 - xe0)
+    for sub in subsets:
+        for key in ("plane1", "plane2"):
+            p = sub.get(key)
+            if not p:
+                continue
+            xa, ya = nodal_plane_arc(p["strike"], p["dip"])
+            ax.plot(x0 + xa * radius, y0 + ya * radius, "-", color=color,
+                    linewidth=0.7, alpha=alpha, zorder=11)
+
+
 def panel_label(ax, text: str) -> None:
     """Label inside the panel's top-left corner — cartopy's aspect handling
     makes outside titles unreliable with manual axes placement."""

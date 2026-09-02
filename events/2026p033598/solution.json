@@ -979,6 +979,100 @@
       "gates_passed": true
     }
   },
+  "jackknife": {
+    "n_subsets": 5,
+    "mw_std": 0.007,
+    "dc_std": 6.0,
+    "max_tensor_rotation_deg": 6.1,
+    "mean_tensor_rotation_deg": 3.7,
+    "subsets": [
+      {
+        "left_out": "MRZ",
+        "mw": 4.282,
+        "pdc": 96.7,
+        "vr": 63.4,
+        "tensor_rotation_deg": 3.0,
+        "plane1": {
+          "strike": 272.1,
+          "dip": 12.6,
+          "rake": 177.3
+        },
+        "plane2": {
+          "strike": 4.7,
+          "dip": 89.4,
+          "rake": 77.5
+        }
+      },
+      {
+        "left_out": "TSZ",
+        "mw": 4.284,
+        "pdc": 84.1,
+        "vr": 68.9,
+        "tensor_rotation_deg": 6.1,
+        "plane1": {
+          "strike": 276.8,
+          "dip": 17.3,
+          "rake": -173.8
+        },
+        "plane2": {
+          "strike": 180.9,
+          "dip": 88.2,
+          "rake": -72.8
+        }
+      },
+      {
+        "left_out": "OHWZ",
+        "mw": 4.267,
+        "pdc": 82.8,
+        "vr": 67.4,
+        "tensor_rotation_deg": 3.4,
+        "plane1": {
+          "strike": 281.5,
+          "dip": 12.7,
+          "rake": -177.1
+        },
+        "plane2": {
+          "strike": 188.7,
+          "dip": 89.4,
+          "rake": -77.3
+        }
+      },
+      {
+        "left_out": "WAZ",
+        "mw": 4.271,
+        "pdc": 91.2,
+        "vr": 70.6,
+        "tensor_rotation_deg": 3.2,
+        "plane1": {
+          "strike": 285.0,
+          "dip": 13.3,
+          "rake": -171.1
+        },
+        "plane2": {
+          "strike": 186.3,
+          "dip": 88.0,
+          "rake": -76.9
+        }
+      },
+      {
+        "left_out": "COVZ",
+        "mw": 4.271,
+        "pdc": 96.8,
+        "vr": 70.5,
+        "tensor_rotation_deg": 2.7,
+        "plane1": {
+          "strike": 273.0,
+          "dip": 12.1,
+          "rake": 177.5
+        },
+        "plane2": {
+          "strike": 5.4,
+          "dip": 89.5,
+          "rake": 77.9
+        }
+      }
+    ]
+  },
   "forward_model": {
     "peak_abs_cm": 0.005792534567693796,
     "detectable": false,
