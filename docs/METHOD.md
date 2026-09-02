@@ -58,7 +58,12 @@ published, with full provenance in `solution.json`.
 
 - **Stations**: network NZ broadbands (HH? preferred over BH?; location
   codes taken from the station inventory, never assumed), 20–400 km
-  epicentral distance, nearest 12 that pass QC. Station distance must
+  epicentral distance, up to 12 passing QC. Candidates are tried in
+  azimuth-sector-interleaved order (8 x 45 deg sectors, nearest-first
+  within each) so the selected set spans the full range of azimuths, and
+  a low-SNR station that is the sole representative of its sector is
+  retained in preference over a redundant high-SNR one — azimuthal
+  coverage stabilises the mechanism more than per-station noise harms it. Station distance must
   exceed 3x source depth (point-source/far-field assumption; waived for
   GeoNet placeholder depths, which are unreliable).
 - **Waveform windows**: origin−150 s to origin+230 s downloaded; final cut

@@ -118,8 +118,22 @@ def fetch_and_process(
     if stages is not None:
         stages.update({"raw": Stream(), "displacement": Stream(), "final": Stream()})
 
+    # azimuth-sector-interleaved candidate order (8 x 45 deg sectors,
+    # nearest-first within each): the first stations tried span the full
+    # compass, codifying quadrant-first manual selection. Pure
+    # nearest-first ordering produced one-sided geometries when the close
+    # stations clustered on one side of the epicentre.
+    sectors: dict[int, list] = {}
+    for r in rows:
+        sectors.setdefault(int(r["azimuth"] // 45) % 8, []).append(r)
+    ordered = []
+    while any(sectors.values()):
+        for k in sorted(sectors):
+            if sectors[k]:
+                ordered.append(sectors[k].pop(0))
+
     used, dropped = [], []
-    for row in rows:
+    for row in ordered:
         if len(used) >= config.MAX_STATIONS:
             break
         sid = f"{row['network']}.{row['station']}.{row['location']}"
@@ -256,13 +270,18 @@ def fetch_and_process(
     ok_rows = [r for r in used if r["snr_tier"] == "ok"]
     low_rows = sorted((r for r in used if r["snr_tier"] == "low"),
                       key=lambda r: -r["snr"])
-    if len(ok_rows) >= config.TIER_TARGET_STATIONS:
-        keep = ok_rows
-        surplus = low_rows
+    # a low-SNR station that is the ONLY one covering its azimuth sector is
+    # worth more to solution stability than its noise costs — never trim it
+    covered = {int(r["azimuth"] // 45) % 8 for r in ok_rows}
+    guards = [r for r in low_rows if int(r["azimuth"] // 45) % 8 not in covered]
+    others = [r for r in low_rows if r not in guards]
+    keep = ok_rows + guards
+    if len(keep) < config.TIER_TARGET_STATIONS:
+        need = config.TIER_TARGET_STATIONS - len(keep)
+        keep += others[:need]
+        surplus = others[need:]
     else:
-        need = config.TIER_TARGET_STATIONS - len(ok_rows)
-        keep = ok_rows + low_rows[:need]
-        surplus = low_rows[need:]
+        surplus = others
     for r in surplus:
         sid = f"{r['network']}.{r['station']}.{r['location']}"
         for comp in "ZRT":
