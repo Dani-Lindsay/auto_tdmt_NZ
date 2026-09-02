@@ -25,6 +25,11 @@ def passes_processing_floor(event: Event) -> tuple[bool, str]:
         return False, (
             f"prelim M{event.prelim_mag:.1f} < {config.PROCESS_MIN_PRELIM_MAG}"
         )
+    if event.depth_km > config.MAX_PROCESS_DEPTH_KM:
+        return False, (
+            f"depth {event.depth_km:g} km > {config.MAX_PROCESS_DEPTH_KM:g} "
+            f"km (below GF library; no surface displacement possible)"
+        )
     b = config.NZ_BBOX
     if not (b["lat_min"] <= event.latitude <= b["lat_max"]
             and b["lon_min"] <= event.longitude % 360.0 <= b["lon_max"]):

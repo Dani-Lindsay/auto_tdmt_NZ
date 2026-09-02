@@ -27,7 +27,8 @@ EVENT_URL = (
 
 
 def list_events(start: str) -> list[tuple[str, str, float]]:
-    """(publicID, origin_time, magnitude) for NZ M>=floor earthquakes."""
+    """(publicID, origin_time, magnitude) for NZ M>=floor earthquakes
+    shallower than the processing depth ceiling."""
     b = config.NZ_BBOX
     windows = [(b["lon_min"], 180.0), (-180.0, b["lon_max"] - 360.0)]
     rows = []
@@ -45,6 +46,8 @@ def list_events(start: str) -> list[tuple[str, str, float]]:
         for line in r.text.splitlines()[1:]:
             f = line.split("|")
             if f[-1].strip() != "earthquake":
+                continue
+            if float(f[4]) > config.MAX_PROCESS_DEPTH_KM:
                 continue
             rows.append((f[0], f[1], float(f[10])))
     rows.sort(key=lambda x: x[1])

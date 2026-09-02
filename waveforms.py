@@ -130,10 +130,12 @@ def fetch_and_process(
                 "latitude": row["latitude"], "longitude": row["longitude"],
                 "distance_km": round(row["distance_km"], 1),
             })
-        # far-field / point-source guard: distance > 3x depth (skip for
-        # placeholder depths, which are meaningless)
+        # far-field / point-source guard: distance > 3x depth. A SHALLOW
+        # source rule (EPS207): skipped for placeholder depths and for deep
+        # events, where every surface station is already far-field.
         if (
             event.depth_km not in config.PLACEHOLDER_DEPTHS_KM
+            and event.depth_km <= config.DIST_DEPTH_RULE_MAX_DEPTH_KM
             and row["distance_km"] < config.MIN_DIST_DEPTH_RATIO * event.depth_km
         ):
             _drop("distance < 3x source depth")
