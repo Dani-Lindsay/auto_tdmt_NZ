@@ -165,19 +165,33 @@ def plot_depth_sensitivity(solution: dict, out_path: Path) -> Path:
     vr_max_depth = max(rows, key=lambda r: r["vr"])["depth_km"]
     dc_max_depth = max(rows, key=lambda r: r["pdc"])["depth_km"]
 
+    # seaborn colorblind palette
+    c_geonet, c_vr, c_dc = "#0173B2", "#DE8F05", "#029E73"
     ref_lines = [
-        (ev["depth_km"], "tab:blue",
+        (ev["depth_km"], c_geonet,
          f"GeoNet depth {ev['depth_km']:g} km"),
-        (vr_max_depth, "tab:red", f"Max VR = {vr_max_depth:g} km"),
-        (dc_max_depth, "tab:olive", f"Max DC = {dc_max_depth:g} km"),
+        (vr_max_depth, c_vr, f"Max VR = {vr_max_depth:g} km"),
+        (dc_max_depth, c_dc, f"Max DC = {dc_max_depth:g} km"),
     ]
     if pref["depth_km"] not in (vr_max_depth, dc_max_depth):
         ref_lines.append((pref["depth_km"], "black",
                           f"Preferred = {pref['depth_km']:g} km"))
 
+    import config
+    from obspy.imaging.beachball import beach
+
     stations = "_".join(r["station"] for r in solution["stations_used"])
+    vr_max = max(r["vr"] for r in rows)
+    window = [r for r in rows
+              if r["vr"] >= vr_max - config.PREFER_DC_VR_TOLERANCE]
+    if len(window) > 8:  # keep the strip readable
+        idx = np.linspace(0, len(window) - 1, 8).round().astype(int)
+        window = [window[i] for i in sorted(set(idx))]
+    edge_for = {vr_max_depth: c_vr, dc_max_depth: c_dc,
+                pref["depth_km"]: "black"}
+
     with plt.style.context("default"):
-        fig, axes = plt.subplots(2, 3, figsize=(11, 7))
+        fig, axes = plt.subplots(2, 3, figsize=(11, 9))
         for (title, ylabel, values), ax in zip(series, axes.ravel()):
             handles = [
                 ax.axvline(d, color=c, lw=1.5, label=lab)
@@ -196,8 +210,37 @@ def plot_depth_sensitivity(solution: dict, out_path: Path) -> Path:
         )
         fig.legend(handles=handles, loc="lower center",
                    ncol=len(ref_lines), fontsize=9, frameon=True,
-                   bbox_to_anchor=(0.5, 0.0))
-        fig.tight_layout(rect=[0, 0.05, 1, 1])
+                   bbox_to_anchor=(0.5, 0.185))
+        fig.tight_layout(rect=[0, 0.24, 1, 1])
+
+        # mechanism strip: solutions across the selection window (VR within
+        # tolerance of max), where VR is flat but the mechanism can swing
+        axb = fig.add_axes([0.06, 0.01, 0.88, 0.17])
+        axb.set_xlim(0, max(len(window), 1))
+        axb.set_ylim(0, 1.5)
+        axb.set_aspect("equal")
+        axb.axis("off")
+        axb.set_anchor("S")
+        for i, r in enumerate(window):
+            tensor = r.get("tensor_rtp_dyne_cm")
+            if tensor:
+                fm = [tensor["MRR"], tensor["MTT"], tensor["MPP"],
+                      tensor["MRT"], tensor["MRP"], tensor["MTP"]]
+            else:  # older archives: DC mechanism only
+                p1 = r["plane1"]
+                fm = [p1["strike"], p1["dip"], p1["rake"]]
+            edge = edge_for.get(r["depth_km"], "0.4")
+            axb.add_collection(beach(
+                fm, xy=(i + 0.5, 0.95), width=0.75, linewidth=1.4,
+                facecolor="firebrick", edgecolor=edge))
+            axb.text(i + 0.5, 0.38, f"{r['depth_km']:g} km", ha="center",
+                     va="top", fontsize=8)
+            axb.text(i + 0.5, 0.22, f"DC {r['pdc']:.0f}%", ha="center",
+                     va="top", fontsize=8, color="0.35")
+        axb.text(0.0, 1.45,
+                 f"mechanism vs depth across the selection window "
+                 f"(VR within {config.PREFER_DC_VR_TOLERANCE:g}% of max)",
+                 fontsize=9, va="top")
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=150)

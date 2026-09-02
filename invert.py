@@ -161,6 +161,12 @@ def summarize(inv, event: Event, stations: list[dict], dropped: list[dict],
             piso=float(mt.piso),
             plane1=dict(zip(("strike", "dip", "rake"), fps[0])),
             plane2=dict(zip(("strike", "dip", "rake"), fps[1])),
+            # full tensor per depth so the depth-sensitivity figure can
+            # draw the true deviatoric beachball at each trial depth
+            tensor_rtp_dyne_cm={
+                k: float(v)
+                for k, v in mt.get_tensor_elements(basis="RTP").items()
+            },
         )
 
     rows = [_mt_row(mt) for mt in inv.moment_tensors]
