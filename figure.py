@@ -317,9 +317,14 @@ def plot_depth_sensitivity(solution: dict, out_path: Path) -> Path:
                 p1 = r["plane1"]
                 fm = [p1["strike"], p1["dip"], p1["rake"]]
             edge = edge_for.get(r["depth_km"], "0.4")
-            axb.add_collection(beach(
-                fm, xy=(i + 0.5, 0.95), width=0.75, linewidth=1.4,
-                facecolor="firebrick", edgecolor=edge))
+            is_pref = r["depth_km"] == pref["depth_km"]
+            ball = beach(
+                fm, xy=(i + 0.5, 0.95), width=0.75,
+                linewidth=1.8 if is_pref else 1.2,
+                facecolor="firebrick", edgecolor=edge)
+            if not is_pref:  # wash out everything but the selected solution
+                ball.set_alpha(0.45)
+            axb.add_collection(ball)
             axb.text(i + 0.5, 0.38, f"{r['depth_km']:g} km", ha="center",
                      va="top", fontsize=8)
             axb.text(i + 0.5, 0.22, f"DC {r['pdc']:.0f}%", ha="center",
