@@ -19,6 +19,11 @@ watch = "python run01_watch.py"
 process = "python run02_process.py"
 publish = "python run03_publish.py"
 test = "pytest -q"
+# one-command Green's function download for students (extracts gf_cache/):
+get-gfs = """test -d gf_cache && echo 'gf_cache already present' || \
+(curl -L https://github.com/Dani-Lindsay/auto_tdmt_NZ/releases/download/gf-latest/gf_library.tar.zst \
+ | tar --use-compress-program=unzstd -xf - -C . && ls gf_cache)"""
+review = "jupyter notebook human_review.ipynb"
 
 [dependencies]
 python = "3.12.*"
@@ -38,6 +43,9 @@ pip = "*"
 c-compiler = "*"
 meson-python = "*"
 ipykernel = ">=7.3.0,<8"
+notebook = ">=7.6.2,<8"
+ipywidgets = ">=8.1.9,<9"
+zstd = ">=1.5.7,<2"
 
 [pypi-dependencies]
 mttime = { git = "https://github.com/LLNL/mttime.git" }
