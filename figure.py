@@ -36,26 +36,29 @@ def _local_km_to_geo(x_km, y_km, lon0: float, lat0: float):
 def make_share_figure(
     solution: dict, forward: dict, passes: list[dict], out_path: Path
 ) -> Path:
-    """Station map + Okada E/N/U displacement for BOTH nodal planes (the MT
-    cannot distinguish them; until geodesy arrives either could be the
-    fault), with faults/GNSS context, scale bars and provenance."""
+    """Eight-panel figure: (a) station map with the deviatoric MT ball,
+    (b-d) plane-1 E/N/U displacement, (e) solution-stability panel (DC
+    ball + jackknife nodal-plane fan + uncertainty text), (f-h) plane-2
+    E/N/U. Displacement AOI fits the modelled signal (minimum half-width
+    12 km, maximum the modelled grid)."""
     import cartopy.crs as ccrs
+    from obspy.imaging.beachball import beach
 
     ev = solution["event"]
     pref = solution["preferred"]
     lon0, lat0 = ev["longitude"], ev["latitude"]
+    jk = solution.get("jackknife", {})
     roi = map_style.square_region(
         map_style.event_region(ev, solution["stations_used"], pad_deg=0.6))
 
     fig = plt.figure(figsize=(17.5, 11.2))
+    row_y = {0: 0.565, 1: 0.11}
+    panel_h = 0.365
 
-    # ---- panel a: stations + full-MT beachball over the station ROI -------
-    ax = map_style.geo_axes(fig, [0.015, 0.565, 0.22, 0.365], roi)
+    # ---- (a) station map: clean deviatoric mechanism ----------------------
+    ax = map_style.geo_axes(fig, [0.02, row_y[0], 0.215, panel_h], roi)
     map_style.draw_context(ax, roi, ccrs, gnss=False)
     map_style.scale_bar(ax, roi, ccrs)
-    # candidates that were dropped: grey; used stations: coloured by the
-    # velocity-model deviation dV% implied by their solved zcor
-    # (EPS207 velocity-model analysis; red = model fast, blue = slow)
     import config as _config
     grey = [d for d in solution["stations_dropped"] if "latitude" in d]
     if grey:
@@ -64,11 +67,8 @@ def make_share_figure(
                 markeredgewidth=0.3, markersize=6,
                 transform=ccrs.PlateCarree(), zorder=5)
     used = solution["stations_used"]
-    dv = [
-        (r["zcor_s"] / (r["distance_km"] / _config.GROUP_VELOCITY_KMS)) * 100.0
-        if "zcor_s" in r else None
-        for r in used
-    ]
+    dv = [(r["zcor_s"] / (r["distance_km"] / _config.GROUP_VELOCITY_KMS))
+          * 100.0 if "zcor_s" in r else None for r in used]
     if any(v is not None for v in dv):
         vals = [v for v in dv if v is not None]
         dvmax = max(5.0, max(abs(v) for v in vals))
@@ -79,7 +79,7 @@ def make_share_figure(
             edgecolors="black", linewidths=0.5,
             transform=ccrs.PlateCarree(), zorder=7,
         )
-        caxa = fig.add_axes([0.055, 0.535, 0.13, 0.011])
+        caxa = fig.add_axes([0.045, 0.517, 0.15, 0.010])
         cba = fig.colorbar(sc, cax=caxa, orientation="horizontal")
         cba.set_label("dV% from zcor (red = model fast)", fontsize=7)
         cba.ax.tick_params(labelsize=6)
@@ -95,16 +95,11 @@ def make_share_figure(
             xycoords=ccrs.PlateCarree()._as_mpl_transform(ax),
         )
     map_style.add_beachball(ax, lon0, lat0, pref["tensor_rtp_dyne_cm"])
-    jk = solution.get("jackknife", {})
-    stab = (f"jackknife n={jk['n_subsets']}: rot <= "
-            f"{jk['max_tensor_rotation_deg']:g} deg"
-            if jk.get("subsets") else None)
     map_style.panel_label(
         ax, f"(a) {ev['public_id']}  Mw {pref['mw']:.1f}  "
-            f"depth {pref['depth_km']:g} km"
-            + (f"\n{stab}" if stab else ""))
+            f"depth {pref['depth_km']:g} km")
 
-    # ---- two rows of E/N/U panels: nodal plane 1 (top), plane 2 (bottom) --
+    # ---- displacement AOI: fit the modelled signal ------------------------
     plane_colors = {"plane1": "#0173B2", "plane2": "#029E73"}
     vmax = max(
         0.1,
@@ -112,8 +107,30 @@ def make_share_figure(
             for p in ("plane1", "plane2")
             for c in ("ue_m", "un_m", "uz_m")) * 100.0,
     )
+    thr = 0.02 * vmax
+    x_km = forward["plane1"]["x_km"]
+    y_km = forward["plane1"]["y_km"]
+    sig = np.zeros((len(y_km), len(x_km)), dtype=bool)
+    for p in ("plane1", "plane2"):
+        for c in ("ue_m", "un_m", "uz_m"):
+            sig |= np.abs(forward[p][c]) * 100.0 >= thr
+    if sig.any():
+        iy, ix = np.where(sig)
+        half = max(12.0, 1.15 * max(
+            abs(x_km[ix.min()]), abs(x_km[ix.max()]),
+            abs(y_km[iy.min()]), abs(y_km[iy.max()])))
+    else:
+        half = 12.0
+    half = min(half, float(x_km.max()))
+    slon, slat = _local_km_to_geo(
+        np.array([-half, half]), np.array([-half, half]), lon0, lat0)
+    model_region = [float(slon[0]), float(slon[1]),
+                    float(slat[0]), float(slat[1])]
+
+    # ---- (b-d) plane 1 and (f-h) plane 2 ----------------------------------
+    letters = {("plane1", 0): "b", ("plane1", 1): "c", ("plane1", 2): "d",
+               ("plane2", 0): "f", ("plane2", 1): "g", ("plane2", 2): "h"}
     pm = None
-    panel = iter("bcdefg")
     for row, plane in enumerate(("plane1", "plane2")):
         fw = forward[plane]
         fault = fw["fault"]
@@ -125,17 +142,14 @@ def make_share_figure(
             np.array(outline["top_x_km"]), np.array(outline["top_y_km"]),
             lon0, lat0)
         glon, glat = _local_km_to_geo(fw["x_km"], fw["y_km"], lon0, lat0)
-        model_region = [float(glon.min()), float(glon.max()),
-                        float(glat.min()), float(glat.max())]
-        y0 = 0.565 - row * 0.455
         for i, (comp, u_m) in enumerate(
                 (("east", fw["ue_m"]), ("north", fw["un_m"]),
                  ("up", fw["uz_m"]))):
             u_cm = u_m * 100.0
             u_plot = np.ma.masked_where(np.abs(u_cm) < 0.02 * vmax, u_cm)
             axi = map_style.geo_axes(
-                fig, [0.245 + 0.23 * i, y0, 0.22, 0.365], model_region,
-                labels=(i == 0),
+                fig, [0.275 + 0.23 * i, row_y[row], 0.21, panel_h],
+                model_region, labels=(i == 0),
             )
             n_gnss = map_style.draw_context(
                 axi, model_region, ccrs, gnss_labels=(i == 0))
@@ -157,28 +171,50 @@ def make_share_figure(
                      markeredgecolor="black", markersize=9,
                      transform=ccrs.PlateCarree(), zorder=11)
             map_style.panel_label(
-                axi, f"({next(panel)}) plane {row + 1} {comp}  "
+                axi, f"({letters[plane, i]}) plane {row + 1} {comp}  "
                      f"(peak {np.abs(u_cm).max():.2f} cm)")
 
-    # inset DC ball below the map: modelled planes in their row colours,
-    # with the jackknife subset planes as a thin grey fan (stability)
-    axb = map_style.inset_dc_ball(
-        fig, [0.045, 0.13, 0.115, 0.30], pref["plane1"], pref["plane2"])
+    # ---- (e) solution stability: DC ball + jackknife fan + text -----------
+    axe = fig.add_axes([0.02, row_y[1], 0.215, panel_h])
+    axe.set_xlim(-1.35, 1.35)
+    axe.set_ylim(-2.3, 1.35)
+    axe.set_aspect("equal")
+    axe.axis("off")
+    axe.add_collection(beach(
+        [pref["plane1"]["strike"], pref["plane1"]["dip"],
+         pref["plane1"]["rake"]], xy=(0, 0.05), width=2.0, linewidth=0.8,
+        facecolor="firebrick"))
     for sub in jk.get("subsets", []):
         for key in ("plane1", "plane2"):
             p = sub.get(key)
             if p:
                 xa, ya = map_style.nodal_plane_arc(p["strike"], p["dip"])
-                axb.plot(xa, ya, "-", color="0.15", linewidth=0.7,
+                axe.plot(xa, ya + 0.05, "-", color="0.15", linewidth=0.7,
                          alpha=0.3, zorder=15)
-    x2, y2 = map_style.nodal_plane_arc(
-        pref["plane2"]["strike"], pref["plane2"]["dip"])
-    axb.plot(x2, y2, "-", color=plane_colors["plane2"], linewidth=2.2,
-             zorder=20, solid_capstyle="round")
-    axb.text(0, -1.6, "plane 2 | grey fan = jackknife", ha="center",
-             va="center", fontsize=6.5, color=plane_colors["plane2"])
+    for key, colr in (("plane1", plane_colors["plane1"]),
+                      ("plane2", plane_colors["plane2"])):
+        xa, ya = map_style.nodal_plane_arc(
+            pref[key]["strike"], pref[key]["dip"])
+        axe.plot(xa, ya + 0.05, "-", color=colr, linewidth=2.2, zorder=20,
+                 solid_capstyle="round")
+    if jk.get("n_subsets"):
+        text = (
+            f"leave-one-out jackknife (n={jk['n_subsets']}):\n"
+            f"Mw {pref['mw']:.2f} $\\pm$ {jk['mw_std']}   "
+            f"DC {pref['pdc']:.0f} $\\pm$ {jk['dc_std']}%\n"
+            f"mechanism rotation $\\leq$ "
+            f"{jk['max_tensor_rotation_deg']:g}$^\\circ$\n"
+            f"grey fan = subset nodal planes"
+        )
+    else:
+        text = "jackknife skipped (fewer than 4 stations)"
+    axe.text(0, -1.45, text, ha="center", va="top", fontsize=8.5)
+    axe.text(0.02, 0.985, "(e) solution stability",
+             transform=axe.transAxes, va="top", ha="left", fontsize=9,
+             bbox=dict(facecolor="white", edgecolor="0.4", linewidth=0.5,
+                       boxstyle="square,pad=0.25"))
 
-    cax = fig.add_axes([0.945, 0.30, 0.009, 0.45])
+    cax = fig.add_axes([0.955, 0.30, 0.009, 0.45])
     cb = fig.colorbar(pm, cax=cax, orientation="vertical")
     cb.set_label("predicted displacement [cm]", fontsize=9)
     cb.ax.tick_params(labelsize=8)
@@ -187,7 +223,7 @@ def make_share_figure(
     detect = ("potentially InSAR detectable" if forward["detectable"]
               else "below InSAR detection")
 
-    # ---- footer: planes, NISAR passes, provenance -------------------------
+    # ---- footer -----------------------------------------------------------
     prov = solution["provenance"]
     p1f = forward["plane1"]["fault"]
     p2f = forward["plane2"]["fault"]
@@ -215,7 +251,7 @@ def make_share_figure(
         f"CLVD {pref['pclvd']:.0f}%"
     )
     for i, line in enumerate(lines):
-        fig.text(0.03, 0.075 - 0.028 * i, line, fontsize=8.5,
+        fig.text(0.02, 0.082 - 0.030 * i, line, fontsize=8.5,
                  family="monospace", va="top")
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
