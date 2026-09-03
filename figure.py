@@ -167,7 +167,7 @@ def make_share_figure(
             # up-dip (shallowest) edge as a distinct red line
             axi.plot(olon, olat, "-", color="black",
                      linewidth=1.0, transform=ccrs.PlateCarree(), zorder=10)
-            axi.plot(tlon, tlat, "-", color="#D62728",
+            axi.plot(tlon, tlat, "-", color=plane_colors[plane],
                      linewidth=2.8, transform=ccrs.PlateCarree(), zorder=11)
             if i == 0:  # dip-direction arrow on the first panel of the row
                 dlon, dlat = _local_km_to_geo(
@@ -245,9 +245,9 @@ def make_share_figure(
     p1f = forward["plane1"]["fault"]
     p2f = forward["plane2"]["fault"]
     lines = [
-        f"Okada forward models (plane outlined in black, RED line = up-dip/shallowest edge, arrow points down-dip; USGS finite-fault convention): "
-        f"plane 1 (top row) {p1f['strike']:.0f}/{p1f['dip']:.0f}/"
-        f"{p1f['rake']:.0f}, plane 2 (bottom row) {p2f['strike']:.0f}/"
+        f"Okada forward models (black outline; COLOURED line = up-dip/shallowest edge, matching that plane's arc on the stability ball; arrow points down-dip): "
+        f"plane 1 (blue, top row) {p1f['strike']:.0f}/{p1f['dip']:.0f}/"
+        f"{p1f['rake']:.0f}, plane 2 (green, bottom row) {p2f['strike']:.0f}/"
         f"{p2f['dip']:.0f}/{p2f['rake']:.0f}; "
         f"peak |u| {peak_cm:.2f} cm - {detect}"]
     if passes:
