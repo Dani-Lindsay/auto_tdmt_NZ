@@ -62,6 +62,34 @@ MT elements (1e20 dyne-cm, matching the GeoNet CMT catalogue conventions). Every
 version, package versions, stations used/dropped (with reasons), the full
 depth-search table and the band search.
 
+## Students: the Human Review catalogue
+
+Alongside the automated archive lives a **human-reviewed catalogue**
+([events_human/](events_human/README.md)) built gradually by students —
+final-year undergraduates and masters students learning regional moment
+tensors by re-examining the automated solutions.
+
+Start here: **[human_review.ipynb](human_review.ipynb)** — a Jupyter
+notebook (runs in the browser or in VS Code) that walks you from
+installation through the whole workflow: browse the automated
+catalogue, watch a seismogram travel from raw counts to
+inversion-ready displacement, run the inversion yourself with full
+manual control (stations, time shifts, depth, record length, filter
+band, velocity model), decide whether you can beat the machine, and
+submit your reviewed solution by Pull Request.
+
+Before opening the notebook, read [docs/METHOD.md](docs/METHOD.md)
+(how the pipeline works) and
+[docs/REVIEW_LEARNINGS.md](docs/REVIEW_LEARNINGS.md) (the reviewer
+watch-list of known failure modes — read it twice). Multiple reviews of
+the same event by different authors are welcome: each is its own row in
+the human catalogue, and disagreement between reviewers is itself
+useful information. The automated archive `events/` is read-only for
+reviewers; PRs may only touch `events_human/`.
+
+> The student workflow was *Made by Claude. Not tested.* — expect to
+> troubleshoot, and treat that as part of the course.
+
 ## Local setup (macOS / Linux)
 
 ```sh
