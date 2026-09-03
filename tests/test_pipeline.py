@@ -257,3 +257,23 @@ def test_peak_noise_tiers_ordered():
     assert 0 < config.CANDIDATE_STATION_VR_MIN < 100
     assert config.CLUSTER_MAX_STATIONS >= 1
     assert config.MIN_USABLE_BEFORE_EXTEND >= config.MIN_STATIONS_USED
+
+
+# --- mechanism comparison metric (J. Townend recipe, 2026-08-20) ------------
+
+def test_min_rotation_identity_and_conjugate():
+    from obspy.imaging.beachball import aux_plane
+    sdr = (40.0, 50.0, 60.0)
+    assert invert.min_rotation_angle_deg(sdr, sdr) < 1e-3
+    # the auxiliary plane parameterises the SAME double couple: angle 0
+    conj = tuple(aux_plane(*sdr))
+    assert invert.min_rotation_angle_deg(sdr, conj) < 0.5
+
+
+def test_min_rotation_known_values():
+    # two vertical strike-slips 30 deg apart in strike: rotation 30 deg
+    a = invert.min_rotation_angle_deg((0, 90, 0), (30, 90, 0))
+    assert abs(a - 30.0) < 0.5
+    # symmetric in argument order
+    assert abs(a - invert.min_rotation_angle_deg((30, 90, 0),
+                                                 (0, 90, 0))) < 1e-6

@@ -327,10 +327,54 @@ def dc_tensor(strike: float, dip: float, rake: float) -> np.ndarray:
 
 
 def tensor_angle_deg(a, b) -> float:
-    """Angle between two DC tensors (nodal-plane-choice independent)."""
+    """Angle between two DC tensors via the normalised tensor inner
+    product (nodal-plane-choice independent). Retained for continuity;
+    the preferred mechanism-comparison metric is
+    ``min_rotation_angle_deg`` below (J. Townend's recommendation)."""
     m1, m2 = dc_tensor(*a), dc_tensor(*b)
     cos = np.sum(m1 * m2) / (np.linalg.norm(m1) * np.linalg.norm(m2))
     return float(np.degrees(np.arccos(np.clip(cos, -1.0, 1.0))))
+
+
+def _mech_rotation_matrix(strike: float, dip: float,
+                          rake: float) -> np.ndarray:
+    """Focal mechanism as a rotation matrix with respect to geographic
+    (NED) coordinates (Walsh et al. 2009, GJI 176, eqs 1-3 sense).
+    Columns are the principal axes T, P and null B (right-handed,
+    T x P = B), built from the Aki & Richards (1980) slip vector u and
+    fault normal n. In THIS frame the double-couple symmetry group is
+    exactly the diagonal sign flips, and the conjugate-plane
+    parameterisation (u and n swapped) maps to one of them — which is
+    why the minimum below is independent of the nodal-plane choice."""
+    phi, delta, lam = np.radians([strike, dip, rake])
+    n = np.array([-np.sin(delta) * np.sin(phi),
+                  np.sin(delta) * np.cos(phi),
+                  -np.cos(delta)])
+    u = np.array([
+        np.cos(lam) * np.cos(phi) + np.cos(delta) * np.sin(lam) * np.sin(phi),
+        np.cos(lam) * np.sin(phi) - np.cos(delta) * np.sin(lam) * np.cos(phi),
+        -np.sin(lam) * np.sin(delta)])
+    t = (u + n) / np.sqrt(2.0)          # tension axis
+    p = (u - n) / np.sqrt(2.0)          # pressure axis
+    b = np.cross(t, p)                  # null axis; det(+1) by order
+    return np.column_stack([t, p, b])
+
+
+def min_rotation_angle_deg(a, b) -> float:
+    """Minimum rotation aligning two double couples (J. Townend's
+    recipe, 2026-08-20; Townend et al. 2012 supplement eq. 1; Walsh,
+    Arnold & Townend 2009; cf. Kagan 1991):
+    angle = arccos((tr(R1^T R2) - 1) / 2), minimised over the DC
+    symmetry group (180-degree rotations about slip, null and normal),
+    so the result is independent of which nodal plane parameterises
+    either mechanism. ``a``/``b`` are (strike, dip, rake) tuples."""
+    r1, r2 = _mech_rotation_matrix(*a), _mech_rotation_matrix(*b)
+    best = 180.0
+    for sym in ((1, 1, 1), (1, -1, -1), (-1, 1, -1), (-1, -1, 1)):
+        cos = (np.trace(r1.T @ (r2 * np.array(sym))) - 1.0) / 2.0
+        best = min(best, float(np.degrees(
+            np.arccos(np.clip(cos, -1.0, 1.0)))))
+    return best
 
 
 def jackknife(event: Event, stations: list[dict], depth: float,
@@ -357,7 +401,7 @@ def jackknife(event: Event, stations: list[dict], depth: float,
                 "pdc": round(float(mt.pdc), 1),
                 "vr": round(float(mt.total_VR), 1),
                 "tensor_rotation_deg": round(
-                    tensor_angle_deg(ref, tuple(fps[0])), 1),
+                    min_rotation_angle_deg(ref, tuple(fps[0])), 1),
                 "plane1": dict(zip(("strike", "dip", "rake"),
                                    [round(float(v), 1) for v in fps[0]])),
                 "plane2": dict(zip(("strike", "dip", "rake"),

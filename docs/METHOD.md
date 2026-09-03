@@ -312,8 +312,29 @@ tests in the suite) and visually against the USGS finite-fault event pages
 (black-outlined plane, red up-dip edge convention, adopted here) and the
 interactive Focal Mechanism Explorer at https://eq.comoglu.com/bb/.
 
+## Validation metric
+
+Mechanism agreement with reference catalogues (`run05_validate.py`) and
+jackknife stability are measured as the **minimum rotation angle**
+between two double couples (J. Townend, pers. comm. 2026-08-20):
+each mechanism is expressed as a rotation matrix of its principal axes
+with respect to geographic coordinates (Walsh et al. 2009, eqs 1-3),
+and the angle is arccos((tr(R1^T R2) - 1)/2), minimised over the
+double-couple symmetry group so the result is independent of which
+nodal plane parameterises either mechanism (cf. Kagan 1991). The
+approach follows Townend et al. (2012), supplement eq. 1
+(`docs/Townend_etal_2012_supplement.pdf`).
+
 ## References
 
+- Walsh, D., Arnold, R., Townend, J. (2009). A Bayesian approach to
+  determining and parameterising earthquake focal mechanisms. GJI 176,
+  235-255.
+- Townend, J., et al. (2012). Three-dimensional variations in present-day
+  tectonic stress along the Australia-Pacific plate boundary in New
+  Zealand. EPSL, doi:10.1016/j.epsl.2012.08.003 (supplement in docs/).
+- Kagan, Y. Y. (1991). 3-D rotation of double-couple earthquake sources.
+  GJI 106, 709-716.
 - Chiang, A. MTtime: Time Domain Moment Tensor Inversion in Python.
   LLNL-CODE-814839. github.com/LLNL/mttime
 - Dreger, D., & Helmberger, D. (1993). Determination of source parameters

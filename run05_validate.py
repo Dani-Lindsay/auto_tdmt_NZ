@@ -24,7 +24,7 @@ import pandas as pd
 
 import config
 from geonet import load_geonet_cmt
-from invert import tensor_angle_deg
+from invert import min_rotation_angle_deg
 
 USGS_URL = ("https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson"
             "&starttime=2026-01-01&minmagnitude=4.5&minlatitude=-50.5"
@@ -160,7 +160,7 @@ def main() -> None:
                 "dMw": round(pref["mw"] - float(ref["Mw"]), 2),
                 "ref_depth": float(ref["CD"]),
                 "dDepth": round(pref["depth_km"] - float(ref["CD"]), 1),
-                "tensor_angle_deg": round(tensor_angle_deg(
+                "rotation_angle_deg": round(min_rotation_angle_deg(
                     (p1["strike"], p1["dip"], p1["rake"]),
                     (float(ref["strike1"]), float(ref["dip1"]),
                      float(ref["rake1"]))), 1),
@@ -174,7 +174,7 @@ def main() -> None:
                 "dMw": round(pref["mw"] - u["Mw"], 2),
                 "ref_depth": round(u["depth"], 1),
                 "dDepth": round(pref["depth_km"] - u["depth"], 1),
-                "tensor_angle_deg": round(tensor_angle_deg(
+                "rotation_angle_deg": round(min_rotation_angle_deg(
                     (p1["strike"], p1["dip"], p1["rake"]),
                     (u["strike"], u["dip"], u["rake"])), 1),
             })
@@ -196,7 +196,7 @@ def main() -> None:
                 "dMw": round(pref["mw"] - float(mag), 2),
                 "ref_depth": round(dep, 1),
                 "dDepth": round(pref["depth_km"] - dep, 1),
-                "tensor_angle_deg": round(tensor_angle_deg(
+                "rotation_angle_deg": round(min_rotation_angle_deg(
                     (p1["strike"], p1["dip"], p1["rake"]),
                     (np1.strike, np1.dip, np1.rake)), 1),
             })
@@ -215,8 +215,8 @@ def main() -> None:
               f"{sub.dMw.abs().median():.2f}")
         print(f"  depth: mean dZ {sub.dDepth.mean():+.1f} km, |dZ| median "
               f"{sub.dDepth.abs().median():.1f} km")
-        print(f"  mechanism: median tensor angle "
-              f"{sub.tensor_angle_deg.median():.0f} deg")
+        print(f"  mechanism: median min rotation "
+              f"{sub.rotation_angle_deg.median():.0f} deg")
 
     colors = {"NZ_CMT_Ristau": "#0072B2", "GlobalCMT": "#E69F00",
               "USGS_NEIC": "#CC79A7"}
@@ -225,7 +225,7 @@ def main() -> None:
         c = colors.get(ref, "black")
         axes[0, 0].scatter(sub.ref_Mw, sub.our_Mw, c=c, s=25, label=ref)
         axes[0, 1].scatter(sub.ref_depth, sub.our_depth, c=c, s=25)
-        axes[1, 0].hist(sub.tensor_angle_deg, bins=np.arange(0, 121, 10),
+        axes[1, 0].hist(sub.rotation_angle_deg, bins=np.arange(0, 121, 10),
                         color=c, alpha=0.6, label=ref)
         axes[1, 1].scatter(sub.ref_Mw, sub.dMw, c=c, s=25)
     axes[0, 0].plot([3.5, 6.5], [3.5, 6.5], "-", color="0.7", zorder=0)
@@ -236,7 +236,7 @@ def main() -> None:
     axes[0, 1].plot([0, lim], [0, lim], "-", color="0.7", zorder=0)
     axes[0, 1].set_xlabel("published depth (km)")
     axes[0, 1].set_ylabel("auto depth (km)")
-    axes[1, 0].set_xlabel("DC tensor angle (deg)")
+    axes[1, 0].set_xlabel("minimum rotation angle (deg)")
     axes[1, 0].set_ylabel("events")
     axes[1, 1].axhline(0, color="0.7")
     axes[1, 1].set_xlabel("published Mw")
