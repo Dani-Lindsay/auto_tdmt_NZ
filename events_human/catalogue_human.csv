@@ -1,0 +1,2 @@
+PublicID,Date,Latitude,Longitude,strike1,dip1,rake1,strike2,dip2,rake2,GeoNet_M,GeoNet_depth,Mw,Depth,NS,AzGap,Grade,DC,VR,Band,Model,Reviewer,ReviewDate,Decision,Changes,Auto_Mw,Auto_Depth,Auto_Grade
+2026p091845,2026-02-03,-41.634407043,174.244064331,285,27,-58,69,68,-105,4.36,8.4,4.06,4.0,5,158.9,D,78,25.1,band_10-50s,nz_south_ristau2008,Dani Lindsay  <dmplindsay@gmail.com>,2026-09-04,revised,TEST TEST added THZ and WEL (BAD STATION) (benched with station VR 54-65); depth fixed to relocated 9 km,4.07571605200273,12.0,B
