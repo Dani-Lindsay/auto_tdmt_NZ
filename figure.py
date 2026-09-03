@@ -167,6 +167,21 @@ def make_share_figure(
                      linewidth=1.2, transform=ccrs.PlateCarree(), zorder=10)
             axi.plot(tlon, tlat, "-", color=plane_colors[plane],
                      linewidth=2.6, transform=ccrs.PlateCarree(), zorder=10)
+            if i == 0:  # dip-direction arrow on the first panel of the row
+                dlon, dlat = _local_km_to_geo(
+                    np.array(outline["dip_arrow_x_km"]),
+                    np.array(outline["dip_arrow_y_km"]), lon0, lat0)
+                axi.annotate(
+                    "", xy=(dlon[1], dlat[1]), xytext=(dlon[0], dlat[0]),
+                    xycoords=ccrs.PlateCarree()._as_mpl_transform(axi),
+                    textcoords=ccrs.PlateCarree()._as_mpl_transform(axi),
+                    arrowprops=dict(arrowstyle="-|>", linewidth=1.4,
+                                    color=plane_colors[plane]), zorder=12)
+                axi.annotate(
+                    "dip", (dlon[1], dlat[1]), xytext=(3, 3),
+                    textcoords="offset points", fontsize=7,
+                    color=plane_colors[plane],
+                    xycoords=ccrs.PlateCarree()._as_mpl_transform(axi))
             axi.plot(lon0, lat0, "*", color="yellow",
                      markeredgecolor="black", markersize=9,
                      transform=ccrs.PlateCarree(), zorder=11)
@@ -228,7 +243,7 @@ def make_share_figure(
     p1f = forward["plane1"]["fault"]
     p2f = forward["plane2"]["fault"]
     lines = [
-        f"Okada forward models (dashed outline, bold edge = up-dip): "
+        f"Okada forward models (dashed outline; BOLD edge = up-dip/shallowest, arrow points down-dip): "
         f"plane 1 (blue) {p1f['strike']:.0f}/{p1f['dip']:.0f}/"
         f"{p1f['rake']:.0f}, plane 2 (green) {p2f['strike']:.0f}/"
         f"{p2f['dip']:.0f}/{p2f['rake']:.0f}; "

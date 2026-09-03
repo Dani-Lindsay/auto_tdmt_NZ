@@ -121,11 +121,16 @@ def fault_outline(fault: dict) -> dict:
         -half_l - half_w,
     ]
     top = [-half_l - half_w, half_l - half_w]  # up-dip edge
+    # dip-direction arrow: from the up-dip edge midpoint, pointing down-dip
+    mid_top = -half_w
+    tip = mid_top + 2.0 * half_w + 0.6 * width_km * np.cos(delta) * d
     return {
         "outline_x_km": [c[0] for c in corners],
         "outline_y_km": [c[1] for c in corners],
         "top_x_km": [c[0] for c in top],
         "top_y_km": [c[1] for c in top],
+        "dip_arrow_x_km": [mid_top[0], tip[0]],
+        "dip_arrow_y_km": [mid_top[1], tip[1]],
     }
 
 
