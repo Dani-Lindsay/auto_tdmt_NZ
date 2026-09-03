@@ -103,6 +103,13 @@ def process_event(public_id: str, debug: bool = False,
             solutions[tag] = process_band(event, b, event_dir / tag, debug, model)
         except AssertionError as e:
             print(f"band {tag} failed: {e}")
+            continue
+        # Below M5.5 the menu is an ordered preference (see band choice
+        # below): once a band passes its gates, later bands would never be
+        # chosen — skip computing them entirely (her 2026-09-03 call).
+        if (event.prelim_mag < 5.5 and band is None
+                and solutions[tag]["quality"]["passed"]):
+            break
     assert solutions, "every filter band failed"
 
     # Band choice. Below M5.5 VR must NOT arbitrate between bands: a
