@@ -54,7 +54,7 @@ def square_region(region: list) -> list:
     return [lon0, lon1, lat0, lat1]
 
 
-def geo_axes(fig, rect, region, labels=True, grid=True):
+def geo_axes(fig, rect, region, labels=True, grid=True, label_size=9):
     """Cartopy Mercator axes at an explicit figure rect [x, y, w, h]
     (manual placement: cartopy's fixed aspect fights layout engines)."""
     import cartopy.crs as ccrs
@@ -77,6 +77,8 @@ def geo_axes(fig, rect, region, labels=True, grid=True):
     if labels:
         gl.top_labels = False
         gl.right_labels = False
+        gl.xlabel_style = {"size": label_size}
+        gl.ylabel_style = {"size": label_size}
     return ax
 
 

@@ -295,7 +295,7 @@ def make_overview_map(events_dir: Path, out_path: Path) -> Path:
     region = [163.5, 183.0, -50.7, -33.3]
     fig = plt.figure(figsize=(7.5, 8.7))
     ax = map_style.geo_axes(fig, [0.07, 0.05, 0.9, 0.88], region,
-                            grid=False)
+                            grid=False, label_size=11)
     map_style.draw_context(ax, region, ccrs, gnss=False)
     dates = []
     for sol in sols:
@@ -314,55 +314,56 @@ def make_overview_map(events_dir: Path, out_path: Path) -> Path:
         fm = [rtp["MRR"], rtp["MTT"], rtp["MPP"],
               rtp["MRT"], rtp["MRP"], rtp["MTP"]]
         ball = beach(fm, xy=(x, y), width=width * (xe1 - xe0),
-                     linewidth=0.4, facecolor="firebrick")
+                     linewidth=0.4, facecolor="black")
         if grade not in ("A", "B"):
-            ball.set_alpha(0.45)
+            ball.set_alpha(0.40)
         ax.add_collection(ball)
         dates.append(ev["origin_time"][:10])
     ax.set_title(
-        f"Automated NZ moment tensor solutions (auto_tdmt_NZ)\n"
+        f"Catalogue Solutions\n"
         f"{len(sols)} events, {min(dates)} to {max(dates)}",
-        fontsize=10,
+        fontsize=13,
     )
 
-    # in-figure legend (bottom-left): sample balls + fault line
+    # in-figure legend, bottom-right (empty ocean), strike-slip demo balls
     xe0, xe1, ye0, ye1 = ax.get_extent(crs=ax.projection)
-    w_ax = xe1 - xe0
-    lx, ly = xe0 + 0.045 * w_ax, ye0 + 0.055 * (ye1 - ye0)
+    w_ax, h_ax = xe1 - xe0, ye1 - ye0
+    lx, ly = xe0 + 0.595 * w_ax, ye0 + 0.045 * h_ax
     import matplotlib.patches as mpatches
     ax.add_patch(mpatches.Rectangle(
-        (lx - 0.02 * w_ax, ly - 0.035 * (ye1 - ye0)), 0.34 * w_ax,
-        0.235 * (ye1 - ye0), facecolor="white", edgecolor="0.4",
+        (lx - 0.015 * w_ax, ly - 0.030 * h_ax), 0.40 * w_ax,
+        0.27 * h_ax, facecolor="white", edgecolor="0.4",
         linewidth=0.6, zorder=200))
-    demo = [(4.0, "Mw 4"), (5.0, "Mw 5"), (6.0, "Mw 6")]
-    fm_demo = [1.0, -0.5, -0.5, 0.3, 0.2, 0.1]
-    for i, (mw, lab) in enumerate(demo):
-        bx = lx + (0.035 + 0.10 * i) * w_ax
-        by = ly + 0.145 * (ye1 - ye0)
+    ss = [0.0, 90.0, 0.0]  # clean strike-slip DC for the demo balls
+    for i, (mw, lab) in enumerate([(4.0, "Mw 4"), (5.0, "Mw 5"),
+                                   (6.0, "Mw 6")]):
+        bx = lx + (0.055 + 0.125 * i) * w_ax
+        by = ly + 0.185 * h_ax
         bw = (0.018 + 0.010 * (mw - 4.0)) * w_ax
-        ax.add_collection(beach(fm_demo, xy=(bx, by), width=bw,
-                                linewidth=0.4, facecolor="firebrick",
+        ax.add_collection(beach(ss, xy=(bx, by), width=bw,
+                                linewidth=0.4, facecolor="black",
                                 zorder=210))
-        ax.text(bx, by - 0.045 * (ye1 - ye0), lab, ha="center",
-                fontsize=7, zorder=220)
-    b1 = beach(fm_demo, xy=(lx + 0.035 * w_ax, ly + 0.045 * (ye1 - ye0)),
-               width=0.022 * w_ax, linewidth=0.4, facecolor="firebrick",
+        ax.text(bx, by - 0.055 * h_ax, lab, ha="center",
+                fontsize=10, zorder=220)
+    b1 = beach(ss, xy=(lx + 0.045 * w_ax, ly + 0.065 * h_ax),
+               width=0.024 * w_ax, linewidth=0.4, facecolor="black",
                zorder=210)
     ax.add_collection(b1)
-    ax.text(lx + 0.06 * w_ax, ly + 0.045 * (ye1 - ye0), "grade A/B",
-            fontsize=7, va="center", zorder=220)
-    b2 = beach(fm_demo, xy=(lx + 0.175 * w_ax, ly + 0.045 * (ye1 - ye0)),
-               width=0.022 * w_ax, linewidth=0.4, facecolor="firebrick",
+    ax.text(lx + 0.075 * w_ax, ly + 0.065 * h_ax, "grade A/B",
+            fontsize=10, va="center", zorder=220)
+    b2 = beach(ss, xy=(lx + 0.22 * w_ax, ly + 0.065 * h_ax),
+               width=0.024 * w_ax, linewidth=0.4, facecolor="black",
                zorder=210)
-    b2.set_alpha(0.45)
+    b2.set_alpha(0.40)
     ax.add_collection(b2)
-    ax.text(lx + 0.20 * w_ax, ly + 0.045 * (ye1 - ye0), "grade C/D",
-            fontsize=7, va="center", zorder=220)
-    ax.plot([lx + 0.02 * w_ax, lx + 0.06 * w_ax],
-            [ly + 0.0, ly + 0.0], "-", color="#8B3A3A", linewidth=1.2,
+    ax.text(lx + 0.25 * w_ax, ly + 0.065 * h_ax, "grade C/D",
+            fontsize=10, va="center", zorder=220)
+    ax.plot([lx + 0.03 * w_ax, lx + 0.075 * w_ax],
+            [ly + 0.005 * h_ax] * 2, "-", color="#8B3A3A", linewidth=1.4,
             zorder=210)
-    ax.text(lx + 0.075 * w_ax, ly, "active faults (NZAFD, GNS)",
-            fontsize=7, va="center", zorder=220)
+    ax.text(lx + 0.09 * w_ax, ly + 0.005 * h_ax,
+            "active faults (NZAFD, GNS)", fontsize=10, va="center",
+            zorder=220)
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=150)

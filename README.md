@@ -27,7 +27,7 @@ any organisation's internal systems.
 human review** — do not interpret mechanisms in volcanic/geothermal
 settings from these solutions.
 
-<img src="events/solutions_map.jpg" width="430" alt="All automated moment tensor solutions to date: beachballs sized by Mw (solid = grade A/B, washed = C/D) over the NZ Active Faults Database">
+<p align="center"><img src="events/solutions_map.jpg" width="480" alt="All automated moment tensor solutions to date: beachballs sized by Mw (solid = grade A/B, washed = C/D) over the NZ Active Faults Database"></p>
 
 ## How it works
 
