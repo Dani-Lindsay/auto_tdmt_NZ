@@ -73,4 +73,6 @@ reference catalogue: 3708 solutions (columns: ['PublicID', 'Date', 'Latitude', '
   depth: mean dZ -6.0 km, |dZ| median 6.5 km
   mechanism: median min rotation 18 deg
 
-wrote /Users/dlindsay/tools/internal/auto_tdmt_NZ/validation/comparison.csv and comparison.jpg
+inter-reference baseline (Ristau vs USGS, n=9): median min rotation 18 deg — the floor any catalogue could reach
+
+wrote /Users/dlindsay/tools/internal/auto_tdmt_NZ/validation/comparison.csv and comparison_mw/comparison_depth/comparison_rotation .jpg

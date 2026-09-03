@@ -5,7 +5,7 @@ quick NDK feeds), with GeoNet as the source of every original hypocentre.
 
     pixi run python run05_validate.py
 
-Writes <OUTPUT_BASE>/validation/comparison.csv and comparison.jpg plus a
+Writes validation/comparison.csv and per-metric figures plus a
 terminal summary. Metrics per common event: dMw, dDepth, and the angle
 between the double-couple tensors built from each catalogue's nodal plane
 (basis-independent; 0 = identical mechanism).
@@ -135,10 +135,12 @@ def main() -> None:
           f"(columns: {list(cmt.columns)[:12]}...)")
 
     rows = []
+    origins = {}
     for path in sorted(config.EVENTS_DIR.glob("*/solution.json")):
         sol = json.loads(path.read_text())
         ev = sol["event"]
         pid = ev["public_id"]
+        origins[pid] = (ev["origin_time"], ev["latitude"], ev["longitude"])
         pref = sol["preferred"]
         p1 = pref["plane1"]
         base = {
@@ -218,33 +220,90 @@ def main() -> None:
         print(f"  mechanism: median min rotation "
               f"{sub.rotation_angle_deg.median():.0f} deg")
 
+    # inter-reference baseline: how far apart the REFERENCES are from
+    # each other on co-matched events (Ristau vs USGS) — the floor any
+    # catalogue could reach; drawn on the rotation figure
+    from invert import min_rotation_angle_deg as _rot
+    gsdr = {str(x["PublicID"]): (float(x["strike1"]), float(x["dip1"]),
+                                 float(x["rake1"]))
+            for _, x in cmt.iterrows()}
+    ref_ref = []
+    for pid, sub in df.groupby("PublicID"):
+        if "USGS_NEIC" not in set(sub.reference) or pid not in gsdr:
+            continue
+        row = origins.get(pid)
+        if row is None:
+            continue
+        m = match_usgs(usgs, *row)
+        if m and "strike" in m:
+            ref_ref.append(_rot(gsdr[pid],
+                                (m["strike"], m["dip"], m["rake"])))
+    baseline = float(np.median(ref_ref)) if ref_ref else None
+    if baseline is not None:
+        print(f"\ninter-reference baseline (Ristau vs USGS, n={len(ref_ref)}):"
+              f" median min rotation {baseline:.0f} deg — the floor any"
+              " catalogue could reach")
+
     colors = {"NZ_CMT_Ristau": "#0072B2", "GlobalCMT": "#E69F00",
               "USGS_NEIC": "#CC79A7"}
-    fig, axes = plt.subplots(2, 2, figsize=(10, 9))
+
+    # ---- figure 1: magnitude -------------------------------------------
+    fig, axes = plt.subplots(1, 2, figsize=(10, 4.4))
     for ref, sub in df.groupby("reference"):
         c = colors.get(ref, "black")
-        axes[0, 0].scatter(sub.ref_Mw, sub.our_Mw, c=c, s=25, label=ref)
-        axes[0, 1].scatter(sub.ref_depth, sub.our_depth, c=c, s=25)
-        axes[1, 0].hist(sub.rotation_angle_deg, bins=np.arange(0, 121, 10),
-                        color=c, alpha=0.6, label=ref)
-        axes[1, 1].scatter(sub.ref_Mw, sub.dMw, c=c, s=25)
-    axes[0, 0].plot([3.5, 6.5], [3.5, 6.5], "-", color="0.7", zorder=0)
-    axes[0, 0].set_xlabel("published Mw")
-    axes[0, 0].set_ylabel("auto Mw")
-    axes[0, 0].legend(fontsize=8)
-    lim = max(df.ref_depth.max(), df.our_depth.max()) + 5
-    axes[0, 1].plot([0, lim], [0, lim], "-", color="0.7", zorder=0)
-    axes[0, 1].set_xlabel("published depth (km)")
-    axes[0, 1].set_ylabel("auto depth (km)")
-    axes[1, 0].set_xlabel("minimum rotation angle (deg)")
-    axes[1, 0].set_ylabel("events")
-    axes[1, 1].axhline(0, color="0.7")
-    axes[1, 1].set_xlabel("published Mw")
-    axes[1, 1].set_ylabel("auto - published Mw")
-    fig.suptitle(f"auto_tdmt_NZ vs published NZ CMT solutions (n={len(df)})")
+        axes[0].scatter(sub.ref_Mw, sub.our_Mw, c=c, s=25, label=ref)
+        axes[1].scatter(sub.ref_Mw, sub.dMw, c=c, s=25)
+    axes[0].plot([3.5, 6.5], [3.5, 6.5], "-", color="0.7", zorder=0)
+    axes[0].set_xlabel("published Mw")
+    axes[0].set_ylabel("auto Mw")
+    axes[0].legend(fontsize=8)
+    axes[1].axhline(0, color="0.7")
+    axes[1].set_xlabel("published Mw")
+    axes[1].set_ylabel("auto - published Mw")
+    fig.suptitle("moment magnitude vs published catalogues")
     fig.tight_layout()
-    fig.savefig(out_dir / "comparison.jpg", dpi=150)
-    print(f"\nwrote {out_dir}/comparison.csv and comparison.jpg")
+    fig.savefig(out_dir / "comparison_mw.jpg", dpi=150)
+    plt.close(fig)
+
+    # ---- figure 2: depth ------------------------------------------------
+    fig, ax = plt.subplots(figsize=(5.4, 5))
+    for ref, sub in df.groupby("reference"):
+        ax.scatter(sub.ref_depth, sub.our_depth,
+                   c=colors.get(ref, "black"), s=25, label=ref)
+    lim = max(df.ref_depth.max(), df.our_depth.max()) + 5
+    ax.plot([0, lim], [0, lim], "-", color="0.7", zorder=0)
+    ax.set_xlabel("published depth (km)")
+    ax.set_ylabel("auto depth (km)")
+    ax.legend(fontsize=8)
+    fig.suptitle("centroid depth vs published catalogues")
+    fig.tight_layout()
+    fig.savefig(out_dir / "comparison_depth.jpg", dpi=150)
+    plt.close(fig)
+
+    # ---- figure 3: mechanism rotation, split by grade -------------------
+    # the all-grades histogram alone is misleading (C/D dominates the
+    # count); the grade split + the inter-agency floor is the story
+    fig, ax = plt.subplots(figsize=(7.5, 4.6))
+    rist = df[df.reference == "NZ_CMT_Ristau"]
+    bins = np.arange(0, 121, 10)
+    ax.hist(rist[rist.grade.isin(["A", "B"])].rotation_angle_deg, bins=bins,
+            color="#0072B2", alpha=0.85, label="grade A/B (published tier)")
+    ax.hist(rist[rist.grade.isin(["C", "D"])].rotation_angle_deg, bins=bins,
+            color="0.65", alpha=0.7, label="grade C/D (archive only)")
+    if baseline is not None:
+        ax.axvline(baseline, color="#D55E00", linestyle="--", linewidth=1.6,
+                   label=f"Ristau-vs-USGS floor ({baseline:.0f}\N{DEGREE SIGN}: "
+                         "how far apart the references themselves are)")
+    ax.set_xlabel("minimum rotation angle vs Ristau NZ CMT (deg)")
+    ax.set_ylabel("events")
+    ax.legend(fontsize=8)
+    fig.suptitle("mechanism agreement, split by quality grade")
+    fig.tight_layout()
+    fig.savefig(out_dir / "comparison_rotation.jpg", dpi=150)
+    plt.close(fig)
+
+    print(f"\nwrote {out_dir}/comparison.csv and comparison_mw/"
+          "comparison_depth/comparison_rotation .jpg")
 
 
 if __name__ == "__main__":

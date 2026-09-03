@@ -12,7 +12,7 @@ pixi run python run05_validate.py
 ```
 
 Outputs: `comparison.csv` (one row per matched event–reference pair),
-`comparison.jpg` (summary panels), `validation_report.txt` (console
+`comparison_mw.jpg`, `comparison_depth.jpg`, `comparison_rotation.jpg` (one figure per metric, embedded below), `validation_report.txt` (console
 log). Numbers quoted below are from the 2026 catalogue as of
 2026-09-04 (61 automated solutions).
 
@@ -38,6 +38,8 @@ signal or noise (noise fitting *inflates* moment, so a positive bias
 that grows toward small magnitudes is the signature of noise
 contamination, not calibration error).
 
+![Moment magnitude comparison](comparison_mw.jpg)
+
 **Current standing (vs Ristau)**: mean ΔMw **+0.04**, median |ΔMw|
 **0.11** (n = 39); A/B grades alone: mean **−0.02**, median |ΔMw|
 **0.07**. By reference-magnitude bin: +0.17 (Mw 3.5–4.0), +0.06
@@ -59,6 +61,8 @@ trades off against mechanism and %DC in long-period inversions, so
 systematic depth bias would contaminate everything downstream
 (including the Okada displacement forecast, which is the pipeline's
 purpose).
+
+![Centroid depth comparison](comparison_depth.jpg)
 
 **Current standing (vs Ristau)**: median |ΔZ| **4.0 km** overall;
 **1.0 km** for A/B grades. Verdict: when the quality gates pass, the
@@ -106,12 +110,23 @@ rotations of 15–30° are normal even between expert agencies (cf.
 Kagan 2003), so values in that range mean "as consistent as published
 catalogues are with each other".
 
-**Current standing**: median minimum rotation vs Ristau **44°** (all
-61 solutions, n = 39 matches) but **18°** for A/B grades vs **56°**
-for C/D — the letter grades cleanly separate publishable geometry
-from archive-only material. Vs USGS: **18°** (n = 10). Vs GCMT:
-**22°** (n = 6). Verdict: A/B mechanisms agree with every reference
-at the level references agree with each other.
+![Mechanism rotation by grade](comparison_rotation.jpg)
+
+**Current standing**: the number that matters is the grade split. The
+A/B (published) tier sits at a median **18°** vs Ristau (and 18° vs
+USGS, 22° vs GCMT); the C/D archive tier sits at **56°**, dominated by
+known failure modes (its worst members, 86–110°, are all grade-D
+solutions whose depth search ran to the grid edge). The all-grades
+median of 44° therefore reflects catalogue *composition* — the matched
+set is three-quarters C/D — not the quality of what gets published.
+
+**Is 18° good?** Yes, and measurably so: for the nine events where
+BOTH Ristau and USGS publish solutions, the two expert reference
+catalogues disagree with *each other* by a median of **18°**
+(individual events range 7–81°) — the dashed line on the figure. The
+A/B tier therefore agrees with the references at exactly the level the
+references agree among themselves; no catalogue could score better
+against Ristau than Ristau scores against USGS.
 
 ## 5. What the grades mean for a reader of the catalogue
 
