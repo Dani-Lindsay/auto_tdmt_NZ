@@ -141,6 +141,33 @@ published NZ regional CMT solutions
 ([GeoNet/data moment-tensor](https://github.com/GeoNet/data/tree/main/moment-tensor);
 their MT elements are in 1e20 dyne-cm).
 
+## Quality grades — how a solution is rated
+
+Every solution gets a BSL-style letter grade from three measured
+quantities: the total variance reduction (**VR**, how much of the
+waveform data the solution explains), the number of stations in the
+final inversion (**NS**), and the largest unsampled arc of azimuths
+around the epicentre (**gap** — a mechanism constrained only from one
+side is weakly constrained no matter how well it fits). The first row
+that matches, top down:
+
+| Grade | VR | Stations | Azimuthal gap | Meaning |
+|---|---|---|---|---|
+| **A** | ≥ 70% | ≥ 5 | ≤ 180° | Well-fit, well-sampled: publishable as-is |
+| **B** | ≥ 60% | ≥ 3 | ≤ 270° | Solid: publishable |
+| **C** | ≥ 50% | ≥ 2 | any | Indicative only — archived, never emailed |
+| **D** | below any C bar | | | Archive/diagnostic material; treat all numbers as unreliable |
+
+Only A/B solutions can pass the publication gate. The grades are
+validated against independent catalogues
+([validation/](validation/README.md)): A/B mechanisms agree with the
+Ristau NZ CMT and USGS references at a median rotation of 18° — the
+same level those two expert catalogues agree with each other — while
+C/D sits at 56°, which is exactly why C/D never publishes. A
+`depth_at_grid_edge` warning is recorded (not blocking) when the depth
+search stops at the boundary of the Green's-function grid, a known
+artifact signature.
+
 ## Operating thresholds
 
 | Stage | Rule |

@@ -71,7 +71,13 @@ NRT_WINDOW_DAYS = 8
 # of M/MLv/mB summary magnitudes — deliberately loose; everything above this
 # floor is processed and archived, publication is decided later on OUR Mw)
 # ---------------------------------------------------------------------------
-PROCESS_MIN_PRELIM_MAG = 4.0
+# Lowered 4.0 -> 3.7 (2026-09-04) after the small-event review: GeoNet
+# preliminary M runs ~0.2-0.3 above the final Mw for small events, so a
+# 3.7 prelim floor reaches true Mw ~3.4-3.5 - the smallest this network
+# + 10-50 s band demonstrably constrains (2026p216882 Mw 3.6 grade C,
+# 2026p221690 Mw 3.77 grade B). A 3.5 prelim floor would mostly add
+# unsolvable Mw~3.2 events (+30% compute) below Ristau's own coverage.
+PROCESS_MIN_PRELIM_MAG = 3.7
 # Events deeper than this cannot produce measurable surface displacement
 # at these magnitudes (the purpose of this tool). GeoNet PLACEHOLDER depths
 # (incl. 33 km) are exempt: their true depth is unknown and often shallow,
