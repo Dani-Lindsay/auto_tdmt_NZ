@@ -54,7 +54,8 @@ GeoNet quake API (poll, 10 min cron)
 ```
 
 Solutions, figures, and provenance are committed to `events/` — the repo is
-the public archive — and [`events/catalogue.csv`](events/catalogue.csv) is
+the public archive — and [`events/catalogue.csv`](events/catalogue.csv) (column reference:
+[`events/CATALOGUE_README.md`](events/CATALOGUE_README.md)) is
 regenerated from the archived solutions after every event: one row per
 solution with origin, nodal planes, Mw/Mo, centroid depth, %DC/%CLVD, VR and
 MT elements (1e20 dyne-cm, matching the GeoNet CMT catalogue conventions). Every `solution.json` records the velocity model, GF

@@ -51,9 +51,12 @@ def _publish_flag(decision: dict) -> str:
 COLUMNS = [
     "PublicID", "Date", "Latitude", "Longitude",
     "strike1", "dip1", "rake1", "strike2", "dip2", "rake2",
-    "GeoNet_M", "GeoNet_depth", "Mw", "Depth", "Mo", "NS", "DC", "CLVD", "VR",
+    "GeoNet_M", "GeoNet_depth", "Mw", "Depth", "Mo",
+    "NS", "AzGap", "Grade", "DC", "CLVD", "VR",
+    "Jk_n", "Jk_Mw_std", "Jk_DC_std", "Jk_rot_deg",
+    "PredDisp_cm", "Detectable",
     "Mxx", "Mxy", "Mxz", "Myy", "Myz", "Mzz",
-    "band", "model", "quality_flag", "publish_flag", "published",
+    "Band", "Model", "quality_flag", "publish_flag", "published",
 ]
 
 
@@ -98,15 +101,26 @@ def build_catalogue(events_dir: Path | None = None) -> Path | None:
             # Mo in dyne-cm; MT elements in 1e20 dyne-cm (GeoNet convention)
             "Mo": f"{p['m0_dyne_cm']:.3e}",
             "NS": s["quality"]["n_stations_used"],
+            "AzGap": s["quality"].get("azimuthal_gap_deg", ""),
+            "Grade": s["quality"].get("grade", ""),
             "DC": round(p["pdc"], 1),
             "CLVD": round(p["pclvd"], 1),
             "VR": round(p["vr"], 1),
+            "Jk_n": s.get("jackknife", {}).get("n_subsets", ""),
+            "Jk_Mw_std": s.get("jackknife", {}).get("mw_std", ""),
+            "Jk_DC_std": s.get("jackknife", {}).get("dc_std", ""),
+            "Jk_rot_deg": s.get("jackknife", {}).get(
+                "max_tensor_rotation_deg", ""),
+            "PredDisp_cm": round(
+                s.get("forward_model", {}).get("peak_abs_cm", 0), 3)
+                if s.get("forward_model") else "",
+            "Detectable": s.get("forward_model", {}).get("detectable", ""),
             **{
                 k.capitalize().replace("m", "M", 1): round(v / 1e20, 4)
                 for k, v in mt.items()
             },
-            "band": s.get("chosen_band", ""),
-            "model": s["provenance"]["velocity_model"],
+            "Band": s.get("chosen_band", "").replace("band_", ""),
+            "Model": s["provenance"]["velocity_model"],
             # "True" when the solution passed, else the actual exit
             # reason(s) so a reader can see WHY it fell short at a glance
             "quality_flag": _quality_flag(s["quality"]),
