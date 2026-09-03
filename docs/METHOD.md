@@ -78,17 +78,20 @@ not a noise proxy, make the final call.
    single-handedly steer the least-squares moment — e.g. NZ.RDHZ at 139x
    the median turned an Mw 5.0 into an apparent Mw 6.2 before this screen
    existed.
-4. **Seed depth**: the best-SNR station per 45-deg azimuth sector (max 8)
-   runs the full depth search, fixing a provisional depth that no single
-   bad station can steer.
-5. **Backward elimination**: the full screened pool is solved at the seed
-   depth and the worst-fitting station (individual VR < 10%) is removed
-   iteratively — never below 3 stations, and a sector's sole
-   representative is protected unless its VR is negative. Data evicts
-   stations, exactly the manual test-around-and-drop workflow.
-6. **Final solve**: the surviving set runs the full depth search; the
-   leave-one-out jackknife then quantifies how much any single station
-   moves the answer.
+4. **Depth-profile culling**: one full depth search with the whole pool
+   yields every station's VR at every trial depth. A station whose BEST
+   VR across all depths never clears the abundance-conditional floor
+   (30% while more than 8 stations, 20% above 5, 10% below) is
+   consistently bad and dropped — a station misaligned only at wrong
+   depths is never condemned, and no provisional depth is assumed. A
+   sector's sole representative survives unless even its best VR is
+   negative; the set never shrinks below 3.
+5. **Greedy earn-your-seat pass** at the survivors' preferred depth: the
+   worst-fitting station is test-dropped while the joint VR improves by
+   at least 2 points; any removals trigger one final full depth search.
+6. **Jackknife**: leave-one-station-out at the preferred depth
+   quantifies how much any single station moves the answer (Mw and %DC
+   spreads, maximum mechanism rotation).
 7. **Weighting**: inverse-distance (mttime built-in). Misfit-based
    weighting risks suppressing exactly the azimuth-constraining stations
    that look different; the elimination loop serves that purpose with an
@@ -98,11 +101,20 @@ Every screened, eliminated or retained station is recorded in
 `solution.json` with its SNR, tier, amplitude ratio or fit, so any
 solution's station set can be audited after the fact.
 
-### 3.2 Pre-processing Station distance must
-  exceed 3x source depth (point-source/far-field assumption; waived for
-  GeoNet placeholder depths, which are unreliable).
-- **Waveform windows**: origin−150 s to origin+230 s downloaded; final cut
-  origin−30 s to origin+200 s.
+### 3.2 Pre-processing
+
+- **Far-field guard**: station distance must exceed 3x source depth
+  (point-source assumption; applied only for shallow, non-placeholder
+  depths).
+- **Waveform windows**: origin−150 s to origin+230 s downloaded; final
+  cut origin−30 s to origin+200 s.
+- **Inversion record length**: for events with preliminary M < 4.5 the
+  fitted window is shortened per station to a deterministic kinematic
+  rule — total window = 30 s pre-origin + distance/2.8 km/s + 20 s tail,
+  clamped to 60–150 s — so the surface-wave train is fully inside the
+  window but trailing noise cannot drag VR down. This is a fixed cut,
+  not an amplitude-based ("returns to zero") cut, for reproducibility.
+  Larger events keep the full 150 s window.
 - **Response removal**: to displacement with pre-filter
   (0.004, 0.007, 10, 20) Hz, then rotation to ZNE and NE→RT along the
   great-circle back-azimuth.
