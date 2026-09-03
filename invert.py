@@ -132,17 +132,20 @@ def invert_with_rejection(
     event: Event, stations: list[dict], depths: list[float],
     event_dir: Path, green_dir: Path,
 ):
-    """Wide-pool backward elimination (include everything, iteratively
-    remove poor fitters — data evicts stations, not an SNR proxy):
+    """Depth-profile station selection (clean hierarchy):
 
-    1. a SEED of the best-SNR station per azimuth sector (max 8) runs the
-       full depth search to fix a provisional depth that poison stations
-       cannot steer;
-    2. at that fixed depth, the full pool is solved and the worst station
-       (individual VR < STATION_VR_FLOOR) is removed iteratively — never
-       below MIN_STATIONS_USED, and a sector's sole representative is
-       protected unless its VR is negative;
-    3. the surviving set runs the final full depth search.
+    1. FULL pool, FULL depth search — one inversion pass yields every
+       station's VR at every trial depth (its depth profile);
+    2. a station whose BEST VR across all depths never clears the
+       abundance-conditional floor (30% while >8 stations, 20% >5, 10%
+       below) is consistently bad and dropped — one misaligned depth
+       cannot condemn a station, and no provisional depth is ever assumed;
+       a sector's sole representative survives unless even its best VR is
+       negative;
+    3. full depth search with the survivors -> preferred solution;
+    4. greedy earn-your-seat pass at the preferred depth: the worst
+       station is test-dropped while the joint VR improves by >= 2;
+    5. if the greedy pass removed anyone, one final full depth search.
 
     Returns (inversion, kept_stations, rejected).
     """
@@ -151,33 +154,13 @@ def invert_with_rejection(
     def _sid(r):
         return f"{r['network']}.{r['station']}.{r['location']}"
 
+    def _sector(r):
+        return int(r["azimuth"] // 45) % 8
+
     def _solve(rows, dd):
         return run_inversion(
             write_mtinv(event, rows, dd, event_dir, green_dir))
 
-    def _station_vrs(inv):
-        mt = inv.moment_tensors[inv.preferred_tensor_id]
-        return {r.station: float(r.VR) for r in mt.station_table.itertuples()}
-
-    def _sector(r):
-        return int(r["azimuth"] // 45) % 8
-
-    # 1: seed depth search — best SNR per sector
-    by_sector: dict[int, dict] = {}
-    for r in stations:
-        k = _sector(r)
-        if k not in by_sector or r["snr"] > by_sector[k]["snr"]:
-            by_sector[k] = r
-    seed = sorted(by_sector.values(), key=lambda r: r["distance_km"])
-    if len(seed) < config.MIN_STATIONS_USED:
-        seed = stations
-    inv_seed = _solve(seed, depths)
-    depth0 = float(inv_seed.moment_tensors[inv_seed.preferred_tensor_id].depth)
-    print(f"seed depth search ({len(seed)} stations): {depth0:g} km")
-
-    # 2: backward elimination of the full pool at the fixed seed depth,
-    # against an abundance-conditional floor: strict while stations are
-    # plentiful, relaxed as the set thins
     def _floor(n):
         if n > config.RICH_STATION_COUNT:
             return config.STATION_VR_FLOOR_RICH
@@ -185,72 +168,83 @@ def invert_with_rejection(
             return config.STATION_VR_FLOOR_MID
         return config.STATION_VR_FLOOR
 
+    # 1: full pool, full depth search -> per-station VR-vs-depth profiles
+    inv1 = _solve(stations, depths)
+    best_vr: dict[str, float] = {}
+    for mt in inv1.moment_tensors:
+        for r in mt.station_table.itertuples():
+            v = float(r.VR)
+            if v > best_vr.get(r.station, -1e9):
+                best_vr[r.station] = v
+
+    # 2: drop the consistently bad (best-over-depth VR below the floor)
+    floor0 = _floor(len(stations))
+    sectors = {}
+    for r in stations:
+        sectors.setdefault(_sector(r), []).append(r)
+    candidates = sorted(
+        (r for r in stations if best_vr.get(_sid(r), 0.0) < floor0),
+        key=lambda r: best_vr.get(_sid(r), 0.0))
     current = list(stations)
-    for _ in range(len(stations)):
-        inv = _solve(current, [depth0])
-        vrs = _station_vrs(inv)
-        floor_dyn = _floor(len(current))
-        sectors_left = {}
-        for r in current:
-            sectors_left.setdefault(_sector(r), []).append(r)
-        candidates = []
-        for r in current:
-            vr = vrs.get(_sid(r), 0.0)
-            if vr >= floor_dyn:
-                continue
-            sole = len(sectors_left[_sector(r)]) == 1
-            if sole and vr >= 0.0:
-                continue  # protected: only coverage of its sector
-            candidates.append((vr, r))
-        if not candidates or len(current) <= config.MIN_STATIONS_USED:
+    for r in candidates:
+        if len(current) <= config.MIN_STATIONS_USED:
             break
-        vr_worst, worst = min(candidates, key=lambda c: c[0])
+        sole = len([x for x in sectors[_sector(r)] if x in current]) == 1
+        if sole and best_vr.get(_sid(r), 0.0) >= 0.0:
+            continue
+        current.remove(r)
         rejected.append({
-            "station": _sid(worst),
-            "reason": f"eliminated: VR {vr_worst:.0f} < {floor_dyn:g} "
-                      f"(floor at {len(current)} stations) at seed depth "
-                      f"{depth0:g} km",
+            "station": _sid(r),
+            "reason": f"consistently bad: best VR "
+                      f"{best_vr.get(_sid(r), 0.0):.0f} over "
+                      f"{len(depths)} depths < floor {floor0:g}",
         })
-        current.remove(worst)
-    # 2b: greedy improvement — a station above the floor must earn its
-    # seat: drop it if the joint fit improves by ELIMINATION_VR_GAIN
+    if rejected:
+        print(f"dropped {len(rejected)} consistently-bad stations: "
+              f"{[d['station'] for d in rejected]}")
+
+    # 3: survivors, full depth search
+    inv2 = _solve(current, depths) if rejected else inv1
+    depth_pref = float(
+        inv2.moment_tensors[inv2.preferred_tensor_id].depth)
+
+    # 4: greedy earn-your-seat at the preferred depth
+    greedy = 0
     while len(current) > config.MIN_STATIONS_USED:
-        inv_cur = _solve(current, [depth0])
+        inv_d = _solve(current, [depth_pref])
         base = float(
-            inv_cur.moment_tensors[inv_cur.preferred_tensor_id].total_VR)
-        vrs = _station_vrs(inv_cur)
+            inv_d.moment_tensors[inv_d.preferred_tensor_id].total_VR)
+        vrs = {r.station: float(r.VR)
+               for r in inv_d.moment_tensors[0].station_table.itertuples()}
         sectors_left = {}
         for r in current:
             sectors_left.setdefault(_sector(r), []).append(r)
-        droppable = [
-            r for r in current
-            if not (len(sectors_left[_sector(r)]) == 1
-                    and vrs.get(_sid(r), 0) >= 0.0)
-        ]
+        droppable = [r for r in current
+                     if not (len(sectors_left[_sector(r)]) == 1
+                             and vrs.get(_sid(r), 0) >= 0.0)]
         if not droppable:
             break
         worst = min(droppable, key=lambda r: vrs.get(_sid(r), 0))
         trial = [r for r in current if r is not worst]
-        inv_t = _solve(trial, [depth0])
+        inv_t = _solve(trial, [depth_pref])
         tot_t = float(
             inv_t.moment_tensors[inv_t.preferred_tensor_id].total_VR)
         if tot_t >= base + config.ELIMINATION_VR_GAIN:
             rejected.append({
                 "station": _sid(worst),
-                "reason": f"test-drop improved joint fit: total VR "
-                          f"{base:.0f} -> {tot_t:.0f} at {depth0:g} km",
+                "reason": f"test-drop improved joint fit: VR {base:.0f} "
+                          f"-> {tot_t:.0f} at {depth_pref:g} km",
             })
             current = trial
+            greedy += 1
         else:
             break
-    if rejected:
-        print(f"eliminated {len(rejected)} stations at {depth0:g} km: "
-              f"{[d['station'] for d in rejected]}")
+    if greedy:
+        print(f"greedy pass removed {greedy} more stations")
+        current.sort(key=lambda r: r["distance_km"])
+        inv2 = _solve(current, depths)
 
-    # 3: final full depth search with the survivors
-    current.sort(key=lambda r: r["distance_km"])
-    inv_final = _solve(current, depths)
-    return inv_final, current, rejected
+    return inv2, current, rejected
 
 
 def dc_tensor(strike: float, dip: float, rake: float) -> np.ndarray:

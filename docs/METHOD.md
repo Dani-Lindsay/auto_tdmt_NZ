@@ -135,10 +135,12 @@ waveforms".
   (ZDD RDD ZDS RDS TDS ZSS RSS TSS ZEX REX) that mttime's
   `green="herrmann"` mode expects (displacement, cm, 1e20 dyne-cm source).
 - **Library grid**: distances 10–500 km at 5 km spacing; source depths
-  2–30 km at 2 km and 34–58 km at 4 km (Fiordland subduction events
-  exceed crustal depths); dt = 1 s, npts = 256, vred = 0 (traces start at
-  origin time). Runtime lookup takes the nearest grid distance
-  (≤2.5 km error, absorbed by the per-station time-shift search).
+  1.0–5.0 km at 0.5 km (fine where shallow depth discrimination
+  happens), 6–10 km at 1 km, 12–30 km at 2 km, and 34–58 km at 4 km
+  (Fiordland subduction events exceed crustal depths); dt = 1 s,
+  npts = 256, vred = 0 (traces start at origin time). Runtime lookup
+  takes the nearest grid distance (≤2.5 km error, absorbed by the
+  per-station time-shift search).
 - Libraries are stored unfiltered and band-passed per event to match the
   data exactly. A manifest records the model file's SHA-256, grid, and
   build time. CI never runs CPS — it downloads the library tarball.
