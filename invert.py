@@ -47,19 +47,18 @@ def write_mtinv(
     event: Event, stations: list[dict], depths: list[float],
     event_dir: Path, green_dir: Path,
 ) -> Path:
-    # magnitude-aware record length: for small events the inversion
-    # window ends shortly after the surface-wave train so trailing noise
-    # cannot drag VR down (window = dist/group_vel + tail, clamped)
-    if event.prelim_mag < config.SHORT_WINDOW_MAX_MAG:
-        npts_col = [
-            int(min(config.INV_NPTS, max(
-                config.WINDOW_MIN_S,
-                r["distance_km"] / config.WINDOW_GROUP_VEL_KMS
-                + config.WINDOW_TAIL_S)))
-            for r in stations
-        ]
-    else:
-        npts_col = config.INV_NPTS
+    # distance-adaptive record length (all magnitudes): each station's
+    # window ends shortly after its surface-wave train — pre-origin 30 s
+    # + dist/group_vel + magnitude-dependent tail, clamped — so trailing
+    # noise cannot drag VR down anywhere
+    tail = config.window_tail_s(event.prelim_mag)
+    npts_col = [
+        int(min(config.INV_NPTS, max(
+            config.WINDOW_MIN_S,
+            config.TIME_BEFORE_S
+            + r["distance_km"] / config.WINDOW_GROUP_VEL_KMS + tail)))
+        for r in stations
+    ]
     frame = {
         "station": [
             f"{r['network']}.{r['station']}.{r['location']}" for r in stations

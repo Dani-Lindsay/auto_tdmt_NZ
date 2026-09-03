@@ -108,13 +108,13 @@ solution's station set can be audited after the fact.
   depths).
 - **Waveform windows**: origin−150 s to origin+230 s downloaded; final
   cut origin−30 s to origin+200 s.
-- **Inversion record length**: for events with preliminary M < 4.5 the
-  fitted window is shortened per station to a deterministic kinematic
-  rule — total window = 30 s pre-origin + distance/2.8 km/s + 20 s tail,
-  clamped to 60–150 s — so the surface-wave train is fully inside the
-  window but trailing noise cannot drag VR down. This is a fixed cut,
-  not an amplitude-based ("returns to zero") cut, for reproducibility.
-  Larger events keep the full 150 s window.
+- **Inversion record length**: distance-adaptive at every magnitude —
+  each station'''s fitted window is 30 s pre-origin + distance/2.8 km/s +
+  a magnitude-dependent tail (20 s below M4.5, 40 s to M5.5, 60 s
+  above), clamped to 60–150 s. A close station'''s train is over quickly
+  regardless of event size; fitting the empty tail only taxes VR. This
+  is a deterministic kinematic cut, not an amplitude-based one, for
+  reproducibility.
 - **Response removal**: to displacement with pre-filter
   (0.004, 0.007, 10, 20) Hz, then rotation to ZNE and NE→RT along the
   great-circle back-azimuth.

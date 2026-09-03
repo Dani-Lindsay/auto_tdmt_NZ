@@ -166,13 +166,21 @@ ELIMINATION_VR_GAIN = 2.0
 # "plateau" and DC alone chose the depth).
 DC_TIEBREAK_MIN_VR = 20.0
 
-# Magnitude-aware inversion window (record length): small events' surface
-# waves pass quickly; the long tail is noise that drags VR down even when
-# the main motion is fit well. Window = dist/group_vel + tail, clamped.
-SHORT_WINDOW_MAX_MAG = 4.5
+# Distance-adaptive inversion window (record length), ALL magnitudes: a
+# close station's surface-wave train is over quickly regardless of event
+# size, and fitting the empty tail only taxes VR. Per-station window =
+# 30 s pre-origin + dist/group_vel + tail(M), clamped; the tail grows
+# with magnitude because larger sources ring longer.
 WINDOW_GROUP_VEL_KMS = 2.8
-WINDOW_TAIL_S = 50.0
 WINDOW_MIN_S = 60.0
+
+
+def window_tail_s(prelim_mag: float) -> float:
+    if prelim_mag < 4.5:
+        return 20.0
+    if prelim_mag < 5.5:
+        return 40.0
+    return 60.0
 
 # Preferred-solution rule (EPS207 §3.3: VR alone is a weak depth
 # discriminator; %DC is more diagnostic): among solutions whose VR is within
