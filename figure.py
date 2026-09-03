@@ -119,7 +119,7 @@ def make_share_figure(
         cba.ax.tick_params(labelsize=6)
     else:
         ax.plot([r["longitude"] for r in used], [r["latitude"] for r in used],
-                "^", color="forestgreen", markeredgecolor="black",
+                "^", color="#E69F00", markeredgecolor="black",
                 markeredgewidth=0.4, markersize=8,
                 transform=ccrs.PlateCarree(), zorder=7)
     for r in used:
