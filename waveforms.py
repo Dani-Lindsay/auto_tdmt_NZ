@@ -202,12 +202,13 @@ def fetch_and_process(
             corners=config.FILTER_CORNERS, zerophase=True,
         )
         snr = _snr(snr_st, origin)
-        if snr < config.SNR_TIER_LOW:
-            _drop(f"SNR {snr:.1f} < {config.SNR_TIER_LOW} (low tier floor)")
-            continue
+        # SNR failures are still processed and written under a rejected_
+        # prefix so the per-band all-station waveform figure can show WHY
+        # they were excluded; mtinv.in never references prefixed files.
+        prefix = "rejected_" if snr < config.SNR_TIER_LOW else ""
         row["snr_tier"] = "ok" if snr >= config.MIN_SNR else "low"
 
-        if stages is not None:
+        if stages is not None and not prefix:
             for src, key in ((raw_copy, "raw"), (st.copy(), "displacement")):
                 for tr in src:
                     tr.stats.distance = row["distance_km"] * 1000.0
@@ -252,7 +253,12 @@ def fetch_and_process(
             tr.stats.sac = sacd
             comp = tr.stats.channel[-1]
             assert comp in "ZRT", f"{sid}: unexpected component {comp}"
-            tr.write(str(workdir / f"{sid}.{comp}.dat"), format="SAC")
+            tr.write(str(workdir / f"{prefix}{sid}.{comp}.dat"),
+                     format="SAC")
+
+        if prefix:
+            _drop(f"SNR {snr:.1f} < {config.SNR_TIER_LOW} (low tier floor)")
+            continue
 
         if stages is not None:
             final_copy = st.copy()
@@ -286,7 +292,9 @@ def fetch_and_process(
         for r in flagged:
             sid = f"{r['network']}.{r['station']}.{r['location']}"
             for comp in "ZRT":
-                (workdir / f"{sid}.{comp}.dat").unlink(missing_ok=True)
+                p = workdir / f"{sid}.{comp}.dat"
+                if p.exists():  # keep for the all-station waveform figure
+                    p.rename(workdir / f"rejected_{p.name}")
             dropped.append({
                 "station": sid,
                 "reason": f"amplitude outlier: peak x dist "

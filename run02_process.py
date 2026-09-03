@@ -68,6 +68,14 @@ def process_band(event, band: tuple[float, float], band_dir: Path,
     solution = invert.summarize(inv, event, kept, dropped + rejected, model)
     solution["filter_band_hz"] = list(band)
     invert.save_solution(solution, band_dir)
+    try:
+        wf = figure.plot_band_waveforms(
+            band_dir, solution,
+            band_dir.parent / f"{event.public_id}_station_waveforms_"
+                              f"{config.band_tag(band)}.jpg")
+        print(f"  all-station waveforms: {wf.name}")
+    except Exception as e:  # noqa: BLE001 — diagnostic figure, not data
+        print(f"  WARNING: all-station waveform figure failed: {e}")
     pref = solution["preferred"]
     print(f"band result: depth {pref['depth_km']:g} km, Mw {pref['mw']:.2f}, "
           f"VR {pref['vr']:.1f}%, DC {pref['pdc']:.0f}%")

@@ -540,3 +540,96 @@ def plot_depth_sensitivity(solution: dict, out_path: Path) -> Path:
     fig.savefig(out_path, dpi=150)
     plt.close(fig)
     return out_path
+
+
+def plot_band_waveforms(band_dir: Path, solution: dict,
+                        out_path: Path) -> Path:
+    """One record section per filter band showing EVERY candidate station
+    with data — used, eliminated-by-fit, and rejected (low SNR / amplitude
+    outlier) — so exclusions can be judged from the waveforms themselves.
+    Traces are the processed displacement data (cm) actually offered to the
+    inversion; rejected stations come from the rejected_*.dat files that
+    waveforms.py now writes instead of discarding.
+    """
+    from obspy import read
+
+    used_ids = {f"{r['network']}.{r['station']}.{r['location']}"
+                for r in solution["stations_used"]}
+    reasons = {d["station"]: d.get("reason", "")
+               for d in solution.get("stations_dropped", [])}
+
+    entries = []
+    for zf in sorted(band_dir.glob("*.Z.dat")):
+        rejected = zf.name.startswith("rejected_")
+        sid = zf.name[len("rejected_"):-len(".Z.dat")] if rejected \
+            else zf.name[:-len(".Z.dat")]
+        comps = {}
+        for comp in "ZRT":
+            p = band_dir / f"{'rejected_' if rejected else ''}{sid}.{comp}.dat"
+            if p.exists():
+                comps[comp] = read(str(p), format="SAC")[0]
+        assert "Z" in comps, f"{sid}: Z component missing"
+        hdr = comps["Z"].stats.sac
+        if sid in used_ids:
+            status, color = "used", "black"
+        elif rejected:
+            status, color = reasons.get(sid, "rejected"), "0.62"
+        else:
+            status, color = reasons.get(sid, "eliminated by fit"), "#D55E00"
+        entries.append(dict(sid=sid, comps=comps, dist=float(hdr.dist),
+                            az=float(hdr.az), status=status, color=color))
+    assert entries, f"no .dat waveforms found in {band_dir}"
+    entries.sort(key=lambda e: e["dist"])
+
+    n = len(entries)
+    fig, axes = plt.subplots(
+        n, 3, figsize=(11, 0.95 * n + 1.2), sharex=True, squeeze=False)
+    for i, e in enumerate(entries):
+        norm = max(np.abs(tr.data).max() for tr in e["comps"].values())
+        norm = norm if norm > 0 else 1.0
+        for j, comp in enumerate("ZRT"):
+            ax = axes[i, j]
+            ax.set_yticks([])
+            ax.set_ylim(-1.15, 1.15)
+            for s in ("top", "right", "left"):
+                ax.spines[s].set_visible(False)
+            tr = e["comps"].get(comp)
+            if tr is None:
+                ax.text(0.5, 0.5, "no data", transform=ax.transAxes,
+                        ha="center", fontsize=6, color="0.5")
+                continue
+            t = float(tr.stats.sac.b) + tr.times()
+            ax.plot(t, tr.data / norm, color=e["color"], linewidth=0.7)
+            ax.text(0.995, 0.96, f"{np.abs(tr.data).max():.2e} cm",
+                    transform=ax.transAxes, ha="right", va="top",
+                    fontsize=5.5, color="0.45")
+            if i == 0:
+                ax.set_title(comp, fontsize=9)
+        axes[i, 0].text(
+            -0.02, 0.72, f"{e['sid'].split('.')[1]}  "
+            f"{e['dist']:.0f} km  az {e['az']:.0f}°",
+            transform=axes[i, 0].transAxes, ha="right", va="center",
+            fontsize=7, fontweight="bold" if e["status"] == "used" else
+            "normal", color="black" if e["status"] == "used" else "0.35")
+        axes[i, 0].text(
+            -0.02, 0.28, e["status"][:58], transform=axes[i, 0].transAxes,
+            ha="right", va="center", fontsize=5.5,
+            color="black" if e["status"] == "used" else e["color"])
+    for j in range(3):
+        axes[-1, j].set_xlabel("time from origin (s)", fontsize=7)
+        axes[-1, j].tick_params(labelsize=6)
+
+    band = solution.get("filter_band_hz")
+    band_txt = (f"  band {1/band[1]:.0f}–{1/band[0]:.0f} s"
+                if band else "")
+    ev = solution["event"]
+    fig.suptitle(
+        f"{ev['public_id']} — all candidate stations{band_txt}   "
+        "(black = used, orange = eliminated by fit, grey = rejected; "
+        "traces normalised per station)", fontsize=9, y=0.995)
+    fig.subplots_adjust(left=0.26, right=0.985, top=1 - 0.55 / (n + 1.2),
+                        bottom=0.55 / (n + 1.2), hspace=0.35, wspace=0.08)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=150)
+    plt.close(fig)
+    return out_path
