@@ -47,14 +47,17 @@ def write_mtinv(
     event: Event, stations: list[dict], depths: list[float],
     event_dir: Path, green_dir: Path,
 ) -> Path:
-    # distance-adaptive record length (all magnitudes): each station's
-    # window ends shortly after its surface-wave train — pre-origin 30 s
-    # + dist/group_vel + magnitude-dependent tail, clamped — so trailing
-    # noise cannot drag VR down anywhere
+    # adaptive record length: each station's window ends shortly after
+    # its surface-wave train. waveforms.py computes the signal-aware end
+    # (kinematic minimum, envelope-extended for slow paths) and stores it
+    # as window_end_s; the kinematic formula is the fallback for rows
+    # that lack it.
     tail = config.window_tail_s(event.prelim_mag)
     npts_col = [
         int(min(config.INV_NPTS, max(
             config.WINDOW_MIN_S,
+            config.TIME_BEFORE_S + r["window_end_s"]
+            if "window_end_s" in r else
             config.TIME_BEFORE_S
             + r["distance_km"] / config.WINDOW_GROUP_VEL_KMS + tail)))
         for r in stations

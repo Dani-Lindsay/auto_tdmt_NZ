@@ -303,7 +303,26 @@ def fetch_and_process(
             config.WINDOW_MIN_S,
             config.TIME_BEFORE_S
             + row["distance_km"] / config.WINDOW_GROUP_VEL_KMS + tail)))
-        tend = wlen - config.TIME_BEFORE_S  # s after origin
+        tend = wlen - config.TIME_BEFORE_S  # s after origin (kinematic MIN)
+
+        # signal-aware window end (REVIEW_LEARNINGS item 13): slow paths
+        # (Hikurangi accretionary prism, ~1.2-1.7 km/s effective group
+        # velocity) deliver trains the kinematic cut bisects. Extend the
+        # end to where the smoothed 3-component envelope decays back
+        # toward the pre-event level — deterministic, data-derived —
+        # never shorter than the kinematic value, capped by INV_NPTS.
+        ref = st[0]
+        b0 = -1.0 * (origin - ref.stats.starttime)
+        tt = b0 + np.arange(ref.stats.npts) * ref.stats.delta
+        env = np.max([np.abs(tr.data) for tr in st], axis=0)
+        win = int(round(15.0 / config.DT))  # 15 s smoothing
+        env = np.convolve(env, np.ones(win) / win, mode="same")
+        noise_lvl = float(np.median(env[(tt > b0 + 5) & (tt < -2)]))
+        thresh = max(2.0 * noise_lvl, 0.05 * float(env.max()))
+        t_cap = config.INV_NPTS - config.TIME_BEFORE_S  # 120 s after origin
+        live = (tt >= tend) & (tt <= t_cap) & (env > thresh)
+        if live.any():
+            tend = int(min(t_cap, tt[live].max() + 10.0))  # +10 s pad
         ratios = []
         for tr in st:
             b = -1.0 * (origin - tr.stats.starttime)

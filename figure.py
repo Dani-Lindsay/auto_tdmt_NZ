@@ -560,6 +560,10 @@ def plot_band_waveforms(band_dir: Path, solution: dict,
     tail = _config.window_tail_s(mag)
     used_ids = {f"{r['network']}.{r['station']}.{r['location']}"
                 for r in solution["stations_used"]}
+    window_ends = {f"{r['network']}.{r['station']}.{r['location']}":
+                   r.get("window_end_s")
+                   for r in solution["stations_used"]
+                   if r.get("window_end_s") is not None}
     reasons = {d["station"]: d.get("reason", "")
                for d in solution.get("stations_dropped", [])}
 
@@ -604,13 +608,18 @@ def plot_band_waveforms(band_dir: Path, solution: dict,
                         ha="center", fontsize=6, color="0.5")
                 continue
             t = float(tr.stats.sac.b) + tr.times()
-            # grey out what lies beyond the distance-adaptive inversion
-            # window, so the record length actually used is visible
-            wlen = int(min(_config.INV_NPTS, max(
-                _config.WINDOW_MIN_S,
-                _config.TIME_BEFORE_S
-                + e["dist"] / _config.WINDOW_GROUP_VEL_KMS + tail)))
-            tend = wlen - _config.TIME_BEFORE_S
+            # grey out what lies beyond the inversion window: prefer the
+            # signal-aware per-station end recorded in the solution,
+            # fall back to the kinematic formula
+            wend = window_ends.get(e["sid"])
+            if wend is not None:
+                tend = float(wend)
+            else:
+                wlen = int(min(_config.INV_NPTS, max(
+                    _config.WINDOW_MIN_S,
+                    _config.TIME_BEFORE_S
+                    + e["dist"] / _config.WINDOW_GROUP_VEL_KMS + tail)))
+                tend = wlen - _config.TIME_BEFORE_S
             if tend < t[-1]:
                 ax.axvspan(tend, t[-1], color="0.92", zorder=0)
             ax.plot(t, tr.data / norm, color=e["color"], linewidth=0.7)
