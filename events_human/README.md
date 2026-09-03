@@ -1,8 +1,9 @@
 # events_human — the human-reviewed catalogue
 
-> **Made by Claude. Not tested.** The workflow that populates this
+> **Made by Claude. Lightly tested.** The workflow that populates this
 > directory (`human_review.ipynb` in the repository root) was generated
-> as a starting point for students and has not been executed end-to-end.
+> as a starting point for students; one full end-to-end execution has
+> succeeded, but expect rough edges.
 
 This directory mirrors the automated archive `events/`, but every entry
 here has been **reviewed by a person**: a student or researcher stepped

@@ -87,8 +87,9 @@ the human catalogue, and disagreement between reviewers is itself
 useful information. The automated archive `events/` is read-only for
 reviewers; PRs may only touch `events_human/`.
 
-> The student workflow was *Made by Claude. Not tested.* — expect to
-> troubleshoot, and treat that as part of the course.
+> The student workflow was *Made by Claude* and lightly tested (one
+> full end-to-end run) — expect to troubleshoot, and treat that as
+> part of the course.
 
 ## Local setup (macOS / Linux)
 
