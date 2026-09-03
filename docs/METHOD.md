@@ -271,6 +271,14 @@ Key observations:
   comparison hook but awaits their solutions for overlapping events
   (their CSV updates ~monthly; note their MT units are 1e20 dyne-cm).
 
+### Verification aids
+
+Nodal-plane and fault-geometry conventions were cross-checked numerically
+(conjugate-plane far-field equivalence, rake/side acid tests — now anchor
+tests in the suite) and visually against the USGS finite-fault event pages
+(black-outlined plane, red up-dip edge convention, adopted here) and the
+interactive Focal Mechanism Explorer at https://eq.comoglu.com/bb/.
+
 ## References
 
 - Chiang, A. MTtime: Time Domain Moment Tensor Inversion in Python.
