@@ -163,10 +163,12 @@ def make_share_figure(
                 vmin=-vmax, vmax=vmax, transform=ccrs.PlateCarree(),
                 alpha=0.9, shading="auto", zorder=3,
             )
-            axi.plot(olon, olat, "--", color=plane_colors[plane],
-                     linewidth=1.2, transform=ccrs.PlateCarree(), zorder=10)
-            axi.plot(tlon, tlat, "-", color=plane_colors[plane],
-                     linewidth=2.6, transform=ccrs.PlateCarree(), zorder=10)
+            # USGS finite-fault convention: plane outlined in black,
+            # up-dip (shallowest) edge as a distinct red line
+            axi.plot(olon, olat, "-", color="black",
+                     linewidth=1.0, transform=ccrs.PlateCarree(), zorder=10)
+            axi.plot(tlon, tlat, "-", color="#D62728",
+                     linewidth=2.8, transform=ccrs.PlateCarree(), zorder=11)
             if i == 0:  # dip-direction arrow on the first panel of the row
                 dlon, dlat = _local_km_to_geo(
                     np.array(outline["dip_arrow_x_km"]),
@@ -176,11 +178,11 @@ def make_share_figure(
                     xycoords=ccrs.PlateCarree()._as_mpl_transform(axi),
                     textcoords=ccrs.PlateCarree()._as_mpl_transform(axi),
                     arrowprops=dict(arrowstyle="-|>", linewidth=1.4,
-                                    color=plane_colors[plane]), zorder=12)
+                                    color="black"), zorder=12)
                 axi.annotate(
                     "dip", (dlon[1], dlat[1]), xytext=(3, 3),
                     textcoords="offset points", fontsize=7,
-                    color=plane_colors[plane],
+                    color="black",
                     xycoords=ccrs.PlateCarree()._as_mpl_transform(axi))
             axi.plot(lon0, lat0, "*", color="yellow",
                      markeredgecolor="black", markersize=9,
@@ -243,9 +245,9 @@ def make_share_figure(
     p1f = forward["plane1"]["fault"]
     p2f = forward["plane2"]["fault"]
     lines = [
-        f"Okada forward models (dashed outline; BOLD edge = up-dip/shallowest, arrow points down-dip): "
-        f"plane 1 (blue) {p1f['strike']:.0f}/{p1f['dip']:.0f}/"
-        f"{p1f['rake']:.0f}, plane 2 (green) {p2f['strike']:.0f}/"
+        f"Okada forward models (plane outlined in black, RED line = up-dip/shallowest edge, arrow points down-dip; USGS finite-fault convention): "
+        f"plane 1 (top row) {p1f['strike']:.0f}/{p1f['dip']:.0f}/"
+        f"{p1f['rake']:.0f}, plane 2 (bottom row) {p2f['strike']:.0f}/"
         f"{p2f['dip']:.0f}/{p2f['rake']:.0f}; "
         f"peak |u| {peak_cm:.2f} cm - {detect}"]
     if passes:
