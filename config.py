@@ -148,6 +148,10 @@ def band_tag(band_hz: tuple[float, float]) -> str:
 # permissive 2.0, this is the filter that removes marginal stations that
 # passed SNR but do not actually fit — keeping them dilutes %DC.
 STATION_VR_FLOOR = 10.0
+# Greedy improvement elimination: a station above the floor is still
+# dropped if removing it improves the joint fit by at least this many VR
+# points (the manual "test around and drop what degrades" practice).
+ELIMINATION_VR_GAIN = 2.0
 
 # Preferred-solution rule (EPS207 §3.3: VR alone is a weak depth
 # discriminator; %DC is more diagnostic): among solutions whose VR is within

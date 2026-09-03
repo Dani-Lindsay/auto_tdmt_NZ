@@ -201,6 +201,37 @@ def invert_with_rejection(
                       f"{config.STATION_VR_FLOOR:g} at seed depth {depth0:g} km",
         })
         current.remove(worst)
+    # 2b: greedy improvement — a station above the floor must earn its
+    # seat: drop it if the joint fit improves by ELIMINATION_VR_GAIN
+    while len(current) > config.MIN_STATIONS_USED:
+        inv_cur = _solve(current, [depth0])
+        base = float(
+            inv_cur.moment_tensors[inv_cur.preferred_tensor_id].total_VR)
+        vrs = _station_vrs(inv_cur)
+        sectors_left = {}
+        for r in current:
+            sectors_left.setdefault(_sector(r), []).append(r)
+        droppable = [
+            r for r in current
+            if not (len(sectors_left[_sector(r)]) == 1
+                    and vrs.get(_sid(r), 0) >= 0.0)
+        ]
+        if not droppable:
+            break
+        worst = min(droppable, key=lambda r: vrs.get(_sid(r), 0))
+        trial = [r for r in current if r is not worst]
+        inv_t = _solve(trial, [depth0])
+        tot_t = float(
+            inv_t.moment_tensors[inv_t.preferred_tensor_id].total_VR)
+        if tot_t >= base + config.ELIMINATION_VR_GAIN:
+            rejected.append({
+                "station": _sid(worst),
+                "reason": f"test-drop improved joint fit: total VR "
+                          f"{base:.0f} -> {tot_t:.0f} at {depth0:g} km",
+            })
+            current = trial
+        else:
+            break
     if rejected:
         print(f"eliminated {len(rejected)} stations at {depth0:g} km: "
               f"{[d['station'] for d in rejected]}")
