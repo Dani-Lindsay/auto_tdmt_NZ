@@ -37,6 +37,7 @@ pip = "*"
 # osx-arm64 and linux-64 without relying on system toolchains
 c-compiler = "*"
 meson-python = "*"
+ipykernel = ">=7.3.0,<8"
 
 [pypi-dependencies]
 mttime = { git = "https://github.com/LLNL/mttime.git" }
