@@ -212,18 +212,19 @@ def draw_context(ax, region, ccrs, gnss=True, gnss_labels=False):
     return len(inside)
 
 
-def nodal_plane_arc(strike: float, dip: float, n: int = 91):
-    """Lower-hemisphere equal-area trace of one nodal plane, unit radius
-    (matches the obspy beachball projection r = sqrt(2) sin(takeoff/2))."""
-    phi, delta = np.radians(strike), np.radians(dip)
-    t = np.linspace(0.0, np.pi, n)
-    sv = np.array([np.sin(phi), np.cos(phi), 0.0])
-    dv = np.array([np.cos(phi) * np.cos(delta), -np.sin(phi) * np.cos(delta),
-                   -np.sin(delta)])
-    v = np.outer(np.cos(t), sv) + np.outer(np.sin(t), dv)
-    takeoff = np.arccos(np.clip(-v[:, 2], -1.0, 1.0))
-    az = np.arctan2(v[:, 0], v[:, 1])
-    r = np.sqrt(2.0) * np.sin(takeoff / 2.0)
+def nodal_plane_arc(strike: float, dip: float, n: int = 315):
+    """Trace of one nodal plane on a unit beachball, using the SAME
+    projection as obspy's beach()/plot_dc (Andy Michael's bb.m adaptation:
+    r = (90-dip)/sqrt(sin^2 phi + cos^2 phi (90-dip)^2/90^2), azimuth from
+    north clockwise) so overlays coincide exactly with the drawn ball."""
+    d = min(dip, 89.9999)
+    phi = np.linspace(0.0, np.pi, n)
+    l = np.sqrt(
+        (90.0 - d) ** 2
+        / (np.sin(phi) ** 2
+           + np.cos(phi) ** 2 * (90.0 - d) ** 2 / 8100.0))
+    r = l / 90.0
+    az = phi + np.radians(strike)
     return r * np.sin(az), r * np.cos(az)
 
 
@@ -242,7 +243,7 @@ def inset_dc_ball(fig, rect, plane1: dict, plane2: dict,
         [plane1["strike"], plane1["dip"], plane1["rake"]], xy=(0, 0),
         width=2.0, linewidth=0.8, facecolor="firebrick"))
     x, y = nodal_plane_arc(plane1["strike"], plane1["dip"])
-    ax.plot(x, y, "-", color=highlight_color, linewidth=2.2, zorder=20,
+    ax.plot(x, y, "-", color=highlight_color, linewidth=2.2, zorder=120,
             solid_capstyle="round")
     ax.text(0, -1.38, "modelled plane", ha="center", va="center", fontsize=7,
             color=highlight_color)

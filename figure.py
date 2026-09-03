@@ -190,12 +190,12 @@ def make_share_figure(
             if p:
                 xa, ya = map_style.nodal_plane_arc(p["strike"], p["dip"])
                 axe.plot(xa, ya + 0.05, "-", color="0.1", linewidth=1.0,
-                         alpha=0.5, zorder=15)
+                         alpha=0.5, zorder=110)
     for key, colr in (("plane1", plane_colors["plane1"]),
                       ("plane2", plane_colors["plane2"])):
         xa, ya = map_style.nodal_plane_arc(
             pref[key]["strike"], pref[key]["dip"])
-        axe.plot(xa, ya + 0.05, "-", color=colr, linewidth=2.2, zorder=20,
+        axe.plot(xa, ya + 0.05, "-", color=colr, linewidth=2.2, zorder=120,
                  solid_capstyle="round")
     if jk.get("n_subsets"):
         text = (
