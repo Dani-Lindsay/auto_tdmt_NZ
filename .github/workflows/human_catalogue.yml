@@ -1,0 +1,38 @@
+name: rebuild-human-catalogue
+
+# The human catalogue CSV is a build product: whenever a review merges
+# into main, rebuild it from every events_human/**/solution.json and
+# commit the result. Student PRs never touch the CSV, so they can never
+# conflict on it.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "events_human/**"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: human-catalogue
+  cancel-in-progress: false
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rebuild catalogue_human.csv
+        run: python3 catalogue_human.py
+
+      - name: Commit if changed
+        run: |
+          git config user.name "auto-tdmt-bot"
+          git config user.email "actions@github.com"
+          git add events_human/catalogue_human.csv
+          git diff --cached --quiet && echo "catalogue unchanged" && exit 0
+          git commit -m "rebuild human catalogue"
+          git pull --rebase origin main
+          git push origin main
