@@ -60,12 +60,46 @@ def make_share_figure(
     map_style.draw_context(ax, roi, ccrs, gnss=False)
     map_style.scale_bar(ax, roi, ccrs)
     import config as _config
+    # dropped stations, marker-coded by cause, named so exclusions can be
+    # audited from the figure alone
     grey = [d for d in solution["stations_dropped"] if "latitude" in d]
-    if grey:
-        ax.plot([d["longitude"] for d in grey], [d["latitude"] for d in grey],
-                "^", color="0.65", markeredgecolor="0.4",
-                markeredgewidth=0.3, markersize=6,
-                transform=ccrs.PlateCarree(), zorder=5)
+
+    def _cause(d):
+        r = d.get("reason", "")
+        if "amplitude outlier" in r:
+            return "amp"
+        if ("eliminated" in r or "test-drop" in r
+                or "consistently bad" in r):
+            return "elim"
+        return "snr"
+
+    styles = {
+        "snr": dict(marker="^", color="0.65", markeredgecolor="0.4",
+                    markeredgewidth=0.3, markersize=6),
+        "amp": dict(marker="x", color="0.35", markeredgewidth=1.2,
+                    markersize=6),
+        "elim": dict(marker="^", color="white", markeredgecolor="0.25",
+                     markeredgewidth=0.8, markersize=6),
+    }
+    for cause, st in styles.items():
+        pts = [d for d in grey if _cause(d) == cause]
+        if pts:
+            ax.plot([d["longitude"] for d in pts],
+                    [d["latitude"] for d in pts], linestyle="none",
+                    transform=ccrs.PlateCarree(), zorder=5, **st)
+    for d in grey:
+        ax.annotate(
+            d["station"].split(".")[1] if "." in d["station"]
+            else d["station"],
+            (d["longitude"], d["latitude"]), xytext=(3, -3),
+            textcoords="offset points", fontsize=5.5, color="0.45",
+            xycoords=ccrs.PlateCarree()._as_mpl_transform(ax))
+    ax.text(0.985, 0.015,
+            "dropped: grey=low SNR  x=bad amplitude  open=eliminated by fit",
+            transform=ax.transAxes, ha="right", va="bottom", fontsize=6.2,
+            color="0.35", zorder=20,
+            bbox=dict(facecolor="white", edgecolor="none", alpha=0.8,
+                      pad=1.5))
     used = solution["stations_used"]
     dv = [(r["zcor_s"] / (r["distance_km"] / _config.GROUP_VELOCITY_KMS))
           * 100.0 if "zcor_s" in r else None for r in used]

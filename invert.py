@@ -54,6 +54,19 @@ def write_mtinv(
     event: Event, stations: list[dict], depths: list[float],
     event_dir: Path, green_dir: Path,
 ) -> Path:
+    # magnitude-aware record length: for small events the inversion
+    # window ends shortly after the surface-wave train so trailing noise
+    # cannot drag VR down (window = dist/group_vel + tail, clamped)
+    if event.prelim_mag < config.SHORT_WINDOW_MAX_MAG:
+        npts_col = [
+            int(min(config.INV_NPTS, max(
+                config.WINDOW_MIN_S,
+                r["distance_km"] / config.WINDOW_GROUP_VEL_KMS
+                + config.WINDOW_TAIL_S)))
+            for r in stations
+        ]
+    else:
+        npts_col = config.INV_NPTS
     frame = {
         "station": [
             f"{r['network']}.{r['station']}.{r['location']}" for r in stations
@@ -61,7 +74,7 @@ def write_mtinv(
         "distance": [r["gf_distance_km"] for r in stations],
         "azimuth": [round(r["azimuth"], 2) for r in stations],
         "ts": config.TIME_BEFORE_S,
-        "npts": config.INV_NPTS,
+        "npts": npts_col,
         "dt": config.DT,
         "used": 1,
         "longitude": [r["longitude"] for r in stations],
@@ -105,6 +118,8 @@ def pick_preferred(vr_pdc: list[tuple[float, float]],
     """
     vrs = [vr for vr, _ in vr_pdc]
     i_max = max(range(len(vrs)), key=lambda i: vrs[i])
+    if vrs[i_max] < config.DC_TIEBREAK_MIN_VR:
+        return i_max  # junk-grade fit: DC differences are noise
     floor = vrs[i_max] - config.PREFER_DC_VR_TOLERANCE
     if contiguous:
         lo = i_max
@@ -363,6 +378,19 @@ def summarize(inv, event: Event, stations: list[dict], dropped: list[dict],
             st["station_vr"] = float(row.VR)
 
     rows = [_mt_row(mt) for mt in inv.moment_tensors]
+
+    def _plateau_span(rr):
+        srt = sorted(rr, key=lambda r: r["depth_km"])
+        vmax = max(r["vr"] for r in srt)
+        i_max = max(range(len(srt)), key=lambda i: srt[i]["vr"])
+        lo = i_max
+        while lo > 0 and srt[lo - 1]["vr"] >= vmax - config.PREFER_DC_VR_TOLERANCE:
+            lo -= 1
+        hi = i_max
+        while hi < len(srt) - 1 and srt[hi + 1]["vr"] >= vmax - config.PREFER_DC_VR_TOLERANCE:
+            hi += 1
+        return srt[hi]["depth_km"] - srt[lo]["depth_km"]
+
     best_vr = max(rows, key=lambda r: r["vr"])
     best_dc = max(rows, key=lambda r: r["pdc"])
     pref = inv.moment_tensors[inv.preferred_tensor_id]
@@ -389,6 +417,8 @@ def summarize(inv, event: Event, stations: list[dict], dropped: list[dict],
             "vr_max_depth_km": best_vr["depth_km"],
             "dc_max_depth_km": best_dc["depth_km"],
             "vr_dc_agree": best_vr["depth_km"] == best_dc["depth_km"],
+            "plateau_km": round(_plateau_span(rows), 1),
+            "depth_unconstrained": _plateau_span(rows) > 10.0,
         },
         "stations_used": stations,
         "stations_dropped": dropped,

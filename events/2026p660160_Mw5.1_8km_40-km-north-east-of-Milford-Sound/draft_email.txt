@@ -7,19 +7,19 @@ Triggered from the GeoNet rapid earthquake solution; origin time, location, prel
 Location: 40 km north-east of Milford Sound (-44.442, 168.323)
 GeoNet preliminary magnitude: M 5.5
 
-Mw: 5.08
+Mw: 5.05
 Centroid depth: 8 km (GeoNet initial: 5 km)
-Variance reduction: 87%  |  DC 59% / CLVD 41%
-Filter band: 20-50 s  |  Velocity model: nz_south_ristau2008
-Nodal plane 1 (strike/dip/rake): 9/50/56
-Nodal plane 2 (strike/dip/rake): 235/51/123
-Stations used: 11  |  Azimuthal gap: 193 deg  |  Quality grade: B
+Variance reduction: 69%  |  DC 63% / CLVD 37%
+Filter band: 10-50 s  |  Velocity model: nz_south_ristau2008
+Nodal plane 1 (strike/dip/rake): 3/47/39
+Nodal plane 2 (strike/dip/rake): 244/63/130
+Stations used: 19  |  Azimuthal gap: 172 deg  |  Quality grade: B
 
-Stability (leave-one-out jackknife, n=11): Mw +/-0.005  |  DC 59 +/-6.6%  |  mechanism rotation <= 3.7 deg
+Stability (leave-one-out jackknife, n=19): Mw +/-0.005  |  DC 63 +/-2.1%  |  mechanism rotation <= 3.0 deg
 
 LIMITATIONS: deviatoric-only inversion (no isotropic component) - these mechanisms must not be interpreted in volcanic or geothermal settings, where real isotropic components are forced into DC/CLVD. Large misfit (low VR or grade C-D) indicates the automated result is unreliable and additional processing is required.
 
-Predicted peak surface displacement 0.55 cm — no detectable surface deformation expected.
+Predicted peak surface displacement 0.45 cm — no detectable surface deformation expected.
 
 NISAR passes over the epicentre:
   track 145 D: last 2026-07-06 06:47Z, next ~2026-09-04 06:47Z

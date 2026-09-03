@@ -45,6 +45,12 @@ def test_pick_preferred_prefers_dc_within_tolerance():
     assert invert.pick_preferred([(80.0, 20.0), (70.0, 90.0)]) == 0
 
 
+def test_pick_preferred_junk_fit_skips_dc_tiebreak():
+    # VR max below 20: everything is noise-grade, take plain VR max
+    rows = [(6.8, 73.0), (3.5, 93.3), (7.7, 54.7)]
+    assert invert.pick_preferred(rows) == 2
+
+
 def test_pick_preferred_bimodal_vr_stays_contiguous():
     # deep lobe grazes the tolerance window but is disconnected from the
     # VR maximum: it must NOT steal the pick on DC (2026p660272 case)

@@ -160,6 +160,20 @@ MID_STATION_COUNT = 5
 # points (the manual "test around and drop what degrades" practice).
 ELIMINATION_VR_GAIN = 2.0
 
+# The %DC tie-break only engages when the fit is meaningful; below this
+# VR maximum the event is junk-grade and DC differences are noise — take
+# the plain VR maximum (2026p348732: VR max 7.7 made the whole grid a
+# "plateau" and DC alone chose the depth).
+DC_TIEBREAK_MIN_VR = 20.0
+
+# Magnitude-aware inversion window (record length): small events' surface
+# waves pass quickly; the long tail is noise that drags VR down even when
+# the main motion is fit well. Window = dist/group_vel + tail, clamped.
+SHORT_WINDOW_MAX_MAG = 4.5
+WINDOW_GROUP_VEL_KMS = 2.8
+WINDOW_TAIL_S = 50.0
+WINDOW_MIN_S = 60.0
+
 # Preferred-solution rule (EPS207 §3.3: VR alone is a weak depth
 # discriminator; %DC is more diagnostic): among solutions whose VR is within
 # this many percentage points of the maximum, prefer the highest %DC. Applied
