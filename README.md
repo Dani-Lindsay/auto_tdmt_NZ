@@ -146,8 +146,9 @@ their MT elements are in 1e20 dyne-cm).
 | Stage | Rule |
 |---|---|
 | **Triggers** | GeoNet preliminary magnitude >= 4.0, inside the NZ box (33-50.5 S, 164 E-177.5 W), event type "earthquake", depth <= 30 km (GeoNet fixed placeholder depths 5/12/33 km are exempt: true depth unknown, the depth search decides) |
-| **Station selection** | NZ broadbands (HH? preferred over BH?), 20-400 km; SNR >= 2.0 in the inversion band, topped up to SNR >= 1.2 when fewer than 5 stations pass; stations with individual VR < 10% rejected after a first pass |
-| **Depth search** | 1-5 km at 0.5 km, to 10 km at 1 km, to 30 km at 2 km, to 58 km at 4 km; full grid for placeholder depths, else +/-20 km of the GeoNet depth |
+| **Station selection** | NZ broadbands (HH? preferred over BH?), near-field exclusion 10 km (<M4.5) / 20 km, magnitude-scaled radius 120-300 km with a one-shot +100 km extension when fewer than 4 usable stations; peak/noise tiers in the inverted window (<2 dead, 2-5 candidate, >=5 core); amplitude screen (peak x distance within 8x of network median); cluster thinning (max 2 within 25 km); core-only depth search, then candidates admitted one at a time on own station VR >= 30 (>= 20 for sparse cores); azimuth-coverage cap (sector-best + top-4 VR when > 12); greedy earn-your-seat drops (joint VR gain >= 2) with unconditional ejection of negative own-VR stations |
+| **Depth search** | 1-5 km at 0.5 km, to 10 km at 1 km, to 30 km at 2 km, to 58 km at 4 km; always the FULL grid — solutions are independent of the GeoNet depth, which is recorded for comparison only |
+| **Filter bands** | < M4.5: 10-50 s only; M4.5-5.5: 10-50 s preferred, 20-50 s fallback (first band that produces a solution wins — VR never arbitrates across bands below M5.5); >= M5.5: 20-100 s vs 30-100 s by the VR+DC rule |
 | **Rated** | A: VR >= 70, >= 5 stations, azimuthal gap <= 180. B: VR >= 60, >= 3 stations, gap <= 270. C: VR >= 50, >= 2 stations. D: below |
 | **Publishes** | grade A or B AND (our Mw >= 5.0 OR Okada-predicted peak displacement >= 1 cm); max 3 emails/day; aftershock throttle (within 75 km/14 d of a published event, must be within 0.5 Mw of it or above the Mw gate) |
 | **Preferred solution** | highest %DC on the contiguous depth plateau within 5 VR points of the VR maximum; per-band, then across the magnitude-dependent band menu |
