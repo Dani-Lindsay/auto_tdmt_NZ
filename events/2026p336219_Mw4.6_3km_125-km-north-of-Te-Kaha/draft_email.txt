@@ -7,15 +7,15 @@ Triggered from the GeoNet rapid earthquake solution; origin time, location, prel
 Location: 125 km north of Te Kaha (-36.677, 177.204)
 GeoNet preliminary magnitude: M 4.5
 
-Mw: 4.55
+Mw: 4.56
 Centroid depth: 3 km (GeoNet initial: 5 km)
-Variance reduction: 80%  |  DC 94% / CLVD 6%
-Filter band: 20-50 s  |  Velocity model: nz_north_ristau2008
-Nodal plane 1 (strike/dip/rake): 217/66/-87
-Nodal plane 2 (strike/dip/rake): 29/24/-97
-Stations used: 19  |  Azimuthal gap: 233 deg  |  Quality grade: B
+Variance reduction: 69%  |  DC 52% / CLVD 48%
+Filter band: 10-50 s  |  Velocity model: nz_north_ristau2008
+Nodal plane 1 (strike/dip/rake): 231/66/-80
+Nodal plane 2 (strike/dip/rake): 26/26/-112
+Stations used: 6  |  Azimuthal gap: 231 deg  |  Quality grade: B
 
-Stability (leave-one-out jackknife, n=19): Mw +/-0.006  |  DC 94 +/-0.9%  |  mechanism rotation <= 2.9 deg
+Stability (leave-one-out jackknife, n=6): Mw +/-0.016  |  DC 52 +/-2.5%  |  mechanism rotation <= 8.0 deg
 
 LIMITATIONS: deviatoric-only inversion (no isotropic component) - these mechanisms must not be interpreted in volcanic or geothermal settings, where real isotropic components are forced into DC/CLVD. Large misfit (low VR or grade C-D) indicates the automated result is unreliable and additional processing is required.
 

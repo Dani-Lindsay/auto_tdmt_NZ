@@ -9,13 +9,13 @@ GeoNet preliminary magnitude: M 4.5
 
 Mw: 4.27
 Centroid depth: 4 km (GeoNet initial: 12 km)
-Variance reduction: 51%  |  DC 99% / CLVD 1%
+Variance reduction: 52%  |  DC 99% / CLVD 1%
 Filter band: 10-50 s  |  Velocity model: nz_south_ristau2008
 Nodal plane 1 (strike/dip/rake): 219/89/-93
 Nodal plane 2 (strike/dip/rake): 111/3/-18
 Stations used: 5  |  Azimuthal gap: 301 deg  |  Quality grade: C
 
-Stability (leave-one-out jackknife, n=5): Mw +/-0.01  |  DC 99 +/-0.8%  |  mechanism rotation <= 3.8 deg
+Stability (leave-one-out jackknife, n=5): Mw +/-0.01  |  DC 99 +/-0.9%  |  mechanism rotation <= 3.8 deg
 
 LIMITATIONS: deviatoric-only inversion (no isotropic component) - these mechanisms must not be interpreted in volcanic or geothermal settings, where real isotropic components are forced into DC/CLVD. Large misfit (low VR or grade C-D) indicates the automated result is unreliable and additional processing is required.
 

@@ -1,0 +1,34 @@
+[auto-MT NZ] Mw 3.7 85 km north-west of Snares Islands (2026p458899), depth 4.5 km
+
+Automated regional moment tensor solution — PRELIMINARY
+
+Event: 2026p458899  2026-06-19T19:01:41.329Z
+Triggered from the GeoNet rapid earthquake solution; origin time, location, preliminary magnitude and initial depth are GeoNet's (geonet.org.nz).
+Location: 85 km north-west of Snares Islands (-47.414, 165.807)
+GeoNet preliminary magnitude: M 4.1
+
+Mw: 3.70
+Centroid depth: 4.5 km (GeoNet initial: 5 km)
+Variance reduction: 17%  |  DC 98% / CLVD 2%
+Filter band: 10-50 s  |  Velocity model: nz_south_ristau2008
+Nodal plane 1 (strike/dip/rake): 183/87/87
+Nodal plane 2 (strike/dip/rake): 57/4/144
+Stations used: 3  |  Azimuthal gap: 316 deg  |  Quality grade: D
+
+Stability: jackknife skipped (fewer than 4 stations)
+
+LIMITATIONS: deviatoric-only inversion (no isotropic component) - these mechanisms must not be interpreted in volcanic or geothermal settings, where real isotropic components are forced into DC/CLVD. Large misfit (low VR or grade C-D) indicates the automated result is unreliable and additional processing is required.
+
+Predicted peak surface displacement 0.01 cm — no detectable surface deformation expected.
+
+NISAR passes over the epicentre:
+  track 145 D: last 2026-08-11 06:48Z, next ~2026-09-04 06:48Z
+  track 080 A: last 2026-08-30 19:00Z, next ~2026-09-11 19:00Z
+
+--
+Automated solution (mttime 1.1.dev0, model nz_south_ristau2008, GF v1). Not reviewed by a human.
+
+This workflow was compiled with Claude (Anthropic) assistance.
+Credits: inversion by mttime, A. Chiang, LLNL (github.com/LLNL/mttime); Green's functions by Computer Programs in Seismology, R. B. Herrmann (rbherrmann.github.io/ComputerProgramsSeismology); waveform processing with ObsPy (obspy.org); waveforms and metadata from GeoNet / Earth Sciences New Zealand (geonet.org.nz, CC BY 3.0 NZ); velocity models from Ristau (2008), SRL 79(3); deformation modelling after Okada (1992) via okada4py, R. Jolivet (github.com/jolivetr/okada4py); fault dimensions from Wells & Coppersmith (1994); active faults from the NZ Active Faults Database, GNS Science (data.gns.cri.nz/af); GNSS marks from GeoNet delta (github.com/GeoNet/delta); NISAR timing from NASA CMR (cmr.earthdata.nasa.gov); colour maps by F. Crameri (fabiocrameri.ch/colourmaps).
+
+Solutions archive: github.com/Dani-Lindsay/auto_tdmt_NZ
