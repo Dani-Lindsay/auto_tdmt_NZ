@@ -51,7 +51,8 @@ def _publish_flag(decision: dict) -> str:
 COLUMNS = [
     "PublicID", "Date", "Latitude", "Longitude",
     "strike1", "dip1", "rake1", "strike2", "dip2", "rake2",
-    "GeoNet_M", "GeoNet_depth", "GeoNet_depth_unc", "Mw", "Depth", "Mo",
+    "GeoNet_M", "GeoNet_depth", "GeoNet_depth_unc", "Mw", "Depth",
+    "Depth_VRmax", "Depth_DCmax", "Plateau_km", "Mo",
     "NS", "AzGap", "Grade", "DC", "CLVD", "VR",
     "Jk_n", "Jk_Mw_std", "Jk_DC_std", "Jk_rot_deg",
     "PredDisp_cm", "Detectable",
@@ -99,6 +100,12 @@ def build_catalogue(events_dir: Path | None = None) -> Path | None:
             # often explained by the depth revision visible in the adjacent
             # GeoNet_depth column
             "Depth": p["depth_km"],
+            "Depth_VRmax": s.get("depth_pick_flags", {}).get(
+                "vr_max_depth_km", ""),
+            "Depth_DCmax": s.get("depth_pick_flags", {}).get(
+                "dc_max_depth_km", ""),
+            "Plateau_km": s.get("depth_pick_flags", {}).get(
+                "plateau_km", ""),
             # Mo in dyne-cm; MT elements in 1e20 dyne-cm (GeoNet convention)
             "Mo": f"{p['m0_dyne_cm']:.3e}",
             "NS": s["quality"]["n_stations_used"],

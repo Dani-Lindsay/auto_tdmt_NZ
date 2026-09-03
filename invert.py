@@ -36,18 +36,11 @@ def search_depths(event: Event, model: str) -> list[float]:
     library depths within DEPTH_SEARCH_MARGIN_KM of the hypocentre."""
     lib = greens.available_depths(model)
     assert lib, "GF library is empty — build it first (greens.py --build)"
-    operator_fixed = 'operator' in str(
-        getattr(event, 'depth_type', '') or '').lower()
-    if operator_fixed or event.depth_km in config.PLACEHOLDER_DEPTHS_KM:
-        return lib  # fixed/placeholder depth: search the full grid
-    unc = getattr(event, "depth_unc_km", None)
-    margin = (min(config.DEPTH_SEARCH_MARGIN_MAX_KM,
-                  max(config.DEPTH_SEARCH_MARGIN_MIN_KM, 2.0 * unc))
-              if unc else config.DEPTH_SEARCH_MARGIN_KM)
-    lo = event.depth_km - margin
-    hi = event.depth_km + margin
-    picked = [d for d in lib if lo <= d <= hi]
-    return picked if picked else lib
+    # INDEPENDENT BY CHOICE (2026-09-03): the full grid is always searched.
+    # Bounding the search around GeoNet's depth forces agreement and
+    # destroys the catalogue's value as an independent check; GeoNet's
+    # depth and uncertainty are recorded for comparison only.
+    return lib
 
 
 def write_mtinv(

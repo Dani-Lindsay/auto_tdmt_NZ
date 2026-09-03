@@ -150,9 +150,10 @@ waveforms".
 - **Engine**: mttime deviatoric inversion (degree 5), ZRT components,
   inverse-distance weighting, per-station cross-correlation time shifts
   (zcor; the pandas<3 pin is required for this — mttime issue #15).
-- **Depth search**: all library depths when GeoNet's depth is a fixed
-  placeholder (5/12/33 km); otherwise library depths within ±20 km of the
-  hypocentre. Inversion window npts=150 at 1 sps, ts=30.
+- **Depth search**: the FULL library grid, always — the solution is kept
+  fully independent of GeoNet's hypocentral depth, which is recorded (with
+  its uncertainty) for comparison only. The catalogue reports the final
+  pick alongside the VR-max and DC-max depths and the plateau width.
 - **Filter-band menu** (BSL practice: a small menu of period bands, longer
   periods for larger events; the pipeline tries each and picks by the rule
   below):

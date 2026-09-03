@@ -28,7 +28,10 @@ README.md for citations.
 |---|---|
 | `strike1,dip1,rake1` / `strike2,dip2,rake2` | Nodal planes of the DC part, degrees, Aki & Richards convention; the data cannot distinguish which plane is the fault |
 | `Mw` | Moment magnitude from the inversion |
-| `Depth` | Our centroid depth, km, from the depth search (compare `GeoNet_depth`) |
+| `Depth` | Our centroid depth, km — the FINAL pick (VR-first, %DC tie-break on the contiguous plateau). The full depth grid is always searched; nothing is constrained toward GeoNet |
+| `Depth_VRmax` | Depth of the maximum variance reduction, km |
+| `Depth_DCmax` | Depth of the maximum %DC, km |
+| `Plateau_km` | Width of the near-VR-max plateau, km; large values mean depth is weakly constrained by the waveforms |
 | `Mo` | Scalar moment, dyne-cm |
 | `NS` | Number of stations used in the final solution |
 | `AzGap` | Largest azimuthal gap between used stations, degrees |
