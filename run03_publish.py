@@ -17,7 +17,8 @@ import publish
 
 def publish_event(public_id: str, state: dict | None = None,
                   force: bool = False) -> None:
-    event_dir = config.EVENTS_DIR / public_id
+    event_dir = config.find_event_dir(public_id)
+    assert event_dir is not None, f"no archive for {public_id} — run run02 first"
     sol_path = event_dir / "solution.json"
     assert sol_path.exists(), f"no solution for {public_id} — run run02 first"
     solution = json.loads(sol_path.read_text())

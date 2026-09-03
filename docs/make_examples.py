@@ -21,7 +21,7 @@ def main(event_ids: list[str]) -> None:
     OUT.mkdir(exist_ok=True)
     rows = []
     for pid in event_ids:
-        ev_dir = config.EVENTS_DIR / pid
+        ev_dir = config.find_event_dir(pid)
         sol = json.loads((ev_dir / "solution.json").read_text())
         pref = sol["preferred"]
         q = sol["quality"]

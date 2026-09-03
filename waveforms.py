@@ -282,6 +282,17 @@ def fetch_and_process(
         surplus = others[need:]
     else:
         surplus = others
+    # gap-adaptive retention: when geometry is one-sided (azimuthal gap of
+    # the kept set > 180 deg, e.g. offshore events), every viable station
+    # adds stability — keep all low-tier candidates up to the cap.
+    if surplus and len(keep) < config.MAX_STATIONS:
+        azs = sorted(r["azimuth"] for r in keep)
+        gaps = [(azs[(i + 1) % len(azs)] - a) % 360.0
+                for i, a in enumerate(azs)]
+        if max(gaps) > 180.0:
+            room = config.MAX_STATIONS - len(keep)
+            keep += surplus[:room]
+            surplus = surplus[room:]
     for r in surplus:
         sid = f"{r['network']}.{r['station']}.{r['location']}"
         for comp in "ZRT":

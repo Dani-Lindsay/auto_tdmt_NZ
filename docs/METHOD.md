@@ -56,14 +56,48 @@ published, with full provenance in `solution.json`.
 
 ## 3. Data selection and pre-processing (`waveforms.py`)
 
-- **Stations**: network NZ broadbands (HH? preferred over BH?; location
-  codes taken from the station inventory, never assumed), 20–400 km
-  epicentral distance, up to 12 passing QC. Candidates are tried in
-  azimuth-sector-interleaved order (8 x 45 deg sectors, nearest-first
-  within each) so the selected set spans the full range of azimuths, and
-  a low-SNR station that is the sole representative of its sector is
-  retained in preference over a redundant high-SNR one — azimuthal
-  coverage stabilises the mechanism more than per-station noise harms it. Station distance must
+### 3.1 Station selection
+
+Azimuthal coverage stabilises a moment tensor more than per-station noise
+harms it, so selection is coverage-first, mirroring manual practice
+(sample every quadrant, then prefer close, clean stations):
+
+1. **Candidate pool**: network NZ broadbands, HH? preferred over BH?
+   (location codes read from the station inventory, never assumed),
+   20–400 km epicentral distance. The distance > 3x depth far-field guard
+   applies only to shallow sources (depth <= 40 km, and never to GeoNet
+   placeholder depths).
+2. **Ordering**: candidates are tried in azimuth-sector-interleaved order
+   — eight 45 deg sectors, nearest-first within each — so the first
+   stations attempted span the full compass. Pure nearest-first ordering
+   produced one-sided geometries whenever the close stations clustered on
+   one side of the epicentre.
+3. **SNR tiers**: per station, SNR = min over components of
+   RMS(signal, origin..+200 s) / RMS(noise, -120..-10 s) in the inversion
+   passband. SNR >= 2.0 (Ristau 2008) is the "ok" tier; 1.2 <= SNR < 2.0
+   is the "low" tier; below 1.2 the record is noise-dominated and dropped.
+4. **Tier retention**: all ok-tier stations are kept (up to the cap of
+   12). Low-tier stations are kept when (a) fewer than 5 ok-tier stations
+   exist (top-up), (b) the station is the sole representative of its
+   azimuth sector (coverage guard), or (c) the kept set's azimuthal gap
+   exceeds 180 deg — e.g. offshore events — in which case ALL viable
+   low-tier stations are retained up to the cap, because in one-sided
+   geometries every constraint adds stability.
+5. **Rejection pass**: after a first inversion, stations with individual
+   VR < 10% at the preferred depth are removed and the inversion rerun
+   once — the counterweight that stops admitted low-tier noise from
+   diluting the solution.
+6. **Weighting**: inverse-distance (an mttime built-in). Per-station SNR
+   down-weighting is not available without modifying mttime, and
+   misfit-based (variance) weighting risks suppressing exactly the
+   azimuth-constraining stations that look different; inclusion rules
+   above achieve the goal instead.
+
+Every dropped or trimmed station is recorded in `solution.json` with its
+SNR and reason, and used stations carry their tier, solved zcor and
+individual VR.
+
+### 3.2 Pre-processing Station distance must
   exceed 3x source depth (point-source/far-field assumption; waived for
   GeoNet placeholder depths, which are unreliable).
 - **Waveform windows**: origin−150 s to origin+230 s downloaded; final cut

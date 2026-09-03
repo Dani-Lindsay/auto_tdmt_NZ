@@ -61,7 +61,8 @@ def main(start: str) -> None:
     print(f"{len(events)} candidate events since {start}", flush=True)
     done = failed = skipped = 0
     for i, (pid, when, mag) in enumerate(events, 1):
-        if (config.EVENTS_DIR / pid / "solution.json").exists():
+        existing = config.find_event_dir(pid)
+        if existing is not None and (existing / "solution.json").exists():
             skipped += 1
             continue
         t0 = time.time()
@@ -80,6 +81,11 @@ def main(start: str) -> None:
             print(f"[{i}/{len(events)}] {pid} {when[:10]} M{mag:.1f} "
                   f"FAILED: {str(e)[:160]}", flush=True)
             failed += 1
+            # a failed event leaves no solution: remove its empty shell
+            shell = config.find_event_dir(pid)
+            if shell is not None and not (shell / "solution.json").exists():
+                import shutil as _sh
+                _sh.rmtree(shell, ignore_errors=True)
         time.sleep(2)  # politeness between events
     print(f"sweep complete {datetime.now(timezone.utc):%Y-%m-%dT%H:%MZ}: "
           f"{done} solved, {failed} failed, {skipped} already done",

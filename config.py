@@ -26,6 +26,25 @@ CPS_BIN = Path(
 )
 STATE_FILE = REPO_DIR / "events" / "index.json"
 
+
+def slugify(text: str) -> str:
+    """Locality -> filesystem-safe slug for event directory names."""
+    import re
+    return re.sub(r"[^A-Za-z0-9-]+", "-", text).strip("-")
+
+
+def event_dir_name(public_id: str, mw: float, depth_km: float,
+                   locality: str) -> str:
+    return (f"{public_id}_Mw{mw:.1f}_{depth_km:g}km_"
+            f"{slugify(locality)[:40]}")
+
+
+def find_event_dir(public_id: str, events_dir: Path | None = None):
+    """Locate an event's directory whether plain or canonically named."""
+    events_dir = events_dir or EVENTS_DIR
+    matches = sorted(events_dir.glob(f"{public_id}*"))
+    return matches[0] if matches else None
+
 # ---------------------------------------------------------------------------
 # GeoNet services
 # ---------------------------------------------------------------------------

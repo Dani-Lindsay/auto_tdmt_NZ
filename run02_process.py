@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
 from pathlib import Path
 
 import catalogue
@@ -80,7 +81,8 @@ def process_event(public_id: str, debug: bool = False,
           f"depth {event.depth_km:g} km, quality={event.quality}")
     assert event.quality != "deleted", f"{public_id} is marked deleted by GeoNet"
 
-    event_dir = config.EVENTS_DIR / event.public_id
+    event_dir = (config.find_event_dir(event.public_id)
+                 or config.EVENTS_DIR / event.public_id)
     event_dir.mkdir(parents=True, exist_ok=True)
 
     model = config.model_for_event(event.latitude, event.longitude)
@@ -150,7 +152,6 @@ def process_event(public_id: str, debug: bool = False,
         best, event_dir / f"{pid}_depth_sensitivity.jpg")
     # waveform-fit pages (mttime output, untouched) copied up with
     # descriptive event-ID names for the email attachments
-    import shutil
     for i, bb in enumerate(
             sorted((event_dir / best_tag).glob("bbwaves.*.jpg"))):
         shutil.copy(bb, event_dir / f"{pid}_waveform_fits_{i:02d}.jpg")
@@ -179,6 +180,17 @@ def process_event(public_id: str, debug: bool = False,
             shutil.rmtree(band_dir_ / "greens", ignore_errors=True)
             for dat in band_dir_.glob("*.dat"):
                 dat.unlink()
+
+    # canonical, human-readable directory name now that Mw/depth are known
+    canonical = config.EVENTS_DIR / config.event_dir_name(
+        event.public_id, best["preferred"]["mw"],
+        best["preferred"]["depth_km"], event.locality)
+    if event_dir != canonical:
+        if canonical.exists():
+            shutil.rmtree(canonical)
+        event_dir.rename(canonical)
+        event_dir = canonical
+        print(f"archived as {canonical.name}")
 
     pref = best["preferred"]
     print(
