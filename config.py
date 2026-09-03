@@ -165,8 +165,9 @@ def band_candidates(prelim_mag: float) -> list[tuple[float, float]]:
         # bands remain testable via run02 --band.
         return [(0.02, 0.10)]
     if prelim_mag < 5.5:
-        # 20-50 s, 10-50 s, 20-100 s
-        return [(0.02, 0.05), (0.02, 0.10), (0.01, 0.05)]
+        # 20-50 s, 10-50 s (20-100 s pruned 2026-09-03: it won 1/19 events
+        # in this bin and only ever fit noise on the losers)
+        return [(0.02, 0.05), (0.02, 0.10)]
     return [(0.01, 0.05), (0.01, 0.033)]  # 20-100 s, 30-100 s
 
 
@@ -203,13 +204,16 @@ DC_TIEBREAK_MIN_VR = 20.0
 # size, and fitting the empty tail only taxes VR. Per-station window =
 # 30 s pre-origin + dist/group_vel + tail(M), clamped; the tail grows
 # with magnitude because larger sources ring longer.
-WINDOW_GROUP_VEL_KMS = 2.8
+# 2.5 km/s (was 2.8): 2026p091845 review showed the tail of the
+# surface-wave train clipped at the old velocity; the slower bound
+# plus the longer small-event tail keeps the full packet in-window
+WINDOW_GROUP_VEL_KMS = 2.5
 WINDOW_MIN_S = 60.0
 
 
 def window_tail_s(prelim_mag: float) -> float:
     if prelim_mag < 4.5:
-        return 20.0
+        return 30.0
     if prelim_mag < 5.5:
         return 40.0
     return 60.0
@@ -249,6 +253,15 @@ RESPONSE_PRE_FILT = (0.004, 0.007, 10.0, 20.0)
 PEAK_NOISE_CORE = 5.0
 PEAK_NOISE_FLOOR = 2.0
 CANDIDATE_STATION_VR_MIN = 30.0
+# sparse events (2026p189537 review: 3 stations is thin): when the
+# core holds fewer than 5 stations, admission relaxes to this floor
+# so azimuth constraint is not starved by one strict threshold
+CANDIDATE_STATION_VR_MIN_SPARSE = 20.0
+SPARSE_CORE_COUNT = 5
+# azimuth-coverage cap (2026p033598 review: too many stations diluted
+# DC): when more survive, keep the best-VR station per 45 deg sector
+# plus the top-4 VR overall — coverage first, then fit
+MAX_USED_STATIONS = 12
 
 # ---------------------------------------------------------------------------
 # Green's function library grid

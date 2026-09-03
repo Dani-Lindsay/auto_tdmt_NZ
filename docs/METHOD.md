@@ -125,8 +125,8 @@ with its drop reason, so exclusions can be judged from the data.
 - **Waveform windows**: origin−150 s to origin+230 s downloaded; final
   cut origin−30 s to origin+200 s.
 - **Inversion record length**: distance-adaptive at every magnitude —
-  each station'''s fitted window is 30 s pre-origin + distance/2.8 km/s +
-  a magnitude-dependent tail (20 s below M4.5, 40 s to M5.5, 60 s
+  each station'''s fitted window is 30 s pre-origin + distance/2.5 km/s +
+  a magnitude-dependent tail (30 s below M4.5, 40 s to M5.5, 60 s
   above), clamped to 60–150 s. A close station'''s train is over quickly
   regardless of event size; fitting the empty tail only taxes VR. This
   is a deterministic kinematic cut, not an amplitude-based one, for
@@ -191,7 +191,7 @@ waveforms".
   | preliminary M | candidate bands |
   |---|---|
   | < 4.5 | 10–50 s only (no coherent energy above ~20 s period; longer-period trials only ever fit noise and inflate Mw — other bands remain testable via `run02 --band`) |
-  | 4.5–5.5 | 20–50 s, 10–50 s, 20–100 s |
+  | 4.5–5.5 | 20–50 s, 10–50 s (20–100 s pruned: won 1/19 events in this bin, elsewhere only fit noise) |
   | ≥ 5.5 | 20–100 s, 30–100 s |
 - **Station rejection**: candidate admission against the core solution
   plus the greedy earn-your-seat pass (§3.1 steps 5–6; cf. dropping

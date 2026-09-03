@@ -194,21 +194,25 @@ def invert_with_rejection(
     print(f"core: {len(core)} stations, depth {depth0:g} km, "
           f"VR {float(mt0.total_VR):.1f}")
 
-    # 2: one-at-a-time candidate admission at the core's preferred depth
+    # 2: one-at-a-time candidate admission at the core's preferred depth.
+    # Sparse cores relax the floor: 3-4 stations constrain a mechanism
+    # poorly, so extra azimuth coverage is worth a weaker individual fit.
+    vr_floor = (config.CANDIDATE_STATION_VR_MIN
+                if len(core) >= config.SPARSE_CORE_COUNT
+                else config.CANDIDATE_STATION_VR_MIN_SPARSE)
     admitted = []
     for c in cands:
         inv_c = _solve(core + [c], [depth0])
         mt_c = inv_c.moment_tensors[inv_c.preferred_tensor_id]
         own_vr = float(mt_c.station_table.iloc[-1].VR)
-        if own_vr >= config.CANDIDATE_STATION_VR_MIN:
+        if own_vr >= vr_floor:
             c["admission_vr"] = round(own_vr, 1)
             admitted.append(c)
         else:
             rejected.append({
                 "station": _sid(c),
                 "reason": f"not predicted by core solution: station VR "
-                          f"{own_vr:.0f} at {depth0:g} km < "
-                          f"{config.CANDIDATE_STATION_VR_MIN:g} "
+                          f"{own_vr:.0f} at {depth0:g} km < {vr_floor:g} "
                           f"(peak/noise {c.get('pk_n', 0.0):.1f})",
             })
     if cands:
@@ -218,6 +222,37 @@ def invert_with_rejection(
     # 3: core + admitted, full depth search
     current = sorted(core + admitted, key=lambda r: r["distance_km"])
     inv2 = _solve(current, depths) if admitted else inv1
+
+    # 3b: azimuth-coverage cap (2026p033598 review: an over-full network
+    # dilutes %DC). Keep the best-VR station in each 45 deg sector plus the
+    # top-4 VR overall — coverage first, then fit — and re-search.
+    if len(current) > config.MAX_USED_STATIONS:
+        mt2 = inv2.moment_tensors[inv2.preferred_tensor_id]
+        vrs = {r.station: float(r.VR)
+               for r in mt2.station_table.itertuples()}
+        by_sector: dict[int, list] = {}
+        for r in current:
+            by_sector.setdefault(_sector(r), []).append(r)
+        keep_ids = {_sid(max(rows_, key=lambda r: vrs.get(_sid(r), -1e9)))
+                    for rows_ in by_sector.values()}
+        for r in sorted(current,
+                        key=lambda r: -vrs.get(_sid(r), -1e9))[:4]:
+            keep_ids.add(_sid(r))
+        for r in current:
+            if _sid(r) not in keep_ids:
+                rejected.append({
+                    "station": _sid(r),
+                    "reason": "azimuth-coverage cap: sector-best + top-4 "
+                              f"VR kept {len(keep_ids)} of {len(current)}; "
+                              f"station VR {vrs.get(_sid(r), 0.0):.0f}",
+                })
+        if len(keep_ids) < len(current):
+            print(f"coverage cap: {len(current)} -> {len(keep_ids)} "
+                  "stations")
+            current = sorted(
+                (r for r in current if _sid(r) in keep_ids),
+                key=lambda r: r["distance_km"])
+            inv2 = _solve(current, depths)
     depth_pref = float(
         inv2.moment_tensors[inv2.preferred_tensor_id].depth)
 
