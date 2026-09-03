@@ -14,7 +14,7 @@ validation scripts. Collected per station:
 - med_amp_ratio: median distance-corrected amplitude vs network median —
   drift flags response-metadata problems (e.g. NZ.RDHZ at ~100x, or a
   dead channel near 0x);
-- n_snr_drop / n_amp_outlier / n_eliminated: why it gets excluded.
+- n_snr_drop (SNR or peak/noise floor) / n_amp_outlier / n_eliminated: why it gets excluded.
 
 A future selection prior can read this table directly; today it is the
 audit trail.
@@ -77,7 +77,7 @@ def build_station_performance(events_dir: Path | None = None) -> Path | None:
             reason = d.get("reason", "")
             if "amp_ratio" in d:
                 e["amp"].append(d["amp_ratio"])
-            if re.search(r"SNR .* <", reason):
+            if re.search(r"SNR .* <|peak/noise .* <", reason):
                 e["snr_drop"] += 1
             elif "amplitude outlier" in reason:
                 e["amp_out"] += 1

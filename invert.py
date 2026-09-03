@@ -273,6 +273,20 @@ def invert_with_rejection(
         if not droppable:
             break
         worst = min(droppable, key=lambda r: vrs.get(_sid(r), 0))
+        # anti-fitting cull: NEGATIVE own VR means the station fits worse
+        # than silence — it only steers the tensor. Dropped without the
+        # joint-gain test (distance weighting can hide the joint cost:
+        # 2026p238013 NNZ sat at station VR -41 behind a passing joint VR).
+        if vrs.get(_sid(worst), 0.0) < 0.0:
+            rejected.append({
+                "station": _sid(worst),
+                "reason": f"anti-fitting: station VR "
+                          f"{vrs.get(_sid(worst), 0.0):.0f} at "
+                          f"{depth_pref:g} km",
+            })
+            current = [r for r in current if r is not worst]
+            greedy += 1
+            continue
         trial = [r for r in current if r is not worst]
         inv_t = _solve(trial, [depth_pref])
         tot_t = float(

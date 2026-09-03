@@ -68,10 +68,11 @@ def make_share_figure(
         r = d.get("reason", "")
         if "amplitude outlier" in r:
             return "amp"
-        if ("eliminated" in r or "test-drop" in r
-                or "consistently bad" in r):
+        if ("test-drop" in r or "not predicted" in r
+                or "coverage cap" in r or "station cluster" in r
+                or "anti-fitting" in r):
             return "elim"
-        return "snr"
+        return "snr"  # dead-channel floor / download / windows
 
     styles = {
         "snr": dict(marker="^", color="0.65", markeredgecolor="0.4",
@@ -95,7 +96,7 @@ def make_share_figure(
             textcoords="offset points", fontsize=5.5, color="0.45",
             xycoords=ccrs.PlateCarree()._as_mpl_transform(ax))
     ax.text(0.985, 0.015,
-            "dropped: grey=low SNR  x=bad amplitude  open=eliminated by fit",
+            "dropped: grey=low signal  x=bad amplitude  open=rejected by fit/coverage",
             transform=ax.transAxes, ha="right", va="bottom", fontsize=6.2,
             color="0.35", zorder=20,
             bbox=dict(facecolor="white", edgecolor="none", alpha=0.8,
@@ -545,7 +546,7 @@ def plot_depth_sensitivity(solution: dict, out_path: Path) -> Path:
 def plot_band_waveforms(band_dir: Path, solution: dict,
                         out_path: Path) -> Path:
     """One record section per filter band showing EVERY candidate station
-    with data — used, eliminated-by-fit, and rejected (low SNR / amplitude
+    with data — used, eliminated-by-fit, and rejected (low signal / amplitude
     outlier) — so exclusions can be judged from the waveforms themselves.
     Traces are the processed displacement data (cm) actually offered to the
     inversion; rejected stations come from the rejected_*.dat files that

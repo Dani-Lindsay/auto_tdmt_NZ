@@ -104,11 +104,12 @@ def process_event(public_id: str, debug: bool = False,
         except AssertionError as e:
             print(f"band {tag} failed: {e}")
             continue
-        # Below M5.5 the menu is an ordered preference (see band choice
-        # below): once a band passes its gates, later bands would never be
-        # chosen — skip computing them entirely (her 2026-09-03 call).
-        if (event.prelim_mag < 5.5 and band is None
-                and solutions[tag]["quality"]["passed"]):
+        # Below M5.5 the menu is an ordered preference: the first band
+        # that produces a solution wins outright (2026-09-03 call — VR
+        # must not arbitrate across bands, and a C-grade first band
+        # usually reflects the event, not the band). Fallback bands run
+        # only when a band fails hard (assert above).
+        if event.prelim_mag < 5.5 and band is None:
             break
     assert solutions, "every filter band failed"
 

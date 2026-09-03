@@ -176,10 +176,13 @@ def fetch_and_process(
             extended = True
             ext = base + config.RADIUS_EXTEND_KM
             try:
-                _, more = select_stations(
+                inv_ext, more = select_stations(
                     client, event, origin, max_dist_km=ext)
             except AssertionError:
                 break
+            # the annulus stations' responses live in the EXTENDED
+            # inventory — merge it, or response removal fails for them
+            inv += inv_ext
             annulus = [r for r in more
                        if r["distance_km"] > base + 1e-6]
             if not annulus:
@@ -386,7 +389,7 @@ def fetch_and_process(
         used = [r for r in used if r not in flagged]
 
     # the screened pool goes forward; station choice is made by backward
-    # elimination in the inversion (data evicts stations, not an SNR
+    # admission/elimination in the inversion (data evicts stations,
     # proxy). Tiers remain as metadata.
     # station-cluster thinning: dense sub-networks (the Ruapehu ring) must
     # not stack near-identical records. Best peak/noise first; a station
