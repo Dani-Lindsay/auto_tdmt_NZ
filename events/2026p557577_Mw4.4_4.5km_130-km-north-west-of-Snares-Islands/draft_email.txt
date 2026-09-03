@@ -9,7 +9,7 @@ GeoNet preliminary magnitude: M 4.2
 
 Mw: 4.41
 Centroid depth: 4.5 km (GeoNet initial: 12 km)
-Variance reduction: 65%  |  DC 92% / CLVD 8%
+Variance reduction: 67%  |  DC 92% / CLVD 8%
 Filter band: 10-50 s  |  Velocity model: nz_south_ristau2008
 Nodal plane 1 (strike/dip/rake): 180/87/107
 Nodal plane 2 (strike/dip/rake): 280/17/10

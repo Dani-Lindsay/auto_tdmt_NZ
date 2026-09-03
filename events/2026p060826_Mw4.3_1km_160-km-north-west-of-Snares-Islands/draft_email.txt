@@ -7,12 +7,12 @@ Triggered from the GeoNet rapid earthquake solution; origin time, location, prel
 Location: 160 km north-west of Snares Islands (-46.713, 165.634)
 GeoNet preliminary magnitude: M 4.4
 
-Mw: 4.34
+Mw: 4.33
 Centroid depth: 1 km (GeoNet initial: 5 km)
-Variance reduction: 68%  |  DC 100% / CLVD 0%
+Variance reduction: 78%  |  DC 100% / CLVD 0%
 Filter band: 20-50 s  |  Velocity model: nz_south_ristau2008
-Nodal plane 1 (strike/dip/rake): 297/7/-6
-Nodal plane 2 (strike/dip/rake): 33/89/-97
+Nodal plane 1 (strike/dip/rake): 297/7/-5
+Nodal plane 2 (strike/dip/rake): 32/89/-97
 Stations used: 1  |  Azimuthal gap: 0 deg  |  Quality grade: D
 
 Stability: jackknife skipped (fewer than 4 stations)
