@@ -373,29 +373,30 @@ def make_overview_map(events_dir: Path, out_path: Path) -> Path:
     import matplotlib.patches as mpatches
     ax.add_patch(mpatches.Rectangle(
         (lx - 0.015 * w_ax, ly - 0.030 * h_ax), 0.40 * w_ax,
-        0.27 * h_ax, facecolor="white", edgecolor="0.4",
+        0.33 * h_ax, facecolor="white", edgecolor="0.4",
         linewidth=0.6, zorder=200))
     ss = [0.0, 90.0, 0.0]  # clean strike-slip DC for the demo balls
     for i, (mw, lab) in enumerate([(4.0, "Mw 4"), (5.0, "Mw 5"),
                                    (6.0, "Mw 6")]):
         bx = lx + (0.055 + 0.125 * i) * w_ax
-        by = ly + 0.185 * h_ax
+        by = ly + 0.245 * h_ax
         bw = (0.018 + 0.010 * (mw - 4.0)) * w_ax
         ax.add_collection(beach(ss, xy=(bx, by), width=bw,
                                 linewidth=0.4, facecolor="black",
                                 zorder=210))
         ax.text(bx, by - 0.055 * h_ax, lab, ha="center",
                 fontsize=10, zorder=220)
-    b1 = beach(ss, xy=(lx + 0.045 * w_ax, ly + 0.065 * h_ax),
+    b1 = beach(ss, xy=(lx + 0.045 * w_ax, ly + 0.125 * h_ax),
                width=0.024 * w_ax, linewidth=0.4, facecolor="black",
                zorder=210)
     ax.add_collection(b1)
-    ax.text(lx + 0.075 * w_ax, ly + 0.065 * h_ax, "grade A/B",
-            fontsize=10, va="center", zorder=220)
+    ax.text(lx + 0.075 * w_ax, ly + 0.125 * h_ax,
+            "grade A/B (mechanism shown)", fontsize=10, va="center",
+            zorder=220)
     ax.add_patch(plt.Circle(
-        (lx + 0.22 * w_ax, ly + 0.065 * h_ax), radius=0.012 * w_ax,
+        (lx + 0.045 * w_ax, ly + 0.062 * h_ax), radius=0.012 * w_ax,
         facecolor="none", edgecolor="black", linewidth=0.9, zorder=210))
-    ax.text(lx + 0.25 * w_ax, ly + 0.065 * h_ax,
+    ax.text(lx + 0.075 * w_ax, ly + 0.062 * h_ax,
             "grade C/D (poorly constrained)", fontsize=10, va="center",
             zorder=220)
     ax.plot([lx + 0.03 * w_ax, lx + 0.075 * w_ax],
