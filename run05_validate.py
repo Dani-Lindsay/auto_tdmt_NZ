@@ -218,8 +218,8 @@ def main() -> None:
         print(f"  mechanism: median tensor angle "
               f"{sub.tensor_angle_deg.median():.0f} deg")
 
-    colors = {"NZ_CMT_Ristau": "#0173B2", "GlobalCMT": "#DE8F05",
-              "USGS_NEIC": "#029E73"}
+    colors = {"NZ_CMT_Ristau": "#0072B2", "GlobalCMT": "#E69F00",
+              "USGS_NEIC": "#CC79A7"}
     fig, axes = plt.subplots(2, 2, figsize=(10, 9))
     for ref, sub in df.groupby("reference"):
         c = colors.get(ref, "black")

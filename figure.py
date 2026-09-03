@@ -134,7 +134,7 @@ def make_share_figure(
             f"depth {pref['depth_km']:g} km")
 
     # ---- displacement AOI: fit the modelled signal ------------------------
-    plane_colors = {"plane1": "#0173B2", "plane2": "#029E73"}
+    plane_colors = {"plane1": "#0072B2", "plane2": "#E69F00"}
     vmax = max(
         0.1,
         max(float(np.abs(forward[p][c]).max())
@@ -281,7 +281,7 @@ def make_share_figure(
     lines = [
         f"Okada forward models (black outline; COLOURED line = up-dip/shallowest edge, matching that plane's arc on the stability ball; arrow points down-dip): "
         f"plane 1 (blue, top row) {p1f['strike']:.0f}/{p1f['dip']:.0f}/"
-        f"{p1f['rake']:.0f}, plane 2 (green, bottom row) {p2f['strike']:.0f}/"
+        f"{p1f['rake']:.0f}, plane 2 (orange, bottom row) {p2f['strike']:.0f}/"
         f"{p2f['dip']:.0f}/{p2f['rake']:.0f}; "
         f"peak |u| {peak_cm:.2f} cm - {detect}"]
     if passes:
@@ -345,13 +345,20 @@ def make_overview_map(events_dir: Path, out_path: Path) -> Path:
         x, y = ax.projection.transform_point(lon, ev["latitude"],
                                              ccrs.PlateCarree())
         xe0, xe1, _, _ = ax.get_extent(crs=ax.projection)
-        fm = [rtp["MRR"], rtp["MTT"], rtp["MPP"],
-              rtp["MRT"], rtp["MRP"], rtp["MTP"]]
-        ball = beach(fm, xy=(x, y), width=width * (xe1 - xe0),
-                     linewidth=0.4, facecolor="black")
-        if grade not in ("A", "B"):
-            ball.set_alpha(0.40)
-        ax.add_collection(ball)
+        if grade in ("A", "B"):
+            # well-constrained: show the mechanism (filled beachball)
+            fm = [rtp["MRR"], rtp["MTT"], rtp["MPP"],
+                  rtp["MRT"], rtp["MRP"], rtp["MTP"]]
+            ax.add_collection(beach(
+                fm, xy=(x, y), width=width * (xe1 - xe0),
+                linewidth=0.4, facecolor="black"))
+        else:
+            # poorly constrained: open circle — location and size only,
+            # no mechanism the data cannot support
+            ax.add_patch(plt.Circle(
+                (x, y), radius=0.5 * width * (xe1 - xe0),
+                facecolor="none", edgecolor="black", linewidth=0.9,
+                zorder=8))
         dates.append(ev["origin_time"][:10])
     ax.set_title(
         f"Catalogue Solutions\n"
@@ -385,13 +392,12 @@ def make_overview_map(events_dir: Path, out_path: Path) -> Path:
     ax.add_collection(b1)
     ax.text(lx + 0.075 * w_ax, ly + 0.065 * h_ax, "grade A/B",
             fontsize=10, va="center", zorder=220)
-    b2 = beach(ss, xy=(lx + 0.22 * w_ax, ly + 0.065 * h_ax),
-               width=0.024 * w_ax, linewidth=0.4, facecolor="black",
-               zorder=210)
-    b2.set_alpha(0.40)
-    ax.add_collection(b2)
-    ax.text(lx + 0.25 * w_ax, ly + 0.065 * h_ax, "grade C/D",
-            fontsize=10, va="center", zorder=220)
+    ax.add_patch(plt.Circle(
+        (lx + 0.22 * w_ax, ly + 0.065 * h_ax), radius=0.012 * w_ax,
+        facecolor="none", edgecolor="black", linewidth=0.9, zorder=210))
+    ax.text(lx + 0.25 * w_ax, ly + 0.065 * h_ax,
+            "grade C/D (poorly constrained)", fontsize=10, va="center",
+            zorder=220)
     ax.plot([lx + 0.03 * w_ax, lx + 0.075 * w_ax],
             [ly + 0.005 * h_ax] * 2, "-", color="#8B3A3A", linewidth=1.4,
             zorder=210)
@@ -425,7 +431,7 @@ def plot_depth_sensitivity(solution: dict, out_path: Path) -> Path:
     dc_max_depth = max(rows, key=lambda r: r["pdc"])["depth_km"]
 
     # seaborn colorblind palette
-    c_geonet, c_vr, c_dc = "#0173B2", "#DE8F05", "#029E73"
+    c_geonet, c_vr, c_dc = "#0072B2", "#E69F00", "#CC79A7"
     ref_lines = [
         (ev["depth_km"], c_geonet,
          f"GeoNet depth {ev['depth_km']:g} km"),

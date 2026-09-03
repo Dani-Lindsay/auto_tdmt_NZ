@@ -232,7 +232,7 @@ def nodal_plane_arc(strike: float, dip: float, n: int = 315):
 
 
 def inset_dc_ball(fig, rect, plane1: dict, plane2: dict,
-                  highlight_color: str = "#0173B2"):
+                  highlight_color: str = "#0072B2"):
     """Small DC beachball inset with the modelled plane (plane1) traced in
     a highlight colour over the standard nodal lines."""
     from obspy.imaging.beachball import beach
