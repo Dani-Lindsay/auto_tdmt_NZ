@@ -20,13 +20,14 @@ import config
 from run02_process import process_event
 
 EVENT_URL = (
-    "{base}/fdsnws/event/1/query?starttime={start}&minmagnitude={mag}"
+    "{base}/fdsnws/event/1/query?starttime={start}&endtime={end}"
+    "&minmagnitude={mag}"
     "&minlatitude={lat0}&maxlatitude={lat1}"
     "&minlongitude={lon0}&maxlongitude={lon1}&format=text"
 )
 
 
-def list_events(start: str) -> list[tuple[str, str, float]]:
+def list_events(start: str, end: str = "2100-01-01") -> list[tuple[str, str, float]]:
     """(publicID, origin_time, magnitude) for NZ M>=floor earthquakes
     shallower than the processing depth ceiling."""
     b = config.NZ_BBOX
@@ -34,7 +35,7 @@ def list_events(start: str) -> list[tuple[str, str, float]]:
     rows = []
     for lon0, lon1 in windows:
         url = EVENT_URL.format(
-            base=config.FDSN_ARCHIVE, start=start,
+            base=config.FDSN_ARCHIVE, start=start, end=end,
             mag=config.PROCESS_MIN_PRELIM_MAG,
             lat0=b["lat_min"], lat1=b["lat_max"], lon0=lon0, lon1=lon1,
         )
@@ -56,8 +57,8 @@ def list_events(start: str) -> list[tuple[str, str, float]]:
     return rows
 
 
-def main(start: str) -> None:
-    events = list_events(start)
+def main(start: str, end: str = "2100-01-01") -> None:
+    events = list_events(start, end)
     print(f"{len(events)} candidate events since {start}", flush=True)
     done = failed = skipped = 0
     for i, (pid, when, mag) in enumerate(events, 1):
@@ -95,5 +96,6 @@ def main(start: str) -> None:
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--start", default="2026-01-01")
+    ap.add_argument("--end", default="2100-01-01")
     args = ap.parse_args()
-    main(args.start)
+    main(args.start, args.end)
