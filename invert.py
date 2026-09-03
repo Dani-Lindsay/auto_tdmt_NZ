@@ -175,18 +175,28 @@ def invert_with_rejection(
     depth0 = float(inv_seed.moment_tensors[inv_seed.preferred_tensor_id].depth)
     print(f"seed depth search ({len(seed)} stations): {depth0:g} km")
 
-    # 2: backward elimination of the full pool at the fixed seed depth
+    # 2: backward elimination of the full pool at the fixed seed depth,
+    # against an abundance-conditional floor: strict while stations are
+    # plentiful, relaxed as the set thins
+    def _floor(n):
+        if n > config.RICH_STATION_COUNT:
+            return config.STATION_VR_FLOOR_RICH
+        if n > config.MID_STATION_COUNT:
+            return config.STATION_VR_FLOOR_MID
+        return config.STATION_VR_FLOOR
+
     current = list(stations)
     for _ in range(len(stations)):
         inv = _solve(current, [depth0])
         vrs = _station_vrs(inv)
+        floor_dyn = _floor(len(current))
         sectors_left = {}
         for r in current:
             sectors_left.setdefault(_sector(r), []).append(r)
         candidates = []
         for r in current:
             vr = vrs.get(_sid(r), 0.0)
-            if vr >= config.STATION_VR_FLOOR:
+            if vr >= floor_dyn:
                 continue
             sole = len(sectors_left[_sector(r)]) == 1
             if sole and vr >= 0.0:
@@ -197,8 +207,9 @@ def invert_with_rejection(
         vr_worst, worst = min(candidates, key=lambda c: c[0])
         rejected.append({
             "station": _sid(worst),
-            "reason": f"eliminated: VR {vr_worst:.0f} < "
-                      f"{config.STATION_VR_FLOOR:g} at seed depth {depth0:g} km",
+            "reason": f"eliminated: VR {vr_worst:.0f} < {floor_dyn:g} "
+                      f"(floor at {len(current)} stations) at seed depth "
+                      f"{depth0:g} km",
         })
         current.remove(worst)
     # 2b: greedy improvement — a station above the floor must earn its

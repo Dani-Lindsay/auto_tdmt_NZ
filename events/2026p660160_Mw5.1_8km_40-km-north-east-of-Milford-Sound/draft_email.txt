@@ -1,4 +1,4 @@
-[auto-MT NZ] Mw 5.0 40 km north-east of Milford Sound (2026p660160), depth 5 km
+[auto-MT NZ] Mw 5.1 40 km north-east of Milford Sound (2026p660160), depth 8 km
 
 Automated regional moment tensor solution — PRELIMINARY
 
@@ -7,19 +7,19 @@ Triggered from the GeoNet rapid earthquake solution; origin time, location, prel
 Location: 40 km north-east of Milford Sound (-44.442, 168.323)
 GeoNet preliminary magnitude: M 5.5
 
-Mw: 5.05
-Centroid depth: 5 km (GeoNet initial: 5 km)
-Variance reduction: 72%  |  DC 53% / CLVD 47%
+Mw: 5.08
+Centroid depth: 8 km (GeoNet initial: 5 km)
+Variance reduction: 87%  |  DC 59% / CLVD 41%
 Filter band: 20-50 s  |  Velocity model: nz_south_ristau2008
-Nodal plane 1 (strike/dip/rake): 10/36/57
-Nodal plane 2 (strike/dip/rake): 230/61/112
-Stations used: 16  |  Azimuthal gap: 182 deg  |  Quality grade: B
+Nodal plane 1 (strike/dip/rake): 9/50/56
+Nodal plane 2 (strike/dip/rake): 235/51/123
+Stations used: 11  |  Azimuthal gap: 193 deg  |  Quality grade: B
 
-Stability (leave-one-out jackknife, n=16): Mw +/-0.006  |  DC 53 +/-4.5%  |  mechanism rotation <= 7.0 deg
+Stability (leave-one-out jackknife, n=11): Mw +/-0.005  |  DC 59 +/-6.6%  |  mechanism rotation <= 3.7 deg
 
 LIMITATIONS: deviatoric-only inversion (no isotropic component) - these mechanisms must not be interpreted in volcanic or geothermal settings, where real isotropic components are forced into DC/CLVD. Large misfit (low VR or grade C-D) indicates the automated result is unreliable and additional processing is required.
 
-Predicted peak surface displacement (Okada, both nodal planes): 1.2 cm — potentially detectable with InSAR.
+Predicted peak surface displacement 0.55 cm — no detectable surface deformation expected.
 
 NISAR passes over the epicentre:
   track 145 D: last 2026-07-06 06:47Z, next ~2026-09-04 06:47Z

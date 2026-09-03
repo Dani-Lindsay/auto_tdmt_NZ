@@ -148,6 +148,13 @@ def band_tag(band_hz: tuple[float, float]) -> str:
 # permissive 2.0, this is the filter that removes marginal stations that
 # passed SNR but do not actually fit — keeping them dilutes %DC.
 STATION_VR_FLOOR = 10.0
+# Abundance-conditional floors: with many stations, poor fitters are dead
+# weight ("when there are so many stations we don't need these bad ones");
+# as the set thins the floor relaxes so marginal azimuth-holders survive.
+STATION_VR_FLOOR_RICH = 30.0   # while more than RICH_STATION_COUNT remain
+STATION_VR_FLOOR_MID = 20.0    # while more than MID_STATION_COUNT remain
+RICH_STATION_COUNT = 8
+MID_STATION_COUNT = 5
 # Greedy improvement elimination: a station above the floor is still
 # dropped if removing it improves the joint fit by at least this many VR
 # points (the manual "test around and drop what degrades" practice).
