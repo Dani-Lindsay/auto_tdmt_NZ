@@ -8,11 +8,14 @@ Inversion: https://github.com/LLNL/mttime/tree/master/examples/notebooks
 with ObsPy (https://github.com/obspy/obspy).
 
 Deviations from the original notebooks: GeoNet NRT/archive FDSN sources
-with retry logic; automated station selection (distance window, HH?>BH?
-priority, 3x-depth rule); per-station SNR gate (signal/pre-event noise in
-the inversion passband, threshold in config.py); magnitude-dependent
-filter-band menu applied per event rather than fixed corners; fail-loud
-drop accounting (every rejected station recorded with a reason).
+with retry logic; automated station selection (magnitude-scaled distance
+window with one-shot radius extension, HH?>BH? priority, 3x-depth rule);
+peak-to-noise station tiers measured in the distance-adaptive inversion
+window (core / candidate / dead, thresholds in config.py) feeding the
+core-plus-admission scheme in invert.py; station-cluster thinning;
+magnitude-dependent filter-band menu applied per event rather than fixed
+corners; fail-loud drop accounting (every rejected station recorded with
+a reason).
 
 Waveform acquisition and pre-processing to mttime-ready SAC files.
 
@@ -37,13 +40,16 @@ import config
 from geonet import Event, fdsn_client
 
 
-def select_stations(client, event: Event, origin: UTCDateTime):
+def select_stations(client, event: Event, origin: UTCDateTime,
+                    max_dist_km: float | None = None):
     """Broadband NZ stations within the working distance range.
 
     Returns (inventory, station_rows) where station_rows is a list of dicts
     with one preferred (channel-band, location) per station, nearest first.
+    ``max_dist_km`` overrides the magnitude-scaled radius (radius extension).
     """
-    max_dist = config.station_max_dist_km(event.prelim_mag)
+    max_dist = max_dist_km or config.station_max_dist_km(event.prelim_mag)
+    min_dist = config.station_min_dist_km(event.prelim_mag)
     inv = client.get_stations(
         network=config.NETWORK,
         channel=",".join(config.CHANNEL_PRIORITY),
@@ -78,7 +84,7 @@ def select_stations(client, event: Event, origin: UTCDateTime):
                 event.latitude, event.longitude, sta.latitude, sta.longitude
             )
             dist_km = dist_m / 1000.0
-            if not (config.MIN_STATION_DIST_KM <= dist_km <= max_dist):
+            if not (min_dist <= dist_km <= max_dist):
                 continue
             rows.append(
                 dict(
@@ -133,8 +139,36 @@ def fetch_and_process(
             if sectors[k]:
                 ordered.append(sectors[k].pop(0))
 
+    import numpy as np
+
     used, dropped = [], []
-    for row in ordered:
+    queue = list(ordered)
+    extended = False
+    i = 0
+    while True:
+        if i >= len(queue):
+            # single radius extension when the usable pool is starved
+            # (offshore events: 2026p047833 review)
+            base = config.station_max_dist_km(event.prelim_mag)
+            if extended or len(used) >= config.MIN_USABLE_BEFORE_EXTEND:
+                break
+            extended = True
+            ext = base + config.RADIUS_EXTEND_KM
+            try:
+                _, more = select_stations(
+                    client, event, origin, max_dist_km=ext)
+            except AssertionError:
+                break
+            annulus = [r for r in more
+                       if r["distance_km"] > base + 1e-6]
+            if not annulus:
+                break
+            print(f"only {len(used)} usable stations: radius extended to "
+                  f"{ext:g} km ({len(annulus)} more candidates)")
+            queue.extend(sorted(annulus, key=lambda r: r["distance_km"]))
+            continue
+        row = queue[i]
+        i += 1
         if len(used) >= config.MAX_STATIONS:
             break
         sid = f"{row['network']}.{row['station']}.{row['location']}"
@@ -195,20 +229,7 @@ def fetch_and_process(
             _drop("not exactly 3 ZNE components")
             continue
 
-        # SNR gate in the inversion passband: RMS(signal)/RMS(pre-event noise)
-        snr_st = st.copy()
-        snr_st.filter(
-            "bandpass", freqmin=fmin, freqmax=fmax,
-            corners=config.FILTER_CORNERS, zerophase=True,
-        )
-        snr = _snr(snr_st, origin)
-        # SNR failures are still processed and written under a rejected_
-        # prefix so the per-band all-station waveform figure can show WHY
-        # they were excluded; mtinv.in never references prefixed files.
-        prefix = "rejected_" if snr < config.SNR_TIER_LOW else ""
-        row["snr_tier"] = "ok" if snr >= config.MIN_SNR else "low"
-
-        if stages is not None and not prefix:
+        if stages is not None:
             for src, key in ((raw_copy, "raw"), (st.copy(), "displacement")):
                 for tr in src:
                     tr.stats.distance = row["distance_km"] * 1000.0
@@ -241,6 +262,34 @@ def fetch_and_process(
             _drop(f"trim gave npts {npts}, want {expected}")
             continue
 
+        # peak-to-noise, measured ONLY inside the distance-adaptive window
+        # actually inverted (see config PEAK_NOISE_* docs). Dead channels
+        # are still written under a rejected_ prefix so the per-band
+        # all-station waveform figure can show WHY they were excluded;
+        # mtinv.in never references prefixed files.
+        tail = config.window_tail_s(event.prelim_mag)
+        wlen = int(min(config.INV_NPTS, max(
+            config.WINDOW_MIN_S,
+            config.TIME_BEFORE_S
+            + row["distance_km"] / config.WINDOW_GROUP_VEL_KMS + tail)))
+        tend = wlen - config.TIME_BEFORE_S  # s after origin
+        ratios = []
+        for tr in st:
+            b = -1.0 * (origin - tr.stats.starttime)
+            t = b + np.arange(tr.stats.npts) * tr.stats.delta
+            noise = tr.data[(t > b + 5) & (t < -2)]
+            sig = tr.data[(t >= 0) & (t <= tend)]
+            assert len(noise) > 10 and len(sig) > 10, \
+                f"{sid}: peak/noise windows too short"
+            ratios.append(
+                float(np.abs(sig).max() / np.sqrt(np.mean(noise ** 2))))
+        pk_n = float(np.median(ratios))
+        row["pk_n"] = round(pk_n, 2)
+        row["window_end_s"] = tend
+        row["tier"] = ("core" if pk_n >= config.PEAK_NOISE_CORE
+                       else "candidate")
+        prefix = "rejected_" if pk_n < config.PEAK_NOISE_FLOOR else ""
+
         for tr in st:
             sacd = AttribDict()
             sacd.stla, sacd.stlo = row["latitude"], row["longitude"]
@@ -257,7 +306,8 @@ def fetch_and_process(
                      format="SAC")
 
         if prefix:
-            _drop(f"SNR {snr:.1f} < {config.SNR_TIER_LOW} (low tier floor)")
+            _drop(f"peak/noise {pk_n:.1f} < {config.PEAK_NOISE_FLOOR:g} "
+                  "(dead-channel floor)")
             continue
 
         if stages is not None:
@@ -266,7 +316,6 @@ def fetch_and_process(
                 tr.stats.distance = row["distance_km"] * 1000.0
             stages["final"] += final_copy
 
-        row["snr"] = round(snr, 2)
         row["filter_hz"] = [fmin, fmax]
         used.append(row)
 
@@ -311,23 +360,35 @@ def fetch_and_process(
     # the screened pool goes forward; station choice is made by backward
     # elimination in the inversion (data evicts stations, not an SNR
     # proxy). Tiers remain as metadata.
-    keep = used
+    # station-cluster thinning: dense sub-networks (the Ruapehu ring) must
+    # not stack near-identical records. Best peak/noise first; a station
+    # with CLUSTER_MAX_STATIONS better ones within CLUSTER_RADIUS_KM is
+    # dropped (its .dat renamed for the all-station figure).
+    kept: list[dict] = []
+    for r in sorted(used, key=lambda x: -x.get("pk_n", 0.0)):
+        near = [k for k in kept if gps2dist_azimuth(
+            r["latitude"], r["longitude"],
+            k["latitude"], k["longitude"])[0] / 1000.0
+            <= config.CLUSTER_RADIUS_KM]
+        if len(near) >= config.CLUSTER_MAX_STATIONS:
+            sid = f"{r['network']}.{r['station']}.{r['location']}"
+            for comp in "ZRT":
+                p = workdir / f"{sid}.{comp}.dat"
+                if p.exists():
+                    p.rename(workdir / f"rejected_{p.name}")
+            dropped.append({
+                "station": sid,
+                "reason": "station cluster: "
+                          f"{len(near)} better stations within "
+                          f"{config.CLUSTER_RADIUS_KM:g} km "
+                          f"({', '.join(k['station'] for k in near)})",
+                "latitude": r["latitude"], "longitude": r["longitude"],
+                "distance_km": round(r["distance_km"], 1),
+            })
+        else:
+            kept.append(r)
+
+    keep = kept
     keep.sort(key=lambda r: r["distance_km"])
     assert keep, f"all {len(rows)} candidate stations dropped: {dropped}"
     return keep, dropped
-
-
-def _snr(st: Stream, origin: UTCDateTime) -> float:
-    """Min over components of RMS(signal window)/RMS(noise window)."""
-    import numpy as np
-
-    snrs = []
-    for tr in st:
-        noise = tr.slice(origin - 4 * config.TIME_BEFORE_S, origin - 10).data
-        signal = tr.slice(origin, origin + config.TIME_AFTER_S).data
-        assert len(noise) > 10 and len(signal) > 10, "SNR windows too short"
-        rms_n = float(np.sqrt(np.mean(noise**2)))
-        rms_s = float(np.sqrt(np.mean(signal**2)))
-        assert rms_n > 0, "zero noise RMS (dead channel?)"
-        snrs.append(rms_s / rms_n)
-    return min(snrs)

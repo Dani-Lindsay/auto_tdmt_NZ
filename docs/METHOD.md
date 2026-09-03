@@ -65,41 +65,57 @@ distance band that carries information for the magnitude, and let FIT,
 not a noise proxy, make the final call.
 
 1. **Candidate pool**: network NZ broadbands (HH? preferred over BH?,
-   location codes from the inventory), from 20 km (near-field exclusion)
-   out to a magnitude-scaled radius — 120 km below M4.0, 180 km to M4.5,
-   250 km to M5.0, 300 km above: small events attenuate below usefulness
-   at far field, larger events still carry information there.
-2. **Noise floor**: per-station SNR (min over components, signal/pre-event
-   noise in the inversion band) must exceed 1.2; records below are
-   noise-dominated. SNR >= 2.0 is tagged "ok", 1.2-2.0 "low" (metadata).
+   location codes from the inventory), from a near-field exclusion
+   (10 km below prelim M4.5 — small shallow events put their information
+   in the close stations; 20 km above) out to a magnitude-scaled radius —
+   120 km below M4.0, 180 km to M4.5, 250 km to M5.0, 300 km above:
+   small events attenuate below usefulness at far field, larger events
+   still carry information there. If fewer than 4 usable stations
+   survive the tiers below (offshore events), the radius is extended
+   once by 100 km and the annulus is fetched and screened the same way.
+2. **Peak-to-noise tiers**: per station, the median over Z/R/T of
+   peak|signal| / RMS(pre-event noise), with the signal measured ONLY
+   inside the distance-adaptive window that is actually inverted (§3.2).
+   An impulsive surface-wave packet is a spike above background, which an
+   RMS-over-the-full-record measure cannot see. Below 2 the channel is
+   dead and rejected outright; 2–5 is a *candidate* ("yellow") that must
+   earn admission (step 5); at or above 5 the station is *core*.
+   Thresholds were calibrated against manual keep/toss labelling of
+   reviewed events (2026-09-03).
 3. **Amplitude-consistency screen**: peak amplitude x distance must lie
    within a factor of 8 of the network median. A station orders of
    magnitude off (broken response metadata, dead channel) would
    single-handedly steer the least-squares moment — e.g. NZ.RDHZ at 139x
    the median turned an Mw 5.0 into an apparent Mw 6.2 before this screen
    existed.
-4. **Depth-profile culling**: one full depth search with the whole pool
-   yields every station's VR at every trial depth. A station whose BEST
-   VR across all depths never clears the abundance-conditional floor
-   (30% while more than 8 stations, 20% above 5, 10% below) is
-   consistently bad and dropped — a station misaligned only at wrong
-   depths is never condemned, and no provisional depth is assumed. A
-   sector's sole representative survives unless even its best VR is
-   negative; the set never shrinks below 3.
-5. **Greedy earn-your-seat pass** at the survivors' preferred depth: the
+4. **Cluster thinning**: at most 2 stations (the best by peak/noise)
+   within 25 km of each other — dense sub-networks (the Ruapehu volcano
+   ring) must not stack near-identical records into one azimuth sector.
+5. **Core inversion + candidate admission**: the core alone gets a full
+   depth search, so the reference solution is never polluted by marginal
+   data (an ungated experiment showed noise traces earn chance VR
+   against a solution their own noise corrupted). Each candidate is then
+   added ALONE at the core's preferred depth and admitted only if the
+   core-dominated solution predicts its waveform — its own station VR
+   must reach 30. %DC never enters the decision: a noise station can
+   inflate DC by dragging the tensor toward a generic mechanism.
+   Core + admitted then get the full depth search.
+6. **Greedy earn-your-seat pass** at the preferred depth: the
    worst-fitting station is test-dropped while the joint VR improves by
    at least 2 points; any removals trigger one final full depth search.
-6. **Jackknife**: leave-one-station-out at the preferred depth
+7. **Jackknife**: leave-one-station-out at the preferred depth
    quantifies how much any single station moves the answer (Mw and %DC
    spreads, maximum mechanism rotation).
-7. **Weighting**: inverse-distance (mttime built-in). Misfit-based
+8. **Weighting**: inverse-distance (mttime built-in). Misfit-based
    weighting risks suppressing exactly the azimuth-constraining stations
-   that look different; the elimination loop serves that purpose with an
-   explicit, recorded decision per station.
+   that look different; the admission and elimination steps serve that
+   purpose with an explicit, recorded decision per station.
 
 Every screened, eliminated or retained station is recorded in
-`solution.json` with its SNR, tier, amplitude ratio or fit, so any
-solution's station set can be audited after the fact.
+`solution.json` with its peak/noise, tier, amplitude ratio or fit, so
+any solution's station set can be audited after the fact — and the
+per-band all-station waveform figure shows every candidate's record
+with its drop reason, so exclusions can be judged from the data.
 
 ### 3.2 Pre-processing
 
@@ -118,11 +134,14 @@ solution's station set can be audited after the fact.
 - **Response removal**: to displacement with pre-filter
   (0.004, 0.007, 10, 20) Hz, then rotation to ZNE and NE→RT along the
   great-circle back-azimuth.
-- **SNR gate**: per station, min over the three components of
-  RMS(signal: origin→+200 s) / RMS(noise: −120→−10 s), measured in the
-  inversion passband. Threshold 2.0, after Ristau (2008): "a SNR higher
-  than 2 is normally required to calculate a reliable moment tensor."
-  Dropped stations are recorded with their SNR in `solution.json`.
+- **Peak-to-noise measurement**: per station, median over the three
+  components of peak|signal| / RMS(pre-event noise), signal window = the
+  distance-adaptive inversion window above, noise window −115 to −2 s.
+  This replaced an RMS-ratio SNR gate (threshold after Ristau 2008)
+  that could not order stations the way visual inspection does: an
+  emergent band-limited packet is a localised peak, and RMS over a
+  200 s record dilutes it with empty tail. Dropped stations are
+  recorded with their peak/noise in `solution.json`.
 - **Filtering**: zero-phase 3-corner Butterworth, band from the menu in
   §5; 5% taper; decimate/resample to 1 sps; convert m→cm (TDMT
   convention). Green's functions receive the identical filter.
@@ -171,16 +190,15 @@ waveforms".
   below):
   | preliminary M | candidate bands |
   |---|---|
-  | < 4.5 | 10–50 s, 20–50 s |
+  | < 4.5 | 10–50 s only (no coherent energy above ~20 s period; longer-period trials only ever fit noise and inflate Mw — other bands remain testable via `run02 --band`) |
   | 4.5–5.5 | 20–50 s, 10–50 s, 20–100 s |
   | ≥ 5.5 | 20–100 s, 30–100 s |
-- **Station rejection**: after a first inversion, stations with individual
-  VR < 10% at the preferred depth are removed and the inversion is rerun
-  once (cf. dropping persistently low-VR stations, Ristau 2008; Dreger &
-  Helmberger 1993). This is the counterweight to the permissive SNR gate:
-  stations that passed SNR 2.0 but do not actually fit are removed here
-  rather than being allowed to dilute the %DC. Rejections are recorded
-  with reasons.
+- **Station rejection**: candidate admission against the core solution
+  plus the greedy earn-your-seat pass (§3.1 steps 5–6; cf. dropping
+  persistently low-VR stations, Ristau 2008; Dreger & Helmberger 1993).
+  Stations whose data the solution cannot predict are removed rather
+  than being allowed to dilute the %DC. Rejections are recorded with
+  reasons.
 - **Preferred solution rule** (hierarchy: VR first, then DC): candidates
   are the depths whose total VR is within 5 percentage points of the VR
   maximum, restricted to the contiguous plateau containing the maximum (a

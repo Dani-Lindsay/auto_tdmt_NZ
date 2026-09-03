@@ -553,6 +553,10 @@ def plot_band_waveforms(band_dir: Path, solution: dict,
     """
     from obspy import read
 
+    import config as _config
+
+    mag = solution["event"].get("prelim_mag") or solution["event"].get("mw")
+    tail = _config.window_tail_s(mag)
     used_ids = {f"{r['network']}.{r['station']}.{r['location']}"
                 for r in solution["stations_used"]}
     reasons = {d["station"]: d.get("reason", "")
@@ -599,6 +603,15 @@ def plot_band_waveforms(band_dir: Path, solution: dict,
                         ha="center", fontsize=6, color="0.5")
                 continue
             t = float(tr.stats.sac.b) + tr.times()
+            # grey out what lies beyond the distance-adaptive inversion
+            # window, so the record length actually used is visible
+            wlen = int(min(_config.INV_NPTS, max(
+                _config.WINDOW_MIN_S,
+                _config.TIME_BEFORE_S
+                + e["dist"] / _config.WINDOW_GROUP_VEL_KMS + tail)))
+            tend = wlen - _config.TIME_BEFORE_S
+            if tend < t[-1]:
+                ax.axvspan(tend, t[-1], color="0.92", zorder=0)
             ax.plot(t, tr.data / norm, color=e["color"], linewidth=0.7)
             ax.text(0.995, 0.96, f"{np.abs(tr.data).max():.2e} cm",
                     transform=ax.transAxes, ha="right", va="top",

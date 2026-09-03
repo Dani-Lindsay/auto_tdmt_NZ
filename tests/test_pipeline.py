@@ -232,3 +232,26 @@ def test_archived_solution_has_provenance():
                 "obspy_version", "preferred_rule"):
         assert prov.get(key), f"provenance missing {key}"
     assert sol["quality"]["checks"], "quality gates missing"
+
+
+# --- station selection rules (2026-09-03 review) ----------------------------
+
+def test_small_events_single_band():
+    # small events carry no coherent energy above ~20 s period: 10-50 s only
+    assert config.band_candidates(4.0) == [(0.02, 0.10)]
+    assert len(config.band_candidates(5.0)) > 1
+
+
+def test_near_field_magnitude_dependent():
+    # small shallow events keep their close stations (info lives there)
+    assert config.station_min_dist_km(4.0) == 10.0
+    assert config.station_min_dist_km(5.0) == config.MIN_STATION_DIST_KM
+
+
+def test_peak_noise_tiers_ordered():
+    # dead-channel floor < core threshold, and the admission VR is a real
+    # fraction (calibrated on the 2026p283255 manual labels)
+    assert 0 < config.PEAK_NOISE_FLOOR < config.PEAK_NOISE_CORE
+    assert 0 < config.CANDIDATE_STATION_VR_MIN < 100
+    assert config.CLUSTER_MAX_STATIONS >= 1
+    assert config.MIN_USABLE_BEFORE_EXTEND >= config.MIN_STATIONS_USED

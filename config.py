@@ -98,8 +98,30 @@ AFTERSHOCK_MW_MARGIN = 0.5
 # ---------------------------------------------------------------------------
 NETWORK = "NZ"
 CHANNEL_PRIORITY = ("HH?", "BH?")  # broadband only; short-period useless at LP
-MAX_STATION_DIST_KM = 300.0  # absolute ceiling; see station_max_dist_km
-MIN_STATION_DIST_KM = 20.0  # near-field exclusion radius
+MAX_STATION_DIST_KM = 300.0  # base ceiling; see station_max_dist_km
+MIN_STATION_DIST_KM = 20.0  # near-field exclusion radius (larger events)
+
+
+def station_min_dist_km(prelim_mag: float) -> float:
+    """Near-field exclusion. Small shallow events put their information in
+    the close stations (2026-09-03 review: 'we are missing out on info');
+    an M4 rupture is ~1 km so the point-source assumption already holds at
+    10 km. Larger events keep the 20 km exclusion."""
+    return 10.0 if prelim_mag < 4.5 else MIN_STATION_DIST_KM
+
+
+# When fewer than this many stations survive the peak/noise floor, the
+# search radius is extended once by RADIUS_EXTEND_KM (offshore events:
+# 2026p047833 review) and the annulus is fetched and processed too.
+MIN_USABLE_BEFORE_EXTEND = 4
+RADIUS_EXTEND_KM = 100.0
+
+# Station clustering: dense sub-networks (e.g. the Ruapehu volcano ring)
+# would let one site dominate the azimuth sector. Keep at most
+# CLUSTER_MAX_STATIONS (the best by peak/noise) within CLUSTER_RADIUS_KM
+# of each other; the rest are dropped with the cluster named in the reason.
+CLUSTER_RADIUS_KM = 25.0
+CLUSTER_MAX_STATIONS = 2
 
 
 def station_max_dist_km(prelim_mag: float) -> float:
@@ -131,7 +153,11 @@ MAX_STATIONS = 30  # pool safety cap; backward elimination prunes
 def band_candidates(prelim_mag: float) -> list[tuple[float, float]]:
     assert 0.0 < prelim_mag < 10.0, f"implausible magnitude {prelim_mag}"
     if prelim_mag < 4.5:
-        return [(0.02, 0.10), (0.02, 0.05)]  # 10-50 s, 20-50 s
+        # 10-50 s only: small events carry no coherent energy above ~20 s
+        # period, and every reviewed case (2026-09-03) preferred 10-50 s;
+        # the 20-50 s trials only ever fit noise (Mw inflation). Other
+        # bands remain testable via run02 --band.
+        return [(0.02, 0.10)]
     if prelim_mag < 5.5:
         # 20-50 s, 10-50 s, 20-100 s
         return [(0.02, 0.05), (0.02, 0.10), (0.01, 0.05)]
@@ -203,17 +229,20 @@ FILTER_CORNERS = 3  # obspy corners, zerophase=True; notebook-02 values, applied
 # Response-removal pre-filter (Hz), from mttime example notebook 01.
 RESPONSE_PRE_FILT = (0.004, 0.007, 10.0, 20.0)
 
-# SNR gate: min over components of RMS(signal, origin..+200 s) /
-# RMS(noise, -120..-10 s), measured in the inversion passband. Ristau (2008):
-# "a SNR higher than 2 is normally required to calculate a reliable moment
-# tensor" — stations below this are dropped (loudly, recorded in provenance).
-MIN_SNR = 2.0
-# Tiered acceptance: when fewer than TIER_TARGET_STATIONS pass MIN_SNR,
-# stations down to SNR_TIER_LOW are admitted (tagged snr_tier="low") so
-# sparse/coda-contaminated events keep azimuthal coverage; the letter
-# quality grade, not a hard gate, then tells the reader what it is worth.
-SNR_TIER_LOW = 1.2
-TIER_TARGET_STATIONS = 5
+# Peak-to-noise station quality (replaces the RMS SNR gate 2026-09-03;
+# calibrated against manual keep/toss labelling of 2026p283255 + review of
+# five further events). Metric: median over Z/R/T of
+# peak|signal| / RMS(pre-event noise), signal measured ONLY inside the
+# distance-adaptive window actually inverted — an impulsive surface-wave
+# packet is a spike above background, which RMS-over-200s could not see.
+# >= PEAK_NOISE_CORE: trusted core, inverted from the start.
+# >= PEAK_NOISE_FLOOR: candidate ("yellow"): admitted only if the core
+#    solution predicts its waveform (station VR >= CANDIDATE_STATION_VR_MIN
+#    when added alone at the core's preferred depth).
+# below the floor: dead channel, rejected outright (data kept for figures).
+PEAK_NOISE_CORE = 5.0
+PEAK_NOISE_FLOOR = 2.0
+CANDIDATE_STATION_VR_MIN = 30.0
 
 # ---------------------------------------------------------------------------
 # Green's function library grid

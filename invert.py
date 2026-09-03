@@ -145,17 +145,18 @@ def invert_with_rejection(
     event: Event, stations: list[dict], depths: list[float],
     event_dir: Path, green_dir: Path,
 ):
-    """Depth-profile station selection (clean hierarchy):
+    """Core-plus-admission station selection (calibrated against manual
+    keep/toss labelling, 2026-09-03):
 
-    1. FULL pool, FULL depth search — one inversion pass yields every
-       station's VR at every trial depth (its depth profile);
-    2. a station whose BEST VR across all depths never clears the
-       abundance-conditional floor (30% while >8 stations, 20% >5, 10%
-       below) is consistently bad and dropped — one misaligned depth
-       cannot condemn a station, and no provisional depth is ever assumed;
-       a sector's sole representative survives unless even its best VR is
-       negative;
-    3. full depth search with the survivors -> preferred solution;
+    1. the CORE — stations whose peak/noise clears PEAK_NOISE_CORE — gets
+       a full depth search on its own, so the reference solution is never
+       polluted by marginal data (the VR-only experiment showed noise
+       traces earn chance VR against a solution their own noise corrupted);
+    2. each remaining candidate ("yellow") is added ALONE at the core's
+       preferred depth and admitted only if the core-dominated solution
+       predicts its waveform: own station VR >= CANDIDATE_STATION_VR_MIN.
+       %DC never enters the decision (a noise station can inflate DC);
+    3. full depth search with core + admitted;
     4. greedy earn-your-seat pass at the preferred depth: the worst
        station is test-dropped while the joint VR improves by >= 2;
     5. if the greedy pass removed anyone, one final full depth search.
@@ -174,50 +175,49 @@ def invert_with_rejection(
         return run_inversion(
             write_mtinv(event, rows, dd, event_dir, green_dir))
 
-    def _floor(n):
-        if n > config.RICH_STATION_COUNT:
-            return config.STATION_VR_FLOOR_RICH
-        if n > config.MID_STATION_COUNT:
-            return config.STATION_VR_FLOOR_MID
-        return config.STATION_VR_FLOOR
+    # 1: core-only full depth search (top-up by peak/noise if the core is
+    # thinner than the minimum station count)
+    ranked = sorted(stations, key=lambda r: -r.get("pk_n", 0.0))
+    core = [r for r in ranked
+            if r.get("tier", "core") == "core"]
+    if len(core) < config.MIN_STATIONS_USED:
+        for r in ranked:
+            if r not in core:
+                core.append(r)
+            if len(core) >= config.MIN_STATIONS_USED:
+                break
+    cands = [r for r in ranked if r not in core]
+    core.sort(key=lambda r: r["distance_km"])
+    inv1 = _solve(core, depths)
+    mt0 = inv1.moment_tensors[inv1.preferred_tensor_id]
+    depth0 = float(mt0.depth)
+    print(f"core: {len(core)} stations, depth {depth0:g} km, "
+          f"VR {float(mt0.total_VR):.1f}")
 
-    # 1: full pool, full depth search -> per-station VR-vs-depth profiles
-    inv1 = _solve(stations, depths)
-    best_vr: dict[str, float] = {}
-    for mt in inv1.moment_tensors:
-        for r in mt.station_table.itertuples():
-            v = float(r.VR)
-            if v > best_vr.get(r.station, -1e9):
-                best_vr[r.station] = v
+    # 2: one-at-a-time candidate admission at the core's preferred depth
+    admitted = []
+    for c in cands:
+        inv_c = _solve(core + [c], [depth0])
+        mt_c = inv_c.moment_tensors[inv_c.preferred_tensor_id]
+        own_vr = float(mt_c.station_table.iloc[-1].VR)
+        if own_vr >= config.CANDIDATE_STATION_VR_MIN:
+            c["admission_vr"] = round(own_vr, 1)
+            admitted.append(c)
+        else:
+            rejected.append({
+                "station": _sid(c),
+                "reason": f"not predicted by core solution: station VR "
+                          f"{own_vr:.0f} at {depth0:g} km < "
+                          f"{config.CANDIDATE_STATION_VR_MIN:g} "
+                          f"(peak/noise {c.get('pk_n', 0.0):.1f})",
+            })
+    if cands:
+        print(f"candidates: {len(admitted)}/{len(cands)} admitted "
+              f"({[r['station'] for r in admitted]})")
 
-    # 2: drop the consistently bad (best-over-depth VR below the floor)
-    floor0 = _floor(len(stations))
-    sectors = {}
-    for r in stations:
-        sectors.setdefault(_sector(r), []).append(r)
-    candidates = sorted(
-        (r for r in stations if best_vr.get(_sid(r), 0.0) < floor0),
-        key=lambda r: best_vr.get(_sid(r), 0.0))
-    current = list(stations)
-    for r in candidates:
-        if len(current) <= config.MIN_STATIONS_USED:
-            break
-        sole = len([x for x in sectors[_sector(r)] if x in current]) == 1
-        if sole and best_vr.get(_sid(r), 0.0) >= 0.0:
-            continue
-        current.remove(r)
-        rejected.append({
-            "station": _sid(r),
-            "reason": f"consistently bad: best VR "
-                      f"{best_vr.get(_sid(r), 0.0):.0f} over "
-                      f"{len(depths)} depths < floor {floor0:g}",
-        })
-    if rejected:
-        print(f"dropped {len(rejected)} consistently-bad stations: "
-              f"{[d['station'] for d in rejected]}")
-
-    # 3: survivors, full depth search
-    inv2 = _solve(current, depths) if rejected else inv1
+    # 3: core + admitted, full depth search
+    current = sorted(core + admitted, key=lambda r: r["distance_km"])
+    inv2 = _solve(current, depths) if admitted else inv1
     depth_pref = float(
         inv2.moment_tensors[inv2.preferred_tensor_id].depth)
 
