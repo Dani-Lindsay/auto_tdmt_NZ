@@ -227,8 +227,14 @@ MIN_STATIONS_USED = 3
 MIN_VR_PUBLISH = 50.0  # % variance reduction floor for publication
 MAX_AZ_GAP_DEG = 270.0  # flag (not fail) beyond this
 # Depth search: full library depth range when GeoNet depth is a placeholder
-# (their fixed depths are unreliable); otherwise +/- this margin.
-DEPTH_SEARCH_MARGIN_KM = 20.0
+# (their fixed depths are unreliable). For real located depths the search
+# is bounded by GeoNet's own depth uncertainty when QuakeML provides it —
+# margin = clamp(2 x depthUncertainty, MIN, MAX) — else the default: a
+# located GeoNet depth is typically good to ~+/-5 km, and an unconstrained
+# search was occasionally preferring depths wildly inconsistent with it.
+DEPTH_SEARCH_MARGIN_KM = 10.0
+DEPTH_SEARCH_MARGIN_MIN_KM = 5.0
+DEPTH_SEARCH_MARGIN_MAX_KM = 15.0
 PLACEHOLDER_DEPTHS_KM = {5.0, 12.0, 33.0}  # GeoNet fixed-depth values
 
 # Surface-wave group velocity used to convert per-station zcor into a

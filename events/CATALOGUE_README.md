@@ -20,6 +20,7 @@ README.md for citations.
 | `Latitude`, `Longitude` | Epicentre, degrees (GeoNet) |
 | `GeoNet_M` | GeoNet preliminary magnitude (mixed types: M/MLv/mB) |
 | `GeoNet_depth` | GeoNet initial depth, km (5/12/33 are fixed placeholders) |
+| `GeoNet_depth_unc` | GeoNet depth uncertainty from QuakeML, km (blank if unavailable). For located depths our depth search is bounded to clamp(2x this, 5-15 km) around GeoNet_depth; placeholder depths search the full grid |
 
 ## Our solution
 

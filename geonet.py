@@ -29,6 +29,11 @@ class Event:
     mag_type: str
     locality: str
     quality: str
+    # from GeoNet QuakeML when available (None otherwise)
+    depth_unc_km: float | None = None
+    eval_mode: str | None = None
+    eval_status: str | None = None
+    depth_type: str | None = None
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -72,6 +77,29 @@ def recent_quakes(mmi: int = 3) -> list[Event]:
     return events
 
 
+def _quakeml_origin_details(public_id: str) -> dict:
+    """Depth uncertainty and review status from GeoNet QuakeML (FDSN event
+    service). Best-effort: {} on any failure — never blocks processing."""
+    try:
+        from obspy import read_events
+
+        cat = read_events(
+            f"{config.FDSN_ARCHIVE}/fdsnws/event/1/query"
+            f"?eventid={public_id}")
+        o = cat[0].preferred_origin() or cat[0].origins[0]
+        unc = getattr(o.depth_errors, "uncertainty", None) \
+            if o.depth_errors else None
+        return {
+            "depth_unc_km": round(unc / 1000.0, 1) if unc else None,
+            "eval_mode": str(o.evaluation_mode) if o.evaluation_mode else None,
+            "eval_status": (str(o.evaluation_status)
+                            if o.evaluation_status else None),
+            "depth_type": str(o.depth_type) if o.depth_type else None,
+        }
+    except Exception:  # noqa: BLE001
+        return {}
+
+
 def get_event(public_id: str) -> Event:
     """Single event by publicID from the quake API."""
     r = _get(
@@ -92,6 +120,7 @@ def get_event(public_id: str) -> Event:
         mag_type="M",
         locality=p["locality"],
         quality=p["quality"],
+        **_quakeml_origin_details(public_id),
     )
 
 

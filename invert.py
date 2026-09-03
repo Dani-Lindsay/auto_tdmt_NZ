@@ -38,8 +38,12 @@ def search_depths(event: Event, model: str) -> list[float]:
     assert lib, "GF library is empty — build it first (greens.py --build)"
     if event.depth_km in config.PLACEHOLDER_DEPTHS_KM:
         return lib
-    lo = event.depth_km - config.DEPTH_SEARCH_MARGIN_KM
-    hi = event.depth_km + config.DEPTH_SEARCH_MARGIN_KM
+    unc = getattr(event, "depth_unc_km", None)
+    margin = (min(config.DEPTH_SEARCH_MARGIN_MAX_KM,
+                  max(config.DEPTH_SEARCH_MARGIN_MIN_KM, 2.0 * unc))
+              if unc else config.DEPTH_SEARCH_MARGIN_KM)
+    lo = event.depth_km - margin
+    hi = event.depth_km + margin
     picked = [d for d in lib if lo <= d <= hi]
     return picked if picked else lib
 

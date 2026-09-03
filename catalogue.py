@@ -51,7 +51,7 @@ def _publish_flag(decision: dict) -> str:
 COLUMNS = [
     "PublicID", "Date", "Latitude", "Longitude",
     "strike1", "dip1", "rake1", "strike2", "dip2", "rake2",
-    "GeoNet_M", "GeoNet_depth", "Mw", "Depth", "Mo",
+    "GeoNet_M", "GeoNet_depth", "GeoNet_depth_unc", "Mw", "Depth", "Mo",
     "NS", "AzGap", "Grade", "DC", "CLVD", "VR",
     "Jk_n", "Jk_Mw_std", "Jk_DC_std", "Jk_rot_deg",
     "PredDisp_cm", "Detectable",
@@ -93,6 +93,7 @@ def build_catalogue(events_dir: Path | None = None) -> Path | None:
             "rake2": round(p["plane2"]["rake"], 1),
             "GeoNet_M": round(ev["prelim_mag"], 2),
             "GeoNet_depth": round(ev["depth_km"], 1),
+            "GeoNet_depth_unc": ev.get("depth_unc_km", ""),
             "Mw": round(p["mw"], 2),
             # our centroid depth beside our Mw: a large Mw revision is
             # often explained by the depth revision visible in the adjacent
