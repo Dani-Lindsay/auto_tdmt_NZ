@@ -204,7 +204,7 @@ def main() -> None:
     assert rows, ("no common events with the reference catalogue yet — "
                   "rerun after it next updates")
     df = pd.DataFrame(rows).sort_values("PublicID")
-    out_dir = config.REPO_DIR / "events" / "validation"
+    out_dir = config.REPO_DIR / "validation"
     out_dir.mkdir(parents=True, exist_ok=True)
     df.to_csv(out_dir / "comparison.csv", index=False)
 
