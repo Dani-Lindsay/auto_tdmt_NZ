@@ -86,7 +86,7 @@ $$\hat{\mathbf{t}} = \frac{\hat{\mathbf{u}}+\hat{\mathbf{n}}}{\sqrt{2}},
 
 The angle between two mechanisms is
 
-$$a = \cos^{-1}\!\left(\frac{\operatorname{tr}\!\left(\mathbf{R}_1^{\mathsf T}\, \mathbf{R}_2\, \mathbf{S}\right) - 1}{2}\right),
+$$a = \cos^{-1}\!\left(\frac{\mathrm{tr}\!\left(\mathbf{R}_1^{\mathsf T}\, \mathbf{R}_2\, \mathbf{S}\right) - 1}{2}\right),
 \qquad
 \mathbf{S} \in \left\{\mathbf{I},\ \mathrm{diag}(1,-1,-1),\ \mathrm{diag}(-1,1,-1),\ \mathrm{diag}(-1,-1,1)\right\}$$
 
