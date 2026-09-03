@@ -278,21 +278,25 @@ def make_share_figure(
 
 
 def make_overview_map(events_dir: Path, out_path: Path) -> Path:
-    """NZ map of every archived solution as its full-MT beachball —
-    the front-page view of the catalogue. A/B grades solid, C/D washed."""
+    """Standalone NZ map of every archived solution: full-MT beachballs
+    (size = Mw, solid = grade A/B, washed = C/D) over the NZ Active Faults
+    Database, with an in-figure legend. No lat/lon grid clutter."""
     import json
 
     import cartopy.crs as ccrs
+    from obspy.imaging.beachball import beach
 
     sols = []
     for p in sorted(events_dir.glob("*/solution.json")):
         try:
             sols.append(json.loads(p.read_text()))
-        except Exception:  # noqa: BLE001 - one bad archive must not kill the map
+        except Exception:  # noqa: BLE001
             continue
-    region = [164.0, 183.0, -49.5, -33.5]
-    fig = plt.figure(figsize=(9.5, 11))
-    ax = map_style.geo_axes(fig, [0.06, 0.05, 0.9, 0.88], region)
+    region = [163.5, 183.0, -50.7, -33.3]
+    fig = plt.figure(figsize=(7.5, 8.7))
+    ax = map_style.geo_axes(fig, [0.07, 0.05, 0.9, 0.88], region,
+                            grid=False)
+    map_style.draw_context(ax, region, ccrs, gnss=False)
     dates = []
     for sol in sols:
         ev = sol["event"]
@@ -301,16 +305,12 @@ def make_overview_map(events_dir: Path, out_path: Path) -> Path:
         grade = sol["quality"].get("grade", "?")
         width = 0.018 + 0.010 * max(0.0, pref["mw"] - 4.0)
         try:
-            ball_args = (ax, lon, ev["latitude"],
-                         pref["tensor_rtp_dyne_cm"])
+            rtp = pref["tensor_rtp_dyne_cm"]
         except KeyError:
             continue
-        from obspy.imaging.beachball import beach
-
         x, y = ax.projection.transform_point(lon, ev["latitude"],
                                              ccrs.PlateCarree())
         xe0, xe1, _, _ = ax.get_extent(crs=ax.projection)
-        rtp = pref["tensor_rtp_dyne_cm"]
         fm = [rtp["MRR"], rtp["MTT"], rtp["MPP"],
               rtp["MRT"], rtp["MRP"], rtp["MTP"]]
         ball = beach(fm, xy=(x, y), width=width * (xe1 - xe0),
@@ -320,11 +320,50 @@ def make_overview_map(events_dir: Path, out_path: Path) -> Path:
         ax.add_collection(ball)
         dates.append(ev["origin_time"][:10])
     ax.set_title(
-        f"auto_tdmt_NZ: {len(sols)} automated moment tensor solutions "
-        f"({min(dates)} to {max(dates)})\n"
-        f"solid = grade A/B, washed = C/D; size scales with Mw",
+        f"Automated NZ moment tensor solutions (auto_tdmt_NZ)\n"
+        f"{len(sols)} events, {min(dates)} to {max(dates)}",
         fontsize=10,
     )
+
+    # in-figure legend (bottom-left): sample balls + fault line
+    xe0, xe1, ye0, ye1 = ax.get_extent(crs=ax.projection)
+    w_ax = xe1 - xe0
+    lx, ly = xe0 + 0.045 * w_ax, ye0 + 0.055 * (ye1 - ye0)
+    import matplotlib.patches as mpatches
+    ax.add_patch(mpatches.Rectangle(
+        (lx - 0.02 * w_ax, ly - 0.035 * (ye1 - ye0)), 0.34 * w_ax,
+        0.235 * (ye1 - ye0), facecolor="white", edgecolor="0.4",
+        linewidth=0.6, zorder=200))
+    demo = [(4.0, "Mw 4"), (5.0, "Mw 5"), (6.0, "Mw 6")]
+    fm_demo = [1.0, -0.5, -0.5, 0.3, 0.2, 0.1]
+    for i, (mw, lab) in enumerate(demo):
+        bx = lx + (0.035 + 0.10 * i) * w_ax
+        by = ly + 0.145 * (ye1 - ye0)
+        bw = (0.018 + 0.010 * (mw - 4.0)) * w_ax
+        ax.add_collection(beach(fm_demo, xy=(bx, by), width=bw,
+                                linewidth=0.4, facecolor="firebrick",
+                                zorder=210))
+        ax.text(bx, by - 0.045 * (ye1 - ye0), lab, ha="center",
+                fontsize=7, zorder=220)
+    b1 = beach(fm_demo, xy=(lx + 0.035 * w_ax, ly + 0.045 * (ye1 - ye0)),
+               width=0.022 * w_ax, linewidth=0.4, facecolor="firebrick",
+               zorder=210)
+    ax.add_collection(b1)
+    ax.text(lx + 0.06 * w_ax, ly + 0.045 * (ye1 - ye0), "grade A/B",
+            fontsize=7, va="center", zorder=220)
+    b2 = beach(fm_demo, xy=(lx + 0.175 * w_ax, ly + 0.045 * (ye1 - ye0)),
+               width=0.022 * w_ax, linewidth=0.4, facecolor="firebrick",
+               zorder=210)
+    b2.set_alpha(0.45)
+    ax.add_collection(b2)
+    ax.text(lx + 0.20 * w_ax, ly + 0.045 * (ye1 - ye0), "grade C/D",
+            fontsize=7, va="center", zorder=220)
+    ax.plot([lx + 0.02 * w_ax, lx + 0.06 * w_ax],
+            [ly + 0.0, ly + 0.0], "-", color="#8B3A3A", linewidth=1.2,
+            zorder=210)
+    ax.text(lx + 0.075 * w_ax, ly, "active faults (NZAFD, GNS)",
+            fontsize=7, va="center", zorder=220)
+
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=150)
     plt.close(fig)

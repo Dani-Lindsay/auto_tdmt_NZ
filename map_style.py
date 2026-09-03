@@ -54,7 +54,7 @@ def square_region(region: list) -> list:
     return [lon0, lon1, lat0, lat1]
 
 
-def geo_axes(fig, rect, region, labels=True):
+def geo_axes(fig, rect, region, labels=True, grid=True):
     """Cartopy Mercator axes at an explicit figure rect [x, y, w, h]
     (manual placement: cartopy's fixed aspect fights layout engines)."""
     import cartopy.crs as ccrs
@@ -71,8 +71,9 @@ def geo_axes(fig, rect, region, labels=True):
                    edgecolor="0.25", linewidth=0.3, zorder=1)
     ax.add_feature(cfeature.COASTLINE.with_scale("10m"), linewidth=0.6,
                    edgecolor="0.15", zorder=2)
-    gl = ax.gridlines(draw_labels=labels, linewidth=0.3, color="0.7",
-                      alpha=0.6, linestyle="--")
+    gl = ax.gridlines(draw_labels=labels, linewidth=0.3 if grid else 0.0,
+                      color="0.7", alpha=0.6 if grid else 0.0,
+                      linestyle="--")
     if labels:
         gl.top_labels = False
         gl.right_labels = False
