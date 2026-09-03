@@ -165,9 +165,11 @@ def band_candidates(prelim_mag: float) -> list[tuple[float, float]]:
         # bands remain testable via run02 --band.
         return [(0.02, 0.10)]
     if prelim_mag < 5.5:
-        # 20-50 s, 10-50 s (20-100 s pruned 2026-09-03: it won 1/19 events
-        # in this bin and only ever fit noise on the losers)
-        return [(0.02, 0.05), (0.02, 0.10)]
+        # ORDERED PREFERENCE (first gate-passer wins below M5.5 — see
+        # run02): 10-50 s first — the band where signal lives at these
+        # magnitudes; 20-50 s is the fallback. 20-100 s pruned 2026-09-03
+        # (won 1/19 in this bin and only ever fit noise on the losers).
+        return [(0.02, 0.10), (0.02, 0.05)]
     return [(0.01, 0.05), (0.01, 0.033)]  # 20-100 s, 30-100 s
 
 

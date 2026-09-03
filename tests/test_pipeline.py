@@ -239,7 +239,9 @@ def test_archived_solution_has_provenance():
 def test_small_events_single_band():
     # small events carry no coherent energy above ~20 s period: 10-50 s only
     assert config.band_candidates(4.0) == [(0.02, 0.10)]
-    assert len(config.band_candidates(5.0)) > 1
+    # mid events: ordered preference, 10-50 s FIRST (VR must not
+    # arbitrate across bands below M5.5 - longer periods fit noise)
+    assert config.band_candidates(5.0) == [(0.02, 0.10), (0.02, 0.05)]
 
 
 def test_near_field_magnitude_dependent():

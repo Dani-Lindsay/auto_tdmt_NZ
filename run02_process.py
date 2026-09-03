@@ -105,14 +105,25 @@ def process_event(public_id: str, debug: bool = False,
             print(f"band {tag} failed: {e}")
     assert solutions, "every filter band failed"
 
-    # choose among gate-passing bands when any exist; otherwise all bands
-    passing = [t for t in solutions if solutions[t]["quality"]["passed"]]
-    tags = passing if passing else list(solutions)
-    best_tag = tags[invert.pick_preferred(
-        [(solutions[t]["preferred"]["vr"], solutions[t]["preferred"]["pdc"])
-         for t in tags],
-        contiguous=False,
-    )]
+    # Band choice. Below M5.5 VR must NOT arbitrate between bands: a
+    # longer-period band is smoother and posts higher VR even when it fits
+    # filtered noise (2026p033598 review: 20-50 s "looked terrible", VR 61,
+    # Mw +0.22 vs the visibly signal-fitting 10-50 s at VR 40). The menu
+    # is an ordered PREFERENCE: take the first band whose gates pass.
+    # At M5.5+ both menu bands are long-period and physical, so the
+    # VR+DC rule still arbitrates there.
+    menu_tags = [config.band_tag(b) for b in bands if config.band_tag(b)
+                 in solutions]
+    passing = [t for t in menu_tags if solutions[t]["quality"]["passed"]]
+    if event.prelim_mag < 5.5 and passing:
+        best_tag = passing[0]
+    else:
+        tags = passing if passing else menu_tags
+        best_tag = tags[invert.pick_preferred(
+            [(solutions[t]["preferred"]["vr"],
+              solutions[t]["preferred"]["pdc"]) for t in tags],
+            contiguous=False,
+        )]
     best = solutions[best_tag]
     best["chosen_band"] = best_tag
     best["band_search"] = {
