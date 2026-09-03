@@ -277,6 +277,8 @@ def fetch_and_process(
             r["peak_x_dist"] = float(
                 abs(tr.data).max() * r["distance_km"])
         med = float(np.median([r["peak_x_dist"] for r in used]))
+        for r in used:
+            r["amp_ratio"] = round(r["peak_x_dist"] / med, 3)
         flagged = [r for r in used
                    if not (med / config.AMPLITUDE_OUTLIER_FACTOR
                            <= r["peak_x_dist"]
@@ -290,6 +292,7 @@ def fetch_and_process(
                 "reason": f"amplitude outlier: peak x dist "
                           f"{r['peak_x_dist']:.2e} vs network median "
                           f"{med:.2e}",
+                "amp_ratio": r["amp_ratio"],
                 "latitude": r["latitude"], "longitude": r["longitude"],
                 "distance_km": round(r["distance_km"], 1),
             })

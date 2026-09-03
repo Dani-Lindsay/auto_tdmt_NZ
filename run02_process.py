@@ -166,6 +166,8 @@ def process_event(public_id: str, debug: bool = False,
 
     out = invert.save_solution(best, event_dir)
     catalogue.build_catalogue()
+    import station_performance
+    station_performance.build_station_performance()
     try:
         figure.make_overview_map(
             config.EVENTS_DIR, config.EVENTS_DIR / "solutions_map.jpg")
