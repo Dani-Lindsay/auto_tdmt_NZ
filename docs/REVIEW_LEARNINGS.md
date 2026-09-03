@@ -28,29 +28,50 @@ that motivate each item.
    apart in mechanism) and inflatable by noise. Mw inflates when the band
    holds no signal (noise fitting), so Mw ≫ prelim is a red flag, not a
    discovery.
-4. **The letter grades quarantine correctly.** Every pathology found in
+4. **Isolated depth spikes at velocity-model layer boundaries are not
+   solutions.** The Green's functions come from a 1-D layered model, and
+   a source moved across a layer interface changes its excitation
+   abruptly — mode shapes, amplitude ratios and depth phases all jump.
+   The depth search samples straight across these jumps, and the
+   per-station time-shift search (zcor) can slide traces into chance
+   alignment on one side of an interface, producing a single depth with
+   anomalously good VR (or a DC that snaps to ~100) surrounded by much
+   worse neighbours (2026p101368 and others). These spikes are artifacts
+   of the model's roughness, not information about the source. The
+   interface depths where they congregate: South Island model 3, 12, 27,
+   39 km; North Island model 1, 3, 5, 15, 33, 64 km (from
+   `models/*.d`). Rule of thumb: a depth is believable when it sits on a
+   CONTIGUOUS plateau whose mechanisms morph smoothly through it (the
+   depth-sensitivity strip shows this at a glance); a one-point spike —
+   especially adjacent to an interface depth or at the grid edge — is to
+   be distrusted no matter how good its VR or DC looks. The
+   plateau-contiguity pick rule automates part of this, but reviewers
+   should still check spikes against the interface list when a depth
+   looks surprising. This is also why %DC see-saws ±40 points over ±3 km
+   near interfaces (the depth-quantization CLVD effect).
+5. **The letter grades quarantine correctly.** Every pathology found in
    review was already C/D; nothing broken could have reached the email
    gate. Archive honesty, not publication safety, is what review
    improves.
-5. **Aftershock sequences are consistent when the station set is.** The
+6. **Aftershock sequences are consistent when the station set is.** The
    five good-grade Te Kaha solutions (11–19° from the mainshock) share a
    spine (KUZ, HAZ, KRBZ, GRZ, OPRZ); the deviants (75–100°) used almost
    disjoint sets, selected during the mainshock's coda. Minutes-to-an-hour
    after a big event, long-period coda poisons both selection and moment
    (2026p336046 at +5 min: prelim 4.2 → Mw 5.01, VR 24).
-6. **Sparse events currently disable their own safety rails.** The
+7. **Sparse events currently disable their own safety rails.** The
    ≥3-station floor blocks the greedy loop (and with it the anti-fitting
    cull), and the amplitude screen needs ≥4 stations — so the weakest
    events get the least protection (2026p101368: RDHZ used at VR −40 with
    zcor at the +100 s limit).
-7. **Physics limits are not bugs.** The closest stations can carry the
+8. **Physics limits are not bugs.** The closest stations can carry the
    sharpest-looking records and still be unfittable: at 10–50 s a 36 km
    station is ~one wavelength out, where waveforms are most sensitive to
    model error (2026p238013 BSWZ/WMVZ at VR −73/−20 while 55 km stations
    fit). And an offshore M4 with no coherent energy at any station cannot
    be inverted at all (2026p111636) — the honest product is "no
    solution", not a grade-D artefact.
-8. **Selection rules compound.** 3×depth exclusion + magnitude-scaled
+9. **Selection rules compound.** 3×depth exclusion + magnitude-scaled
    radius + dead-channel floor + cluster thinning can jointly starve an
    easy event (2026p355073: WEL/BSWZ/WLCZ — the best stations — all
    removed by 3×depth for an 18 km-deep event; 2026p348732 similar).
@@ -70,6 +91,10 @@ that motivate each item.
 - zcor at the search limit (±100 s) → chance alignment, not fit.
 - DC differing wildly between neighbouring events or depths → the
   depth/CLVD see-saw, not source physics.
+- A single-depth VR or DC spike adjacent to a model interface (SI: 3,
+  12, 27, 39 km; NI: 1, 3, 5, 15, 33, 64 km) or at the grid edge →
+  layer-boundary artifact; trust plateaus with smoothly-morphing
+  mechanisms, never one-point winners.
 - Event within ~1 h and ~100 km of an M5.5+ → coda contamination of both
   selection and moment.
 - Beautiful close-station records rejected at long period → near-field
