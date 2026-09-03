@@ -10,8 +10,10 @@ through the automated solution, re-ran the inversion, tweaked station
 selection / filter band / depth range where justified, and recorded
 their reasoning. It grows gradually as events receive human eyes.
 
-- `catalogue_human.csv` — one row per reviewed event: the human
-  solution, the reviewer, the decision (`accept_automated` / `revised` /
+- `catalogue_human.csv` — the SHARED master catalogue that many
+  reviewers append to, one row per reviewed event. Its columns
+  mirror the automated `events/catalogue.csv` (so the two can be
+  compared directly) plus reviewer columns: the reviewer, the decision (`accept_automated` / `revised` /
   `reject`), and what changed relative to the automated answer.
 - `<eventID>_Mw..._..._.../` — the reviewed solution: `solution.json`
   (with a `human_review` block and the automated reference), the
@@ -25,7 +27,11 @@ their reasoning. It grows gradually as events receive human eyes.
 2. Contributions arrive by Pull Request touching **only** this
    directory (see the notebook, step 8). PRs touching anything else are
    closed unmerged.
-3. Every solution names its reviewer and states its reasoning. "The
+3. Every solution names its reviewer and states its reasoning.
+4. Merge conflicts in `catalogue_human.csv` (two reviews merged
+   close together) are normal: `git pull --rebase`, re-run the
+   notebook's staging cell (it re-appends your row
+   idempotently), commit again. "The
    automated solution is correct" and "no defensible solution exists"
    are both valid, valuable review outcomes.
 
