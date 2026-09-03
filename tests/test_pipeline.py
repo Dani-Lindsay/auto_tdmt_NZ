@@ -104,6 +104,33 @@ def test_forward_displacement_anchors():
     assert r2["peak_abs_m"] < 0.001
 
 
+def test_okada_rake_side_convention():
+    # N-S vertical LEFT-LATERAL (rake 0): east side must move north.
+    # Guards the strike/dip/rake -> okada4py mapping end to end.
+    import numpy as np
+    r = okada_forward.predicted_displacement(
+        mw=5.5, m0_dyne_cm=2.24e24, depth_km=5.0,
+        strike=0.0, dip=89.9, rake=0.0)
+    ix = int(np.argmin(np.abs(r["x_km"] - 5.0)))
+    iy = int(np.argmin(np.abs(r["y_km"] - 0.0)))
+    assert r["un_m"][iy, ix] > 0, "east side of left-lateral must move north"
+
+
+def test_conjugate_planes_equivalent_far_field():
+    # both nodal planes of a DC must give near-identical far-field statics
+    import numpy as np
+    a = okada_forward.predicted_displacement(
+        mw=5.1, m0_dyne_cm=5.6e23, depth_km=8.0, strike=9, dip=50, rake=56)
+    b = okada_forward.predicted_displacement(
+        mw=5.1, m0_dyne_cm=5.6e23, depth_km=8.0,
+        strike=235, dip=51, rake=123)
+    L = a["fault"]["length_km"]
+    X, Y = np.meshgrid(a["x_km"], a["y_km"])
+    far = np.sqrt(X**2 + Y**2) > 3 * L
+    corr = np.corrcoef(a["uz_m"][far], b["uz_m"][far])[0, 1]
+    assert corr > 0.99, f"conjugate far fields diverge (corr {corr:.3f})"
+
+
 # --- trigger / gates --------------------------------------------------------
 
 def _event(mag=5.0, lat=-44.4, lon=168.3, depth=5.0, quality="best"):
