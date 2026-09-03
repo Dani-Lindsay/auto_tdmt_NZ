@@ -180,7 +180,7 @@ def make_share_figure(
                     arrowprops=dict(arrowstyle="-|>", linewidth=1.4,
                                     color="black"), zorder=12)
                 axi.annotate(
-                    "dip (hanging wall)", (dlon[1], dlat[1]), xytext=(3, 3),
+                    "dip", (dlon[1], dlat[1]), xytext=(3, 3),
                     textcoords="offset points", fontsize=7,
                     color="black",
                     xycoords=ccrs.PlateCarree()._as_mpl_transform(axi))
