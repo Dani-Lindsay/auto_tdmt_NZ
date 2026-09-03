@@ -18,3 +18,6 @@ __pycache__/
 events/*/band_*/
 events/*/*.dat
 events/*/greens/
+# student review scratch (human_review.ipynb)
+review_work/
+.ipynb_checkpoints/
