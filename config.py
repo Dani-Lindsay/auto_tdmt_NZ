@@ -21,6 +21,12 @@ OUTPUT_BASE = Path(
 )
 EVENTS_DIR = Path(os.environ.get("AUTO_TDMT_EVENTS", OUTPUT_BASE / "outputs"))
 GF_LIBRARY_DIR = Path(os.environ.get("AUTO_TDMT_GF", OUTPUT_BASE / "gf_library"))
+# Raw-waveform download cache (laptop iteration): miniSEED + StationXML per
+# event, written on first download and reused by every later sweep, so
+# repeated rule-testing does not re-download from GeoNet. DISPOSABLE —
+# delete the whole directory at any time (rm -rf), nothing else references
+# it; a README.txt inside says the same.
+WF_CACHE_DIR = Path(os.environ.get("AUTO_TDMT_WFCACHE", OUTPUT_BASE / "wfcache"))
 CPS_BIN = Path(
     os.environ.get("AUTO_TDMT_CPS_BIN", OUTPUT_BASE / "cps" / "PROGRAMS.330" / "bin")
 )

@@ -40,6 +40,20 @@ import config
 from geonet import Event, fdsn_client
 
 
+def _cache_dir(public_id: str) -> Path:
+    """Per-event raw-download cache (see config.WF_CACHE_DIR: disposable)."""
+    d = config.WF_CACHE_DIR / public_id
+    d.mkdir(parents=True, exist_ok=True)
+    readme = config.WF_CACHE_DIR / "README.txt"
+    if not readme.exists():
+        readme.write_text(
+            "auto_tdmt_NZ raw-waveform download cache.\n"
+            "Everything here is re-downloadable from GeoNet FDSN and is\n"
+            "DISPOSABLE: delete this directory at any time (rm -rf) —\n"
+            "nothing else references it; the next run just re-downloads.\n")
+    return d
+
+
 def select_stations(client, event: Event, origin: UTCDateTime,
                     max_dist_km: float | None = None):
     """Broadband NZ stations within the working distance range.
@@ -50,16 +64,23 @@ def select_stations(client, event: Event, origin: UTCDateTime,
     """
     max_dist = max_dist_km or config.station_max_dist_km(event.prelim_mag)
     min_dist = config.station_min_dist_km(event.prelim_mag)
-    inv = client.get_stations(
-        network=config.NETWORK,
-        channel=",".join(config.CHANNEL_PRIORITY),
-        latitude=event.latitude,
-        longitude=event.longitude,
-        maxradius=kilometers2degrees(max_dist),
-        level="response",
-        starttime=origin,
-        endtime=origin + config.TIME_AFTER_S,
-    )
+    inv_cache = (_cache_dir(event.public_id)
+                 / f"inventory_{int(round(max_dist))}km.xml")
+    if inv_cache.exists():
+        from obspy import read_inventory
+        inv = read_inventory(str(inv_cache))
+    else:
+        inv = client.get_stations(
+            network=config.NETWORK,
+            channel=",".join(config.CHANNEL_PRIORITY),
+            latitude=event.latitude,
+            longitude=event.longitude,
+            maxradius=kilometers2degrees(max_dist),
+            level="response",
+            starttime=origin,
+            endtime=origin + config.TIME_AFTER_S,
+        )
+        inv.write(str(inv_cache), format="STATIONXML")
     rows = []
     for net in inv:
         for sta in net:
@@ -189,16 +210,23 @@ def fetch_and_process(
         ):
             _drop("distance < 3x source depth")
             continue
+        wf_cache = (_cache_dir(event.public_id)
+                    / f"{sid}.{row['band']}.mseed")
         try:
-            st = client.get_waveforms(
-                network=row["network"],
-                station=row["station"],
-                location=row["location"],
-                channel=f"{row['band']}?",
-                starttime=origin - 5 * config.TIME_BEFORE_S,
-                endtime=origin + config.TIME_AFTER_S + config.TIME_BEFORE_S,
-                attach_response=False,
-            )
+            if wf_cache.exists():
+                st = read(str(wf_cache))
+            else:
+                st = client.get_waveforms(
+                    network=row["network"],
+                    station=row["station"],
+                    location=row["location"],
+                    channel=f"{row['band']}?",
+                    starttime=origin - 5 * config.TIME_BEFORE_S,
+                    endtime=origin + config.TIME_AFTER_S
+                    + config.TIME_BEFORE_S,
+                    attach_response=False,
+                )
+                st.write(str(wf_cache), format="MSEED")
         except Exception as e:  # noqa: BLE001 - record and move on, loudly
             _drop(f"download failed: {e}")
             continue
