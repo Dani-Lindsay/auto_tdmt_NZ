@@ -82,17 +82,13 @@ whose columns are its principal axes in geographic (NED) coordinates,
 built from the Aki & Richards (1980) slip vector $\hat{\mathbf{u}}$
 and fault normal $\hat{\mathbf{n}}$:
 
-$$\hat{\mathbf{t}} = \frac{\hat{\mathbf{u}}+\hat{\mathbf{n}}}{\sqrt{2}},
-\qquad
-\hat{\mathbf{p}} = \frac{\hat{\mathbf{u}}-\hat{\mathbf{n}}}{\sqrt{2}},
-\qquad
-\hat{\mathbf{b}} = \hat{\mathbf{t}} \times \hat{\mathbf{p}}$$
+$$\hat{\mathbf{t}} = \frac{\hat{\mathbf{u}}+\hat{\mathbf{n}}}{\sqrt{2}}, \qquad \hat{\mathbf{p}} = \frac{\hat{\mathbf{u}}-\hat{\mathbf{n}}}{\sqrt{2}}, \qquad \hat{\mathbf{b}} = \hat{\mathbf{t}} \times \hat{\mathbf{p}}$$
 
 The angle between two mechanisms is
 
-$$a = \cos^{-1}\!\left(\frac{\mathrm{tr}\!\left(\mathbf{R}_1^{\mathsf T}\, \mathbf{R}_2\, \mathbf{S}\right) - 1}{2}\right),
-\qquad
-\mathbf{S} \in \left\{\mathbf{I},\ \mathrm{diag}(1,-1,-1),\ \mathrm{diag}(-1,1,-1),\ \mathrm{diag}(-1,-1,1)\right\}$$
+$$a = \cos^{-1} \left( \frac{ \mathrm{tr}(\mathbf{R}_1^{\top} \mathbf{R}_2 \mathbf{S}) - 1 }{2} \right)$$
+
+$$\mathbf{S} \in \{ \mathbf{I}, \; \mathrm{diag}(1,-1,-1), \; \mathrm{diag}(-1,1,-1), \; \mathrm{diag}(-1,-1,1) \}$$
 
 minimised over $\mathbf{S}$, the double-couple symmetry group (180°
 rotations about each principal axis). In the principal-axes frame
