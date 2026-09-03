@@ -29,7 +29,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from obspy import Stream, UTCDateTime
+from obspy import Stream, UTCDateTime, read
 from obspy.core.util.attribdict import AttribDict
 from obspy.geodetics.base import gps2dist_azimuth, kilometers2degrees
 
@@ -43,12 +43,13 @@ def select_stations(client, event: Event, origin: UTCDateTime):
     Returns (inventory, station_rows) where station_rows is a list of dicts
     with one preferred (channel-band, location) per station, nearest first.
     """
+    max_dist = config.station_max_dist_km(event.prelim_mag)
     inv = client.get_stations(
         network=config.NETWORK,
         channel=",".join(config.CHANNEL_PRIORITY),
         latitude=event.latitude,
         longitude=event.longitude,
-        maxradius=kilometers2degrees(config.MAX_STATION_DIST_KM),
+        maxradius=kilometers2degrees(max_dist),
         level="response",
         starttime=origin,
         endtime=origin + config.TIME_AFTER_S,
@@ -77,7 +78,7 @@ def select_stations(client, event: Event, origin: UTCDateTime):
                 event.latitude, event.longitude, sta.latitude, sta.longitude
             )
             dist_km = dist_m / 1000.0
-            if not (config.MIN_STATION_DIST_KM <= dist_km <= config.MAX_STATION_DIST_KM):
+            if not (config.MIN_STATION_DIST_KM <= dist_km <= max_dist):
                 continue
             rows.append(
                 dict(
@@ -263,47 +264,43 @@ def fetch_and_process(
         row["filter_hz"] = [fmin, fmax]
         used.append(row)
 
-    # tiered selection: prefer SNR >= MIN_SNR; top up with low-tier
-    # stations (down to SNR_TIER_LOW) only when coverage is thin, so sparse
-    # or coda-contaminated events keep azimuthal coverage. The quality
-    # grade reports what the solution is worth; the tier is recorded.
-    ok_rows = [r for r in used if r["snr_tier"] == "ok"]
-    low_rows = sorted((r for r in used if r["snr_tier"] == "low"),
-                      key=lambda r: -r["snr"])
-    # a low-SNR station that is the ONLY one covering its azimuth sector is
-    # worth more to solution stability than its noise costs — never trim it
-    covered = {int(r["azimuth"] // 45) % 8 for r in ok_rows}
-    guards = [r for r in low_rows if int(r["azimuth"] // 45) % 8 not in covered]
-    others = [r for r in low_rows if r not in guards]
-    keep = ok_rows + guards
-    if len(keep) < config.TIER_TARGET_STATIONS:
-        need = config.TIER_TARGET_STATIONS - len(keep)
-        keep += others[:need]
-        surplus = others[need:]
-    else:
-        surplus = others
-    # gap-adaptive retention: when geometry is one-sided (azimuthal gap of
-    # the kept set > 180 deg, e.g. offshore events), every viable station
-    # adds stability — keep all low-tier candidates up to the cap.
-    if surplus and len(keep) < config.MAX_STATIONS:
-        azs = sorted(r["azimuth"] for r in keep)
-        gaps = [(azs[(i + 1) % len(azs)] - a) % 360.0
-                for i, a in enumerate(azs)]
-        if max(gaps) > 180.0:
-            room = config.MAX_STATIONS - len(keep)
-            keep += surplus[:room]
-            surplus = surplus[room:]
-    for r in surplus:
-        sid = f"{r['network']}.{r['station']}.{r['location']}"
-        for comp in "ZRT":
-            (workdir / f"{sid}.{comp}.dat").unlink(missing_ok=True)
-        dropped.append({
-            "station": sid,
-            "reason": f"SNR {r['snr']:.1f} < {config.MIN_SNR} "
-                      f"(low tier, coverage already sufficient)",
-            "latitude": r["latitude"], "longitude": r["longitude"],
-            "distance_km": round(r["distance_km"], 1),
-        })
+    # amplitude-consistency screen: peak x distance should be comparable
+    # across the network; a station orders of magnitude off has broken
+    # response metadata (e.g. NZ.RDHZ 2026-09) and would single-handedly
+    # steer the least-squares moment. Screen BEFORE inversion.
+    import numpy as np
+
+    if len(used) >= 4:
+        for r in used:
+            tr = read(str(workdir / f"{r['network']}.{r['station']}."
+                          f"{r['location']}.Z.dat"), format="SAC")[0]
+            r["peak_x_dist"] = float(
+                abs(tr.data).max() * r["distance_km"])
+        med = float(np.median([r["peak_x_dist"] for r in used]))
+        flagged = [r for r in used
+                   if not (med / config.AMPLITUDE_OUTLIER_FACTOR
+                           <= r["peak_x_dist"]
+                           <= med * config.AMPLITUDE_OUTLIER_FACTOR)]
+        for r in flagged:
+            sid = f"{r['network']}.{r['station']}.{r['location']}"
+            for comp in "ZRT":
+                (workdir / f"{sid}.{comp}.dat").unlink(missing_ok=True)
+            dropped.append({
+                "station": sid,
+                "reason": f"amplitude outlier: peak x dist "
+                          f"{r['peak_x_dist']:.2e} vs network median "
+                          f"{med:.2e}",
+                "latitude": r["latitude"], "longitude": r["longitude"],
+                "distance_km": round(r["distance_km"], 1),
+            })
+            print(f"  amplitude outlier screened: {sid} "
+                  f"({r['peak_x_dist']/med:.0f}x median)")
+        used = [r for r in used if r not in flagged]
+
+    # the screened pool goes forward; station choice is made by backward
+    # elimination in the inversion (data evicts stations, not an SNR
+    # proxy). Tiers remain as metadata.
+    keep = used
     keep.sort(key=lambda r: r["distance_km"])
     assert keep, f"all {len(rows)} candidate stations dropped: {dropped}"
     return keep, dropped

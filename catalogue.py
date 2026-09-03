@@ -41,12 +41,19 @@ def _quality_flag(quality: dict) -> str:
     return ";".join(failed) if failed else f"grade_{grade}"
 
 
+def _publish_flag(decision: dict) -> str:
+    if decision.get("publish"):
+        return "True"
+    tags = decision.get("reason_tags")
+    return ";".join(tags) if tags else "unpublished"
+
+
 COLUMNS = [
     "PublicID", "Date", "Latitude", "Longitude",
     "strike1", "dip1", "rake1", "strike2", "dip2", "rake2",
     "GeoNet_M", "GeoNet_depth", "Mw", "Depth", "Mo", "NS", "DC", "CLVD", "VR",
     "Mxx", "Mxy", "Mxz", "Myy", "Myz", "Mzz",
-    "band", "model", "quality_flag", "published",
+    "band", "model", "quality_flag", "publish_flag", "published",
 ]
 
 
@@ -103,6 +110,7 @@ def build_catalogue(events_dir: Path | None = None) -> Path | None:
             # "True" when the solution passed, else the actual exit
             # reason(s) so a reader can see WHY it fell short at a glance
             "quality_flag": _quality_flag(s["quality"]),
+            "publish_flag": _publish_flag(s.get("publish_decision", {})),
             "published": ev["public_id"] in published_ids,
         })
 

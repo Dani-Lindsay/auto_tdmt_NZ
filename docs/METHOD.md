@@ -58,44 +58,45 @@ published, with full provenance in `solution.json`.
 
 ### 3.1 Station selection
 
-Azimuthal coverage stabilises a moment tensor more than per-station noise
-harms it, so selection is coverage-first, mirroring manual practice
-(sample every quadrant, then prefer close, clean stations):
+The goal is the best data for the job — not all data (which washes the
+solution out) and not a thin subset (which discards constraint). Selection
+mirrors manual practice: sample the maximum azimuth range, prefer the
+distance band that carries information for the magnitude, and let FIT,
+not a noise proxy, make the final call.
 
-1. **Candidate pool**: network NZ broadbands, HH? preferred over BH?
-   (location codes read from the station inventory, never assumed),
-   20–400 km epicentral distance. The distance > 3x depth far-field guard
-   applies only to shallow sources (depth <= 40 km, and never to GeoNet
-   placeholder depths).
-2. **Ordering**: candidates are tried in azimuth-sector-interleaved order
-   — eight 45 deg sectors, nearest-first within each — so the first
-   stations attempted span the full compass. Pure nearest-first ordering
-   produced one-sided geometries whenever the close stations clustered on
-   one side of the epicentre.
-3. **SNR tiers**: per station, SNR = min over components of
-   RMS(signal, origin..+200 s) / RMS(noise, -120..-10 s) in the inversion
-   passband. SNR >= 2.0 (Ristau 2008) is the "ok" tier; 1.2 <= SNR < 2.0
-   is the "low" tier; below 1.2 the record is noise-dominated and dropped.
-4. **Tier retention**: all ok-tier stations are kept (up to the cap of
-   12). Low-tier stations are kept when (a) fewer than 5 ok-tier stations
-   exist (top-up), (b) the station is the sole representative of its
-   azimuth sector (coverage guard), or (c) the kept set's azimuthal gap
-   exceeds 180 deg — e.g. offshore events — in which case ALL viable
-   low-tier stations are retained up to the cap, because in one-sided
-   geometries every constraint adds stability.
-5. **Rejection pass**: after a first inversion, stations with individual
-   VR < 10% at the preferred depth are removed and the inversion rerun
-   once — the counterweight that stops admitted low-tier noise from
-   diluting the solution.
-6. **Weighting**: inverse-distance (an mttime built-in). Per-station SNR
-   down-weighting is not available without modifying mttime, and
-   misfit-based (variance) weighting risks suppressing exactly the
-   azimuth-constraining stations that look different; inclusion rules
-   above achieve the goal instead.
+1. **Candidate pool**: network NZ broadbands (HH? preferred over BH?,
+   location codes from the inventory), from 20 km (near-field exclusion)
+   out to a magnitude-scaled radius — 120 km below M4.0, 180 km to M4.5,
+   250 km to M5.0, 300 km above: small events attenuate below usefulness
+   at far field, larger events still carry information there.
+2. **Noise floor**: per-station SNR (min over components, signal/pre-event
+   noise in the inversion band) must exceed 1.2; records below are
+   noise-dominated. SNR >= 2.0 is tagged "ok", 1.2-2.0 "low" (metadata).
+3. **Amplitude-consistency screen**: peak amplitude x distance must lie
+   within a factor of 8 of the network median. A station orders of
+   magnitude off (broken response metadata, dead channel) would
+   single-handedly steer the least-squares moment — e.g. NZ.RDHZ at 139x
+   the median turned an Mw 5.0 into an apparent Mw 6.2 before this screen
+   existed.
+4. **Seed depth**: the best-SNR station per 45-deg azimuth sector (max 8)
+   runs the full depth search, fixing a provisional depth that no single
+   bad station can steer.
+5. **Backward elimination**: the full screened pool is solved at the seed
+   depth and the worst-fitting station (individual VR < 10%) is removed
+   iteratively — never below 3 stations, and a sector's sole
+   representative is protected unless its VR is negative. Data evicts
+   stations, exactly the manual test-around-and-drop workflow.
+6. **Final solve**: the surviving set runs the full depth search; the
+   leave-one-out jackknife then quantifies how much any single station
+   moves the answer.
+7. **Weighting**: inverse-distance (mttime built-in). Misfit-based
+   weighting risks suppressing exactly the azimuth-constraining stations
+   that look different; the elimination loop serves that purpose with an
+   explicit, recorded decision per station.
 
-Every dropped or trimmed station is recorded in `solution.json` with its
-SNR and reason, and used stations carry their tier, solved zcor and
-individual VR.
+Every screened, eliminated or retained station is recorded in
+`solution.json` with its SNR, tier, amplitude ratio or fit, so any
+solution's station set can be audited after the fact.
 
 ### 3.2 Pre-processing Station distance must
   exceed 3x source depth (point-source/far-field assumption; waived for

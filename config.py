@@ -98,12 +98,31 @@ AFTERSHOCK_MW_MARGIN = 0.5
 # ---------------------------------------------------------------------------
 NETWORK = "NZ"
 CHANNEL_PRIORITY = ("HH?", "BH?")  # broadband only; short-period useless at LP
-MAX_STATION_DIST_KM = 400.0
-MIN_STATION_DIST_KM = 20.0
+MAX_STATION_DIST_KM = 300.0  # absolute ceiling; see station_max_dist_km
+MIN_STATION_DIST_KM = 20.0  # near-field exclusion radius
+
+
+def station_max_dist_km(prelim_mag: float) -> float:
+    """Magnitude-scaled search radius: small events attenuate below
+    usefulness at far field, larger events still carry information there."""
+    if prelim_mag < 4.0:
+        return 120.0
+    if prelim_mag < 4.5:
+        return 180.0
+    if prelim_mag < 5.0:
+        return 250.0
+    return MAX_STATION_DIST_KM
+
+
+# Amplitude-consistency screen: a station whose distance-corrected peak
+# amplitude (peak x distance) is more than this factor from the network
+# median has broken response metadata or severe site pathology and would
+# steer the least-squares moment — drop it before inversion.
+AMPLITUDE_OUTLIER_FACTOR = 8.0
 # Station distance must exceed ~3x source depth for the point-source /
 # far-field assumptions used by TDMT (EPS207 §3.1).
 MIN_DIST_DEPTH_RATIO = 3.0
-MAX_STATIONS = 12  # nearest N passing QC; keeps inversion + plots tidy
+MAX_STATIONS = 30  # pool safety cap; backward elimination prunes
 
 # Zero-phase Butterworth passbands in Hz, ordered candidate lists per
 # preliminary magnitude (BSL TDMT practice: a small menu of period bands,

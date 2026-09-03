@@ -96,12 +96,9 @@ def make_share_figure(
         )
     map_style.add_beachball(ax, lon0, lat0, pref["tensor_rtp_dyne_cm"])
     jk = solution.get("jackknife", {})
-    if jk.get("subsets"):
-        map_style.add_jackknife_planes(ax, lon0, lat0, jk["subsets"])
-        stab = (f"jackknife n={jk['n_subsets']}: rot <= "
-                f"{jk['max_tensor_rotation_deg']:g} deg")
-    else:
-        stab = None
+    stab = (f"jackknife n={jk['n_subsets']}: rot <= "
+            f"{jk['max_tensor_rotation_deg']:g} deg"
+            if jk.get("subsets") else None)
     map_style.panel_label(
         ax, f"(a) {ev['public_id']}  Mw {pref['mw']:.1f}  "
             f"depth {pref['depth_km']:g} km"
@@ -163,15 +160,23 @@ def make_share_figure(
                 axi, f"({next(panel)}) plane {row + 1} {comp}  "
                      f"(peak {np.abs(u_cm).max():.2f} cm)")
 
-    # inset DC ball: both planes traced in their row colours
+    # inset DC ball below the map: modelled planes in their row colours,
+    # with the jackknife subset planes as a thin grey fan (stability)
     axb = map_style.inset_dc_ball(
         fig, [0.045, 0.13, 0.115, 0.30], pref["plane1"], pref["plane2"])
+    for sub in jk.get("subsets", []):
+        for key in ("plane1", "plane2"):
+            p = sub.get(key)
+            if p:
+                xa, ya = map_style.nodal_plane_arc(p["strike"], p["dip"])
+                axb.plot(xa, ya, "-", color="0.15", linewidth=0.7,
+                         alpha=0.3, zorder=15)
     x2, y2 = map_style.nodal_plane_arc(
         pref["plane2"]["strike"], pref["plane2"]["dip"])
     axb.plot(x2, y2, "-", color=plane_colors["plane2"], linewidth=2.2,
              zorder=20, solid_capstyle="round")
-    axb.text(0, -1.6, "plane 2", ha="center", va="center", fontsize=7,
-             color=plane_colors["plane2"])
+    axb.text(0, -1.6, "plane 2 | grey fan = jackknife", ha="center",
+             va="center", fontsize=6.5, color=plane_colors["plane2"])
 
     cax = fig.add_axes([0.945, 0.30, 0.009, 0.45])
     cb = fig.colorbar(pm, cax=cax, orientation="vertical")

@@ -48,12 +48,14 @@ def publish_decision(solution: dict, forward: dict,
     pref = solution["preferred"]
     ev = solution["event"]
     reasons = []
+    tags = []
 
     grade = solution["quality"].get("grade", "?")
     if not solution["quality"]["passed"]:
         reasons.append(
             f"quality grade {grade} (email requires A or B): "
             f"{solution['quality']['checks']}")
+        tags.append(f"grade_{grade}")
 
     mw_ok = pref["mw"] >= config.PUBLISH_MIN_MW
     disp_ok = forward["peak_abs_m"] >= config.PUBLISH_MIN_PRED_DISP_M
@@ -63,6 +65,7 @@ def publish_decision(solution: dict, forward: dict,
             f"displacement {forward['peak_abs_m'] * 100:.2f} cm < "
             f"{config.PUBLISH_MIN_PRED_DISP_M * 100:g} cm"
         )
+        tags.append("too_small_no_disp")
 
     now = datetime.now(timezone.utc)
     today = [
@@ -71,6 +74,7 @@ def publish_decision(solution: dict, forward: dict,
     ]
     if len(today) >= config.MAX_POSTS_PER_DAY:
         reasons.append(f"daily cap {config.MAX_POSTS_PER_DAY} reached")
+        tags.append("daily_cap")
 
     # aftershock throttle: nearby recent published mainshock dominates
     for p in published_history:
@@ -88,10 +92,12 @@ def publish_decision(solution: dict, forward: dict,
                 f"{dist_km:.0f} km of published {p['public_id']} "
                 f"(Mw {p['mw']:.2f})"
             )
+            tags.append("aftershock")
             break
 
     return {
         "publish": not reasons,
+        "reason_tags": tags,
         "reasons": reasons or ["passed all publication gates"],
         "mw_gate": mw_ok,
         "displacement_gate": disp_ok,
