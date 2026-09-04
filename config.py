@@ -271,6 +271,25 @@ def window_tail_s(prelim_mag: float) -> float:
 # this many percentage points of the maximum, prefer the highest %DC. Applied
 # to the depth pick, the station-rejection reference and the band choice.
 PREFER_DC_VR_TOLERANCE = 5.0
+# ...but the DC tie-break itself uses a TIGHTER window (2026-09-05): DC
+# may break a near-tie in VR, it must not buy a 5-point VR loss. At the
+# old tolerance the pick landed on the EDGE of the plateau (2026p091845:
+# 24 km at VR 60.5/DC 98 chosen over 18-22 km at VR 65/DC 88-93).
+# Measured over 343 archived events with a Ristau reference depth:
+# tolerance 5 -> median |dZ| 9.0 km, tolerance 2 -> 8.0 km (61 events
+# move), and DC contributes nothing beyond that (tolerance 0 is also 8.0).
+DEPTH_DC_TOLERANCE = 2.0
+
+# Depth plausibility vs the GeoNet hypocentre. The search stays FULLY
+# INDEPENDENT — this only flags and downgrades, never forces. Threshold
+# set by D. Lindsay (2026-09-05): our centroid depth and GeoNet's
+# hypocentre should agree within 8 km. Calibration from the Ristau
+# catalogue (343 matched events): his centroid depths sit a median 4 km
+# from the GeoNet hypocentre, 57% within 5 km and 82% within 10 km — so
+# 8 km is close to his typical agreement, and a solution outside it is
+# claiming something a trusted analyst catalogue rarely does. Placeholder
+# GeoNet depths (5/12/33 km) are exempt: those are not measurements.
+DEPTH_PLAUSIBLE_MAX_KM = 8.0
 
 # Sample spacing / windows — locked between data prep and the GF library,
 # following the mttime example notebooks (Chiang) exactly:

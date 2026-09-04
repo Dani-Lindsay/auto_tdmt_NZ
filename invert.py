@@ -167,7 +167,9 @@ def pick_preferred_detail(vr_pdc: list[tuple[float, float]],
     if vrs[i_ref] < config.DC_TIEBREAK_MIN_VR:
         return i_ref, guarded  # junk-grade fit: DC differences are noise
     if contiguous:
-        cands = plateau_indices(vrs, i_ref)
+        # DC breaks a near-tie in VR only (DEPTH_DC_TOLERANCE), inside the
+        # wider plateau that defines "the depth is not resolved"
+        cands = plateau_indices(vrs, i_ref, config.DEPTH_DC_TOLERANCE)
     else:
         floor = vrs[i_ref] - config.PREFER_DC_VR_TOLERANCE
         cands = [i for i, vr in enumerate(vrs) if vr >= floor]
@@ -857,9 +859,22 @@ def summarize(inv, event: Event, stations: list[dict], dropped: list[dict],
     return solution
 
 
+def depth_plausible(our_depth_km: float, geonet_depth_km: float) -> bool:
+    """Does our centroid depth agree with the GeoNet hypocentre?
+
+    The search itself stays fully independent — this only judges the
+    RESULT. A GeoNet placeholder depth (5/12/33 km) is not a measurement,
+    so nothing is judged against it. Threshold: DEPTH_PLAUSIBLE_MAX_KM
+    (8 km), close to the typical agreement in the Ristau catalogue, whose
+    centroid depths sit a median 4 km from the GeoNet hypocentre."""
+    if geonet_depth_km in config.PLACEHOLDER_DEPTHS_KM:
+        return True
+    return abs(our_depth_km - geonet_depth_km) <= config.DEPTH_PLAUSIBLE_MAX_KM
+
+
 def grade_v2(vr: float, dc: float, min_own_vr: float,
              jk_rot: float | None, edge_artifact: bool,
-             pair_ok: bool) -> str:
+             pair_ok: bool, depth_ok: bool = True) -> str:
     """Letter grade from evidence only (v2, 2026-09-04).
 
     Station COUNT and azimuthal GAP are deliberately absent: three
@@ -875,7 +890,7 @@ def grade_v2(vr: float, dc: float, min_own_vr: float,
     ra, rb, rc = (config.GRADE_RUBRIC[k] for k in ("A", "B", "C"))
     if not pair_ok or vr < rc["vr"] or min_own_vr < rc["min_own_vr"]:
         return "D"
-    if (edge_artifact or vr < rb["vr"] or dc < rb["dc"]
+    if (edge_artifact or not depth_ok or vr < rb["vr"] or dc < rb["dc"]
             or min_own_vr < rb["min_own_vr"]
             or (jk_rot is not None and jk_rot > rb["jk_rot_max"])):
         return "C"
@@ -913,8 +928,10 @@ def quality_gates(solution: dict) -> dict:
     flags = solution.get("depth_pick_flags", {})
     edge_artifact = bool(flags.get("edge_artifact", False))
 
+    depth_ok = depth_plausible(pref["depth_km"],
+                               solution["event"].get("depth_km", 0.0))
     grade = grade_v2(pref["vr"], pref["pdc"], min_own_vr, jk_rot,
-                     edge_artifact, pair_ok)
+                     edge_artifact, pair_ok, depth_ok)
     rb = config.GRADE_RUBRIC["B"]
     checks = {
         "vr_floor": pref["vr"] >= config.GRADE_RUBRIC["C"]["vr"],
@@ -922,6 +939,7 @@ def quality_gates(solution: dict) -> dict:
         "az_pair_90": pair_ok,
         "jackknife_stable": jk_rot is None or jk_rot <= rb["jk_rot_max"],
         "depth_interior": not edge_artifact,
+        "depth_agrees_with_geonet": depth_ok,
         "dc_floor": pref["pdc"] >= rb["dc"],
     }
     warnings = {
@@ -931,6 +949,7 @@ def quality_gates(solution: dict) -> dict:
         "grid_edge_guard_applied": bool(
             flags.get("grid_edge_guard_applied", False)),
         "jackknife_skipped": jk_rot is None,
+        "depth_far_from_geonet": not depth_ok,
     }
     return {
         # informational, no longer thresholds
@@ -938,6 +957,8 @@ def quality_gates(solution: dict) -> dict:
         "azimuthal_gap_deg": round(az_gap, 1),
         "min_own_vr": round(min_own_vr, 1),
         "jackknife_rotation_deg": jk_rot,
+        "depth_minus_geonet_km": round(
+            pref["depth_km"] - solution["event"].get("depth_km", 0.0), 1),
         "grade": grade,
         "checks": checks,
         "warnings": warnings,

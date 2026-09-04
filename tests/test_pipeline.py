@@ -189,8 +189,10 @@ def test_quality_grades():
     thresholds (3 well-fitting stations spanning 90 deg can be an A)."""
     gates = invert.quality_gates
 
-    def sol(vr, azimuths, own_vrs, dc=90.0, jk_rot=5.0, edge=False):
+    def sol(vr, azimuths, own_vrs, dc=90.0, jk_rot=5.0, edge=False,
+            geonet_depth=10.0):
         s = {
+            "event": {"depth_km": geonet_depth},
             "preferred": {"vr": vr, "pdc": dc, "depth_km": 10.0},
             "stations_used": [
                 {"azimuth": a, "final": {"own_vr": v}}
@@ -228,6 +230,15 @@ def test_quality_grades():
     # D: a station fitting worse than nothing
     q = gates(sol(90, [0, 100, 200], [70, 70, 5]))
     assert q["grade"] == "D"
+    # C: our centroid depth cannot be 30 km from GeoNet's hypocentre and
+    # still be published ("it is just not reasonable for the geonet
+    # solution and ours to be completely different")
+    q = gates(sol(85, [0, 100, 200], [60, 55, 45], geonet_depth=40.0))
+    assert q["grade"] == "C" and not q["checks"]["depth_agrees_with_geonet"]
+    # ...but a GeoNet PLACEHOLDER depth is not a measurement, so it is
+    # never used to judge us
+    q = gates(sol(85, [0, 100, 200], [60, 55, 45], geonet_depth=33.0))
+    assert q["checks"]["depth_agrees_with_geonet"]
 
 
 def test_aftershock_throttle():
