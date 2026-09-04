@@ -32,6 +32,45 @@ CPS_BIN = Path(
 )
 STATE_FILE = REPO_DIR / "events" / "index.json"
 
+# ---------------------------------------------------------------------------
+# Code version stamped into every solution and catalogue row, so a catalogue
+# with mixed-vintage rows is self-describing and any solution can be traced
+# to the exact code that produced it (git tag selection-v3 = the pre-funnel
+# state). Bump SELECTION_VERSION whenever selection or grading rules change.
+# ---------------------------------------------------------------------------
+SELECTION_VERSION = "v4"
+
+
+def code_version() -> str:
+    """Short git hash of HEAD (+ '-dirty'), or 'unknown' outside a checkout."""
+    import subprocess
+    try:
+        out = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"], cwd=REPO_DIR,
+            capture_output=True, text=True, timeout=10)
+        if out.returncode != 0:
+            return "unknown"
+        commit = out.stdout.strip()
+        dirty = subprocess.run(
+            ["git", "status", "--porcelain", "--untracked-files=no"],
+            cwd=REPO_DIR, capture_output=True, text=True, timeout=10)
+        if dirty.returncode == 0 and dirty.stdout.strip():
+            commit += "-dirty"
+        return commit
+    except Exception:  # noqa: BLE001 - provenance must never break a run
+        return "unknown"
+
+
+# Archive status: an event either has a solution or is recorded as having
+# no coherent one (see invert.no_solution_record). Every consumer branches
+# on is_solved() rather than assuming "preferred" exists.
+STATUS_SOLVED = "solved"
+STATUS_NO_SOLUTION = "no_coherent_solution"
+
+
+def is_solved(solution: dict) -> bool:
+    return solution.get("status", STATUS_SOLVED) == STATUS_SOLVED
+
 
 def slugify(text: str) -> str:
     """Locality -> filesystem-safe slug for event directory names."""
@@ -43,6 +82,12 @@ def event_dir_name(public_id: str, mw: float, depth_km: float,
                    locality: str) -> str:
     return (f"{public_id}_Mw{mw:.1f}_{depth_km:g}km_"
             f"{slugify(locality)[:40]}")
+
+
+def no_solution_dir_name(public_id: str, locality: str) -> str:
+    """Directory name for an event with no coherent solution — visibly
+    different from a solved event's Mw/depth name."""
+    return f"{public_id}_NOSOL_{slugify(locality)[:40]}"
 
 
 def find_event_dir(public_id: str, events_dir: Path | None = None):
@@ -122,16 +167,17 @@ def station_min_dist_km(prelim_mag: float) -> float:
     return 10.0 if prelim_mag < 4.5 else MIN_STATION_DIST_KM
 
 
-# When fewer than this many stations survive the peak/noise floor, the
-# search radius is extended once by RADIUS_EXTEND_KM (offshore events:
-# 2026p047833 review) and the annulus is fetched and processed too.
+# When fewer than this many stations enter the pool, the search radius is
+# extended once by RADIUS_EXTEND_KM (offshore events: 2026p047833 review)
+# and the annulus is fetched and processed too.
 MIN_USABLE_BEFORE_EXTEND = 4
 RADIUS_EXTEND_KM = 100.0
 
 # Station clustering: dense sub-networks (e.g. the Ruapehu volcano ring)
-# would let one site dominate the azimuth sector. Keep at most
-# CLUSTER_MAX_STATIONS (the best by peak/noise) within CLUSTER_RADIUS_KM
-# of each other; the rest are dropped with the cluster named in the reason.
+# would let one site dominate an azimuth sector. Beyond CLUSTER_MAX_STATIONS
+# within CLUSTER_RADIUS_KM, a station is TAGGED "cluster_surplus" — a
+# DEMOTION, NEVER AN EXCLUSION (v4): it still gets its seat-earning test in
+# the funnel, but must not reduce the joint fit to be admitted.
 CLUSTER_RADIUS_KM = 25.0
 CLUSTER_MAX_STATIONS = 2
 
@@ -153,10 +199,18 @@ def station_max_dist_km(prelim_mag: float) -> float:
 # median has broken response metadata or severe site pathology and would
 # steer the least-squares moment — drop it before inversion.
 AMPLITUDE_OUTLIER_FACTOR = 8.0
-# Station distance must exceed ~3x source depth for the point-source /
-# far-field assumptions used by TDMT (EPS207 §3.1).
+# The screen needs a network median to compare against; 3 is the minimum
+# that gives one (was 4, which left the sparsest events unprotected —
+# 2026p101368 used RDHZ at station VR -40 because the screen never ran).
+AMP_SCREEN_MIN_STATIONS = 3
+# Station distance below ~3x source depth violates the point-source /
+# far-field heuristic (EPS207 §3.1) — but the CPS Green's functions are
+# complete-wavefield solutions including the near-field terms, and the
+# 2026-09-04 audit found this rule removing the CLOSEST station in every
+# event it touched (94% of those ended C/D). It is now a DEMOTION TAG
+# ("near_field"), NEVER AN EXCLUSION: the fit decides.
 MIN_DIST_DEPTH_RATIO = 3.0
-MAX_STATIONS = 30  # pool safety cap; backward elimination prunes
+MAX_POOL_STATIONS = 30  # pool safety cap; the funnel prunes by fit
 
 # Zero-phase Butterworth passbands in Hz, ordered candidate lists per
 # preliminary magnitude (BSL TDMT practice: a small menu of period bands,
@@ -182,10 +236,10 @@ def band_candidates(prelim_mag: float) -> list[tuple[float, float]]:
 def band_tag(band_hz: tuple[float, float]) -> str:
     return f"band_{round(1/band_hz[1]):d}-{round(1/band_hz[0]):d}s"
 
-# Greedy improvement elimination: a station above the floor is still
-# dropped if removing it improves the joint fit by at least this many VR
-# points (the manual "test around and drop what degrades" practice).
-ELIMINATION_VR_GAIN = 2.0
+# (Removed 2026-09-04: the greedy "test-drop what improves joint VR" pass.
+# It was evicting well-fitting stations to polish a number — 2026p091845
+# lost THZ/MRZ/WRRZ at station VR 54-65 — which is VR vanity at the cost of
+# azimuth coverage. Stations now leave only if they anti-fit.)
 
 # The %DC tie-break only engages when the fit is meaningful; below this
 # VR maximum the event is junk-grade and DC differences are noise — take
@@ -233,29 +287,125 @@ FILTER_CORNERS = 3  # obspy corners, zerophase=True; notebook-02 values, applied
 # Response-removal pre-filter (Hz), from mttime example notebook 01.
 RESPONSE_PRE_FILT = (0.004, 0.007, 10.0, 20.0)
 
-# Peak-to-noise station quality (replaces the RMS SNR gate 2026-09-03;
-# calibrated against manual keep/toss labelling of 2026p283255 + review of
-# five further events). Metric: median over Z/R/T of
+# ---------------------------------------------------------------------------
+# Station selection v4 — the funnel (2026-09-04)
+#
+# Design (D. Lindsay): use ALL stations, drop the worst-VR ones keeping the
+# majority (~10), re-run, choose the best 4-6 as the core, then incrementally
+# add every other station back and decide which are useful, considering
+# azimuth spread and individual fit. Nothing usable is deleted by a
+# pre-filter; the fit decides. Motivation: the 693-event audit found 61% of
+# all station exclusions were decided by the solution itself, and 69% of
+# those vetoes were issued by cores whose own VR was below 20.
+# ---------------------------------------------------------------------------
+
+# Peak-to-noise station quality: median over Z/R/T of
 # peak|signal| / RMS(pre-event noise), signal measured ONLY inside the
 # distance-adaptive window actually inverted — an impulsive surface-wave
 # packet is a spike above background, which RMS-over-200s could not see.
-# >= PEAK_NOISE_CORE: trusted core, inverted from the start.
-# >= PEAK_NOISE_FLOOR: candidate ("yellow"): admitted only if the core
-#    solution predicts its waveform (station VR >= CANDIDATE_STATION_VR_MIN
-#    when added alone at the core's preferred depth).
-# below the floor: dead channel, rejected outright (data kept for figures).
-PEAK_NOISE_CORE = 5.0
-PEAK_NOISE_FLOOR = 2.0
-CANDIDATE_STATION_VR_MIN = 30.0
-# sparse events (2026p189537 review: 3 stations is thin): when the
-# core holds fewer than 5 stations, admission relaxes to this floor
-# so azimuth constraint is not starved by one strict threshold
-CANDIDATE_STATION_VR_MIN_SPARSE = 20.0
+# Below PEAK_NOISE_DEAD the channel carries nothing and is hard-rejected
+# (data still written for the figures); between DEAD and STRONG the station
+# is TAGGED "weak_signal" and must earn its seat in the funnel.
+PEAK_NOISE_DEAD = 1.2
+PEAK_NOISE_STRONG = 5.0
+
+# Time-shift (zcor) sanity. mttime's cross-correlation search is unbounded
+# (a 60 s window can slide >100 s), which is exactly how a noise trace finds
+# a chance alignment and earns undeserved VR. Archive calibration: stations
+# used in grade A/B solutions have |zcor| <= 9 s at p95, while grade-D
+# stations reach 0.88 of their whole travel time. Pass 1 therefore runs with
+# NO shifts at all, and from pass 2 on a station whose solved shift exceeds
+# this bound is rejected (its fit is not evidence).
+ZCOR_MAX_S = 8.0
+
+# Pass 1: survey inversion over the whole pool, coarse depth grid (every
+# PASS1_DEPTH_STRIDE-th library depth plus both ends). Stations are ranked by
+# the MEDIAN of their own VR over the contiguous VR plateau — chance
+# alignment is depth-specific, real coherence is not.
+PASS1_DEPTH_STRIDE = 2
+PASS1_KEEP_N = 10          # "keep the majority"
+PASS1_KEEP_MAX = 12        # after filling empty azimuth sectors
+PASS1_KEEP_VR_MIN = 10.0   # a station must fit at least this well to survive
+
+# Pass 2 -> core: the best few by own VR, big enough to constrain a
+# mechanism, small enough to stay clean. The core must contain two stations
+# at least AZ_PAIR_MIN_DEG apart or it cannot resolve a mechanism at all.
+CORE_SIZE_MIN = 3
+CORE_SIZE_MAX = 6
+CORE_VR_MIN = 30.0
+
+# Pass 3 — earn your seat: every non-core station (tagged ones included) is
+# added at the core depth and kept if the core solution predicts its
+# waveform. Sparse cores relax the floor: with 3-4 stations, extra azimuth
+# coverage is worth a weaker individual fit (2026p189537 review).
+ADMIT_VR_MIN = 30.0
+ADMIT_VR_MIN_SPARSE = 20.0
 SPARSE_CORE_COUNT = 5
-# azimuth-coverage cap (2026p033598 review: too many stations diluted
-# DC): when more survive, keep the best-VR station per 45 deg sector
-# plus the top-4 VR overall — coverage first, then fit
+# A station that fills an EMPTY azimuth sector is worth admitting on a
+# weaker fit — geometry is the scarcer commodity in NZ.
+ADMIT_SECTOR_VR_MIN = 10.0
+# ...but no addition may cost more than this many joint VR points unless it
+# brings a new sector.
+ADMIT_MAX_JOINT_VR_DROP = 3.0
+# Upper bound on the used set (2026p033598 review: an over-full network
+# diluted %DC from 98 to 46).
 MAX_USED_STATIONS = 12
+
+# A station whose own VR is negative fits worse than silence: it only steers
+# the tensor, so it is culled unconditionally (no joint-gain test, no
+# sector protection — 2026p238013 NNZ sat at -41 behind a passing joint VR).
+ANTIFIT_VR = 0.0
+
+# Below this joint VR nothing coheres: the event is archived as
+# "no coherent solution" rather than publishing a junk mechanism.
+NO_SOLUTION_VR = 20.0
+
+# Depth-pick guard: a VR maximum sitting on the first/last grid depth with a
+# zero-width plateau is an artifact (the smoothest GFs absorb noise). Prefer
+# the best INTERIOR local maximum within this tolerance — 2026p508890 rode a
+# 58 km edge (VR 22.7) over the physical 8 km peak (VR 18.3, DC 88-96).
+GRID_EDGE_VR_TOLERANCE = 5.0
+
+# Mechanism geometry sanity: two used stations at least this far apart in
+# azimuth. Every grade A/B solution in the archive already satisfies it;
+# 330 of 559 grade-D solutions do not.
+AZ_PAIR_MIN_DEG = 90.0
+
+# Band escalation: if the inverted Mw overshoots the preliminary magnitude
+# by this much, the event is bigger than the band menu assumed — run the
+# next band up and prefer it if it fits at least as well (2026p336046:
+# prelim 4.2 -> Mw 5.01 out of a 10-50 s-only run).
+BAND_ESCALATE_DMW = 0.6
+
+# ---------------------------------------------------------------------------
+# Quality grades v2 (2026-09-04) — evidence, not station counts
+#
+# Station count and azimuthal gap are GONE as thresholds (D. Lindsay: "so
+# long as you have stations 90 degrees from each other you can make a good
+# solution"; 3 well-fitting stations can be grade A, as at BSL). What
+# remains is measured evidence: how well the solution explains the data
+# (VR), whether every used station actually fits (no passengers), whether
+# the mechanism survives leaving a station out (jackknife rotation), and
+# whether the depth is a real interior plateau rather than a grid-edge
+# artifact. B additionally requires DC >= 60, which makes B exactly the
+# BSL publishability rule (VR >= 60 and DC >= 60).
+#
+# Thresholds are the archive's own A/B statistics: min own-station VR p25
+# 41 (A) / 35 (B); jackknife max rotation p90 12 deg (A), p75 14.5 (B).
+# DC never enters SELECTION — a noise station can inflate it.
+# ---------------------------------------------------------------------------
+GRADE_RUBRIC = {
+    "A": dict(vr=70.0, dc=60.0, min_own_vr=40.0, jk_rot_max=15.0,
+              need_jackknife=True),
+    "B": dict(vr=60.0, dc=60.0, min_own_vr=25.0, jk_rot_max=25.0,
+              need_jackknife=False),
+    "C": dict(vr=50.0, min_own_vr=10.0),
+}
+
+
+def sector(azimuth: float) -> int:
+    """Azimuth -> one of 8 x 45 degree sectors."""
+    return int(azimuth // 45) % 8
 
 # ---------------------------------------------------------------------------
 # Green's function library grid
@@ -288,17 +438,9 @@ GF_VERSION = "v1"
 # ---------------------------------------------------------------------------
 INVERSION_DEGREE = 5  # deviatoric
 MIN_STATIONS_USED = 3
-MIN_VR_PUBLISH = 50.0  # % variance reduction floor for publication
-MAX_AZ_GAP_DEG = 270.0  # flag (not fail) beyond this
-# Depth search: full library depth range when GeoNet depth is a placeholder
-# (their fixed depths are unreliable). For real located depths the search
-# is bounded by GeoNet's own depth uncertainty when QuakeML provides it —
-# margin = clamp(2 x depthUncertainty, MIN, MAX) — else the default: a
-# located GeoNet depth is typically good to ~+/-5 km, and an unconstrained
-# search was occasionally preferring depths wildly inconsistent with it.
-DEPTH_SEARCH_MARGIN_KM = 10.0
-DEPTH_SEARCH_MARGIN_MIN_KM = 5.0
-DEPTH_SEARCH_MARGIN_MAX_KM = 15.0
+# The depth search always covers the full GF grid (INDEPENDENT BY CHOICE,
+# 2026-09-03): bounding it around GeoNet's depth would force agreement and
+# destroy the catalogue's value as an independent check.
 PLACEHOLDER_DEPTHS_KM = {5.0, 12.0, 33.0}  # GeoNet fixed-depth values
 
 # Surface-wave group velocity used to convert per-station zcor into a

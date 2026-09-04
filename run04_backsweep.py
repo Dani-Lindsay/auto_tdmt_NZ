@@ -60,7 +60,7 @@ def list_events(start: str, end: str = "2100-01-01") -> list[tuple[str, str, flo
 def main(start: str, end: str = "2100-01-01") -> None:
     events = list_events(start, end)
     print(f"{len(events)} candidate events since {start}", flush=True)
-    done = failed = skipped = 0
+    done = failed = skipped = nosol = 0
     for i, (pid, when, mag) in enumerate(events, 1):
         existing = config.find_event_dir(pid)
         if existing is not None and (existing / "solution.json").exists():
@@ -69,15 +69,24 @@ def main(start: str, end: str = "2100-01-01") -> None:
         t0 = time.time()
         try:
             sol = process_event(pid)
-            p = sol["preferred"]
-            print(
-                f"[{i}/{len(events)}] {pid} {when[:10]} M{mag:.1f} -> "
-                f"Mw {p['mw']:.2f} depth {p['depth_km']:g} km "
-                f"VR {p['vr']:.0f}% DC {p['pdc']:.0f}% "
-                f"grade {sol['quality']['grade']} "
-                f"({time.time() - t0:.0f}s)", flush=True,
-            )
-            done += 1
+            if not config.is_solved(sol):
+                print(
+                    f"[{i}/{len(events)}] {pid} {when[:10]} M{mag:.1f} -> "
+                    f"NO COHERENT SOLUTION ({sol['abort']['stage']}, "
+                    f"best VR {sol['abort']['best_vr']:.0f}) "
+                    f"({time.time() - t0:.0f}s)", flush=True,
+                )
+                nosol += 1
+            else:
+                p = sol["preferred"]
+                print(
+                    f"[{i}/{len(events)}] {pid} {when[:10]} M{mag:.1f} -> "
+                    f"Mw {p['mw']:.2f} depth {p['depth_km']:g} km "
+                    f"VR {p['vr']:.0f}% DC {p['pdc']:.0f}% "
+                    f"grade {sol['quality']['grade']} "
+                    f"({time.time() - t0:.0f}s)", flush=True,
+                )
+                done += 1
         except Exception as e:  # noqa: BLE001 - sweep must survive bad events
             print(f"[{i}/{len(events)}] {pid} {when[:10]} M{mag:.1f} "
                   f"FAILED: {str(e)[:160]}", flush=True)
@@ -89,7 +98,8 @@ def main(start: str, end: str = "2100-01-01") -> None:
                 _sh.rmtree(shell, ignore_errors=True)
         time.sleep(2)  # politeness between events
     print(f"sweep complete {datetime.now(timezone.utc):%Y-%m-%dT%H:%MZ}: "
-          f"{done} solved, {failed} failed, {skipped} already done",
+          f"{done} solved, {nosol} no coherent solution, "
+          f"{failed} failed, {skipped} already done",
           flush=True)
 
 

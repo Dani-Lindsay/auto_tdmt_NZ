@@ -45,6 +45,8 @@ def publish_event(public_id: str, state: dict | None = None,
     if own_state:
         from run01_watch import load_state
         state = load_state()
+    assert config.is_solved(solution), \
+        f"{public_id} has no coherent solution — nothing to publish"
     state["published"].append({
         "public_id": public_id,
         "mw": solution["preferred"]["mw"],

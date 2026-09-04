@@ -81,6 +81,19 @@ def main(process: bool) -> None:
             save_state(state)
             continue
 
+        if not config.is_solved(solution):
+            ab = solution["abort"]
+            state["processed"][ev.public_id] = {
+                "status": "no_solution",
+                "stage": ab["stage"], "reason": ab["reason"],
+                "best_vr": ab["best_vr"],
+                "run_utc": datetime.now(timezone.utc).isoformat(),
+            }
+            save_state(state)
+            print(f"{ev.public_id}: no coherent solution "
+                  f"({ab['stage']}) — archived, not published")
+            continue
+
         decision = solution["publish_decision"]
         summary = {
             "status": "ok",

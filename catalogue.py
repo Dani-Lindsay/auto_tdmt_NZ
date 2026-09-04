@@ -24,8 +24,14 @@ from pathlib import Path
 import config
 
 _FLAG_NAMES = {
-    "min_stations": "few_stations",
     "vr_floor": "low_VR",
+    "no_passengers": "station_not_fitting",
+    "az_pair_90": "no_90deg_azimuth_pair",
+    "jackknife_stable": "unstable_mechanism",
+    "depth_interior": "grid_edge_depth",
+    "dc_floor": "low_DC",
+    # v3 names, kept so old archived solutions still read sensibly
+    "min_stations": "few_stations",
     "az_gap_ok": "wide_az_gap",
 }
 
@@ -57,7 +63,8 @@ COLUMNS = [
     "Jk_n", "Jk_Mw_std", "Jk_DC_std", "Jk_rot_deg",
     "PredDisp_cm", "Detectable",
     "Mxx", "Mxy", "Mxz", "Myy", "Myz", "Mzz",
-    "Band", "Model", "quality_flag", "publish_flag", "published",
+    "Band", "Model", "Status", "Selection", "Code",
+    "quality_flag", "publish_flag", "published",
 ]
 
 
@@ -79,7 +86,32 @@ def build_catalogue(events_dir: Path | None = None) -> Path | None:
     rows = []
     for path in solutions:
         s = json.loads(path.read_text())
-        ev, p = s["event"], s["preferred"]
+        ev = s["event"]
+        if not config.is_solved(s):
+            # no coherent solution: the row carries the origin and the
+            # reason, and NO mechanism numbers at all
+            rows.append({
+                "PublicID": ev["public_id"],
+                "Date": ev["origin_time"],
+                "Latitude": round(ev["latitude"], 4),
+                "Longitude": round(ev["longitude"], 4),
+                "GeoNet_M": round(ev["prelim_mag"], 2),
+                "GeoNet_depth": round(ev["depth_km"], 1),
+                "NS": 0,
+                "Grade": "X",
+                "Band": s.get("chosen_band", "").replace("band_", ""),
+                "Model": s.get("provenance", {}).get("velocity_model", ""),
+                "Status": config.STATUS_NO_SOLUTION,
+                "Selection": s.get("provenance", {}).get(
+                    "selection_version", ""),
+                "Code": s.get("provenance", {}).get("code_commit", ""),
+                "quality_flag": (f"no_coherent_solution:"
+                                 f"{s['abort']['stage']}"),
+                "publish_flag": "no_coherent_solution",
+                "published": False,
+            })
+            continue
+        p = s["preferred"]
         mt = s["preferred"]["tensor_dyne_cm"]  # XYZ basis, dyne-cm
         rows.append({
             "PublicID": ev["public_id"],
@@ -129,6 +161,11 @@ def build_catalogue(events_dir: Path | None = None) -> Path | None:
             },
             "Band": s.get("chosen_band", "").replace("band_", ""),
             "Model": s["provenance"]["velocity_model"],
+            # which code produced this row (the catalogue is
+            # self-describing when it mixes vintages)
+            "Status": s.get("status", config.STATUS_SOLVED),
+            "Selection": s["provenance"].get("selection_version", "v3"),
+            "Code": s["provenance"].get("code_commit", ""),
             # "True" when the solution passed, else the actual exit
             # reason(s) so a reader can see WHY it fell short at a glance
             "quality_flag": _quality_flag(s["quality"]),

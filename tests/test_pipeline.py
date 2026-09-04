@@ -185,26 +185,49 @@ def test_publish_gates():
 
 
 def test_quality_grades():
+    """Grade v2: evidence only — station count and azimuthal gap are NOT
+    thresholds (3 well-fitting stations spanning 90 deg can be an A)."""
     gates = invert.quality_gates
-    def sol(vr, stations, azimuths):
-        return {
-            "preferred": {"vr": vr, "depth_km": 10.0},
+
+    def sol(vr, azimuths, own_vrs, dc=90.0, jk_rot=5.0, edge=False):
+        s = {
+            "preferred": {"vr": vr, "pdc": dc, "depth_km": 10.0},
             "stations_used": [
-                {"azimuth": a} for a in azimuths[:stations]
+                {"azimuth": a, "final": {"own_vr": v}}
+                for a, v in zip(azimuths, own_vrs)
             ],
+            "depth_pick_flags": {"edge_artifact": edge},
         }
-    # A: strong VR, good coverage
-    q = gates(sol(75, 6, [0, 60, 120, 180, 240, 300]))
+        if jk_rot is not None:
+            s["jackknife"] = {"n_subsets": len(azimuths),
+                              "max_tensor_rotation_deg": jk_rot}
+        return s
+
+    # A: strong fit, no passengers, stable, interior depth — and only
+    # THREE stations, which the old count-based rubric could not grade A
+    q = gates(sol(75, [0, 100, 200], [60, 55, 45]))
     assert q["grade"] == "A" and q["passed"]
-    # B: decent VR, 3 stations, wide gap
-    q = gates(sol(65, 3, [0, 90, 180]))
+    # B: a passenger drags min own VR below the A bar
+    q = gates(sol(75, [0, 100, 200], [60, 55, 30]))
     assert q["grade"] == "B" and q["passed"]
-    # C: 2 stations
-    q = gates(sol(80, 2, [0, 90]))
+    # B: jackknife skipped (too few stations to leave one out)
+    q = gates(sol(75, [0, 100, 200], [60, 55, 45], jk_rot=None))
+    assert q["grade"] == "B"
+    # C: DC below the BSL publishability bar, however good the fit
+    q = gates(sol(85, [0, 100, 200], [60, 55, 45], dc=40))
     assert q["grade"] == "C" and not q["passed"]
-    # D: single station
-    q = gates(sol(90, 1, [0]))
+    # C: grid-edge depth artifact
+    q = gates(sol(85, [0, 100, 200], [60, 55, 45], edge=True))
+    assert q["grade"] == "C"
+    # C: unstable mechanism
+    q = gates(sol(85, [0, 100, 200], [60, 55, 45], jk_rot=40))
+    assert q["grade"] == "C"
+    # D: no 90-degree azimuth pair, however high the VR
+    q = gates(sol(90, [0, 30, 60], [70, 70, 70]))
     assert q["grade"] == "D" and not q["passed"]
+    # D: a station fitting worse than nothing
+    q = gates(sol(90, [0, 100, 200], [70, 70, 5]))
+    assert q["grade"] == "D"
 
 
 def test_aftershock_throttle():
@@ -250,13 +273,21 @@ def test_near_field_magnitude_dependent():
     assert config.station_min_dist_km(5.0) == config.MIN_STATION_DIST_KM
 
 
-def test_peak_noise_tiers_ordered():
-    # dead-channel floor < core threshold, and the admission VR is a real
-    # fraction (calibrated on the 2026p283255 manual labels)
-    assert 0 < config.PEAK_NOISE_FLOOR < config.PEAK_NOISE_CORE
-    assert 0 < config.CANDIDATE_STATION_VR_MIN < 100
-    assert config.CLUSTER_MAX_STATIONS >= 1
-    assert config.MIN_USABLE_BEFORE_EXTEND >= config.MIN_STATIONS_USED
+def test_selection_thresholds_ordered():
+    # dead-channel floor below the strong-signal threshold; the admission
+    # floors are real VR fractions; the funnel keeps a majority, not a
+    # handful; grade rubric monotonic A -> C
+    assert 0 < config.PEAK_NOISE_DEAD < config.PEAK_NOISE_STRONG
+    assert 0 < config.ADMIT_VR_MIN_SPARSE <= config.ADMIT_VR_MIN < 100
+    assert config.CORE_SIZE_MIN <= config.CORE_SIZE_MAX <= config.PASS1_KEEP_N
+    assert config.PASS1_KEEP_N <= config.PASS1_KEEP_MAX
+    assert config.MIN_STATIONS_USED <= config.CORE_SIZE_MIN
+    r = config.GRADE_RUBRIC
+    assert r["A"]["vr"] > r["B"]["vr"] > r["C"]["vr"]
+    assert r["A"]["min_own_vr"] > r["B"]["min_own_vr"] > r["C"]["min_own_vr"]
+    assert r["A"]["jk_rot_max"] < r["B"]["jk_rot_max"]
+    # B is exactly the BSL publishability rule
+    assert r["B"]["vr"] == 60.0 and r["B"]["dc"] == 60.0
 
 
 # --- mechanism comparison metric (J. Townend recipe, 2026-08-20) ------------

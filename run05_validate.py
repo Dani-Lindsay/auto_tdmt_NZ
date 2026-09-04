@@ -138,6 +138,8 @@ def main() -> None:
     origins = {}
     for path in sorted(config.EVENTS_DIR.glob("*/solution.json")):
         sol = json.loads(path.read_text())
+        if not config.is_solved(sol):
+            continue  # no mechanism to compare
         ev = sol["event"]
         pid = ev["public_id"]
         origins[pid] = (ev["origin_time"], ev["latitude"], ev["longitude"])

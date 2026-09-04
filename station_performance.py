@@ -31,11 +31,13 @@ from pathlib import Path
 import numpy as np
 
 import config
+import invert
 
 COLUMNS = [
-    "station", "n_seen", "n_used", "use_rate", "med_station_vr",
-    "mean_dv_pct", "med_abs_dv_pct", "med_amp_ratio",
-    "n_snr_drop", "n_amp_outlier", "n_eliminated", "last_event",
+    "station", "n_seen", "n_used", "use_rate", "n_used_demoted",
+    "med_station_vr", "mean_dv_pct", "med_abs_dv_pct", "med_amp_ratio",
+    "n_nodata", "n_dead", "n_amp_outlier", "n_not_admitted", "n_antifit",
+    "n_abort", "last_event",
 ]
 
 
@@ -46,8 +48,10 @@ def build_station_performance(events_dir: Path | None = None) -> Path | None:
         return None
 
     ledger: dict[str, dict] = defaultdict(
-        lambda: {"used": [], "dv": [], "amp": [], "snr_drop": 0,
-                 "amp_out": 0, "elim": 0, "seen": 0, "last": ""})
+        lambda: {"used": [], "dv": [], "amp": [], "seen": 0, "last": "",
+                 "demoted_used": 0,
+                 "nodata": 0, "dead": 0, "amp_out": 0, "not_admitted": 0,
+                 "antifit": 0, "abort": 0, "other": 0})
 
     def _key(sid: str) -> str:
         parts = sid.split(".")
@@ -69,6 +73,8 @@ def build_station_performance(events_dir: Path | None = None) -> Path | None:
                                    / config.GROUP_VELOCITY_KMS) * 100.0)
             if "amp_ratio" in r:
                 e["amp"].append(r["amp_ratio"])
+            if r.get("tier") == "demoted":
+                e["demoted_used"] += 1
         for d in s.get("stations_dropped", []):
             k = _key(d["station"])
             e = ledger[k]
@@ -77,12 +83,23 @@ def build_station_performance(events_dir: Path | None = None) -> Path | None:
             reason = d.get("reason", "")
             if "amp_ratio" in d:
                 e["amp"].append(d["amp_ratio"])
-            if re.search(r"SNR .* <|peak/noise .* <", reason):
-                e["snr_drop"] += 1
-            elif "amplitude outlier" in reason:
+            # ONE shared vocabulary with figure.py (invert.reason_class);
+            # legacy v3 strings fall through to "other"
+            cls = invert.reason_class(reason)
+            if cls == "nodata":
+                e["nodata"] += 1
+            elif cls == "dead":
+                e["dead"] += 1
+            elif cls == "amp":
                 e["amp_out"] += 1
-            elif "eliminated" in reason or "test-drop" in reason:
-                e["elim"] += 1
+            elif cls == "not_admitted":
+                e["not_admitted"] += 1
+            elif cls == "antifit":
+                e["antifit"] += 1
+            elif cls == "abort":
+                e["abort"] += 1
+            else:
+                e["other"] += 1
 
     out = events_dir / "station_performance.csv"
     with open(out, "w", newline="") as f:
@@ -104,9 +121,13 @@ def build_station_performance(events_dir: Path | None = None) -> Path | None:
                                    if e["dv"] else ""),
                 "med_amp_ratio": (round(float(np.median(e["amp"])), 2)
                                   if e["amp"] else ""),
-                "n_snr_drop": e["snr_drop"],
+                "n_used_demoted": e["demoted_used"],
+                "n_nodata": e["nodata"],
+                "n_dead": e["dead"],
                 "n_amp_outlier": e["amp_out"],
-                "n_eliminated": e["elim"],
+                "n_not_admitted": e["not_admitted"],
+                "n_antifit": e["antifit"],
+                "n_abort": e["abort"],
                 "last_event": e["last"],
             })
     print(f"station performance: {len(ledger)} stations -> {out}")

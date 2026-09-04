@@ -1,0 +1,177 @@
+{
+  "_about": "Per-station reviewer labels extracted from notes_2026-09-04.md (D. Lindsay). keep = must be used by the selection; toss = must NOT be used; maybe = free. Event-level expectations under 'event'. Replayed by run07_replay_labels.py: these labels are the acceptance test for any change to station selection.",
+  "_labels": {
+    "keep": "clear signal — I would invert this",
+    "maybe": "marginal — let the fit decide",
+    "toss": "noise, dead, or clearly wrong"
+  },
+  "events": [
+    {
+      "public_id": "2026p051624",
+      "band": "band_10-50s",
+      "event": {
+        "expect": "no_coherent_solution",
+        "note": "all of these stations look pretty bad, hard to see any signal really; VR 16% and DC weird"
+      },
+      "stations": {"MMNZ": "toss", "HIZ": "toss", "WHTZ": "maybe"}
+    },
+    {
+      "public_id": "2026p067727",
+      "band": "band_10-50s",
+      "event": {
+        "expect": "no_coherent_solution",
+        "depth_implausible": "38 km cannot be right when GeoNet says 18 km",
+        "note": "I cant really see a EQ in these waveforms"
+      },
+      "stations": {"WMVZ": "toss", "BSWZ": "toss", "OAHZ": "keep"}
+    },
+    {
+      "public_id": "2026p336037",
+      "band": "band_20-100s",
+      "event": {
+        "expect": "solved",
+        "depth_range_km": [4.0, 6.5],
+        "note": "all stations look good in the waveforms; HAZ timing weird (model shorter duration than data)"
+      },
+      "stations": {"HAZ": "maybe"}
+    },
+    {
+      "public_id": "2026p336046",
+      "band": "band_10-50s",
+      "event": {
+        "expect": "no_coherent_solution",
+        "depth_implausible": "4 km vs GeoNet 33 km",
+        "note": "raw waveforms all look like noise; URZ fits only on T"
+      },
+      "stations": {}
+    },
+    {
+      "public_id": "2026p336219",
+      "band": "band_10-50s",
+      "event": {
+        "expect": "solved",
+        "note": "beautiful waveform model fits; very low DC; TVZ / lower Coromandel stations would fill the azimuth gap"
+      },
+      "stations": {
+        "WHTZ": "toss", "TLZ": "toss", "KNCZ": "toss", "UTU": "toss",
+        "LIRZ": "toss", "KARZ": "toss", "TGRZ": "toss", "OPRZ": "toss"
+      }
+    },
+    {
+      "public_id": "2026p348732",
+      "band": "band_10-50s",
+      "event": {
+        "expect": "either",
+        "note": "inversion waveforms look bad, plotting noise?"
+      },
+      "stations": {
+        "TSZ": "keep", "BFZ": "keep", "KWHZ": "keep", "MRZ": "keep",
+        "MOVZ": "keep", "BKZ": "keep", "TRVZ": "keep", "MAVZ": "keep",
+        "NGZ": "keep", "COVZ": "keep", "MNMZ": "keep", "HATZ": "keep",
+        "WAZ": "maybe", "OTVZ": "maybe", "WTVZ": "maybe", "WATZ": "maybe",
+        "OHWZ": "toss", "MTVZ": "toss", "WHVZ": "toss", "FWVZ": "toss",
+        "ETVZ": "toss", "TMVZ": "toss", "KRVZ": "toss", "OAHZ": "toss",
+        "TWVZ": "toss", "RATZ": "toss", "KNZ": "toss", "WRRZ": "toss",
+        "KPRZ": "toss", "WHTZ": "toss"
+      }
+    },
+    {
+      "public_id": "2026p355073",
+      "band": "band_10-50s",
+      "event": {
+        "expect": "either",
+        "note": "hard to see signal on any waveform, but the fits are surprisingly good; check the correlated record length",
+        "clip_s": {"NNZ": 75, "MRZ": 75, "OHWZ": 100, "QRZ": 100}
+      },
+      "stations": {"QRZ": "maybe"}
+    },
+    {
+      "public_id": "2026p357402",
+      "band": "band_10-50s",
+      "event": {
+        "expect": "either",
+        "note": "waveform model is bad; model and data ANTICORRELATED at WHVZ and COVZ; RTZ probably fitting noise"
+      },
+      "stations": {
+        "WHVZ": "keep", "MAVZ": "keep", "OTVZ": "keep", "COVZ": "keep",
+        "NTVZ": "keep", "MNMZ": "keep", "KRVZ": "keep", "WTVZ": "keep",
+        "TMVZ": "maybe", "NGZ": "maybe", "HATZ": "maybe", "TWVZ": "maybe",
+        "RATZ": "maybe",
+        "OAHZ": "toss", "OHWZ": "toss", "KPRZ": "toss", "RTZ": "toss"
+      }
+    },
+    {
+      "public_id": "2026p452668",
+      "band": "band_10-50s",
+      "event": {
+        "expect": "solved",
+        "depth_range_km": [18.0, 26.0],
+        "note": "fits look great; no usable stations from the SOUTH — has the azimuth spread rule been lost?"
+      },
+      "stations": {
+        "TSZ": "toss", "FWVZ": "toss",
+        "KWHZ": "maybe", "WEL": "maybe", "OHWZ": "maybe", "HATZ": "maybe",
+        "TRVZ": "maybe", "WRRZ": "maybe", "MRZ": "maybe"
+      }
+    },
+    {
+      "public_id": "2026p508890",
+      "band": "band_10-50s",
+      "event": {
+        "expect": "solved",
+        "depth_range_km": [8.0, 12.0],
+        "depth_implausible": "58 km cannot be right when GeoNet and max DC are 8-10 km",
+        "note": "fits look great, great azimuth coverage; cut the correlation length to ~75 s to reduce noise in PXZ and WAZ",
+        "clip_s": {"PXZ": 75, "WAZ": 75}
+      },
+      "stations": {
+        "HATZ": "keep", "MNMZ": "keep",
+        "PXZ": "toss", "TWVZ": "toss", "ETVZ": "toss", "KRVZ": "toss",
+        "NGZ": "toss", "FWVZ": "toss", "TRVZ": "toss", "WHVZ": "toss",
+        "WEL": "toss", "MTVZ": "toss", "KWHZ": "toss", "WRRZ": "toss"
+      }
+    },
+    {
+      "public_id": "2026p534917",
+      "band": "band_10-50s",
+      "event": {
+        "expect": "no_coherent_solution",
+        "note": "these waveforms all look crap; I cant see signal in any of them"
+      },
+      "stations": {}
+    },
+    {
+      "public_id": "2026p553250",
+      "band": "band_20-100s",
+      "event": {
+        "expect": "solved",
+        "prefer_band": "band_20-100s",
+        "note": "20-100 s should be fitted first; 30-100 s looks overly smoothed. All stations look great in the raw waveforms; pick the best VR per 45 deg azimuth sector"
+      },
+      "stations": {
+        "WTVZ": "toss", "KRVZ": "toss", "RATZ": "toss", "MTVZ": "toss",
+        "KPRZ": "toss"
+      }
+    },
+    {
+      "public_id": "2026p598118",
+      "band": "band_10-50s",
+      "event": {
+        "expect": "solved",
+        "note": "waveform model looks good, great DC and VR, good azimuth coverage"
+      },
+      "stations": {}
+    },
+    {
+      "public_id": "2026p660160",
+      "band": "band_20-50s",
+      "event": {
+        "expect": "solved",
+        "depth_range_km": [5.0, 7.0],
+        "note": "DC should be better; one station is probably pulling the solution and costing DC; WHZ timing could be improved; the shallow-depth pull is probably one station's zcor"
+      },
+      "stations": {"WHZ": "maybe", "MSZ": "maybe", "JCZ": "maybe",
+                   "WKZ": "maybe"}
+    }
+  ]
+}

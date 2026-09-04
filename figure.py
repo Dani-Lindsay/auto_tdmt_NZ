@@ -64,15 +64,15 @@ def make_share_figure(
     # audited from the figure alone
     grey = [d for d in solution["stations_dropped"] if "latitude" in d]
 
+    # ONE shared reason vocabulary (invert.reason_class) — the same
+    # mapping drives the station-performance ledger
+    import invert as _invert
+
     def _cause(d):
-        r = d.get("reason", "")
-        if "amplitude outlier" in r:
-            return "amp"
-        if ("test-drop" in r or "not predicted" in r
-                or "coverage cap" in r or "station cluster" in r
-                or "anti-fitting" in r):
-            return "elim"
-        return "snr"  # dead-channel floor / download / windows
+        return {"nodata": "snr", "dead": "snr", "amp": "amp",
+                "not_admitted": "elim", "antifit": "elim",
+                "abort": "abort"}.get(
+            _invert.reason_class(d.get("reason", "")), "snr")
 
     styles = {
         "snr": dict(marker="^", color="0.65", markeredgecolor="0.4",
@@ -81,6 +81,8 @@ def make_share_figure(
                     markersize=6),
         "elim": dict(marker="^", color="white", markeredgecolor="0.25",
                      markeredgewidth=0.8, markersize=6),
+        "abort": dict(marker="x", color="0.6", markeredgewidth=1.0,
+                      markersize=6),
     }
     for cause, st in styles.items():
         pts = [d for d in grey if _cause(d) == cause]
@@ -96,7 +98,7 @@ def make_share_figure(
             textcoords="offset points", fontsize=5.5, color="0.45",
             xycoords=ccrs.PlateCarree()._as_mpl_transform(ax))
     ax.text(0.985, 0.015,
-            "dropped: grey=low signal  x=bad amplitude  open=rejected by fit/coverage",
+            "dropped: grey=no usable signal  x=bad amplitude  open=did not earn a seat",
             transform=ax.transAxes, ha="right", va="bottom", fontsize=6.2,
             color="0.35", zorder=20,
             bbox=dict(facecolor="white", edgecolor="none", alpha=0.8,
@@ -321,12 +323,19 @@ def make_overview_map(events_dir: Path, out_path: Path) -> Path:
     import cartopy.crs as ccrs
     from obspy.imaging.beachball import beach
 
-    sols = []
+    import config as _config
+
+    sols, n_nosol = [], 0
     for p in sorted(events_dir.glob("*/solution.json")):
         try:
-            sols.append(json.loads(p.read_text()))
+            sol = json.loads(p.read_text())
         except Exception:  # noqa: BLE001
             continue
+        # events with no coherent solution have no mechanism to plot
+        if not _config.is_solved(sol):
+            n_nosol += 1
+            continue
+        sols.append(sol)
     region = [163.5, 183.0, -50.7, -33.3]
     fig = plt.figure(figsize=(7.5, 8.7))
     ax = map_style.geo_axes(fig, [0.07, 0.05, 0.9, 0.88], region,
@@ -363,7 +372,8 @@ def make_overview_map(events_dir: Path, out_path: Path) -> Path:
         dates.append(ev["origin_time"][:10])
     ax.set_title(
         f"Catalogue Solutions\n"
-        f"{len(sols)} events, {min(dates)} to {max(dates)}",
+        f"{len(sols)} events, {min(dates)} to {max(dates)}"
+        + (f" (+{n_nosol} with no coherent solution)" if n_nosol else ""),
         fontsize=13,
     )
 
@@ -566,6 +576,35 @@ def plot_band_waveforms(band_dir: Path, solution: dict,
                    if r.get("window_end_s") is not None}
     reasons = {d["station"]: d.get("reason", "")
                for d in solution.get("stations_dropped", [])}
+    # every station's own evidence, so "rejected by a wrong core" is
+    # visible from the figure alone
+    info = {f"{r['network']}.{r['station']}.{r['location']}": r
+            for r in (solution.get("stations_used", [])
+                      + solution.get("stations_dropped", []))
+            if "network" in r}
+
+    def _annotate(sid, base):
+        r = info.get(sid, {})
+        bits = []
+        if r.get("pk_n") is not None:
+            bits.append(f"pk/n {r['pk_n']:g}")
+        p1 = (r.get("pass1") or {}).get("own_vr")
+        if p1 is not None:
+            bits.append(f"survey VR {p1:g}")
+        own = (r.get("final") or {}).get("own_vr")
+        if own is not None:
+            bits.append(f"own VR {own:g}")
+        # the solved time shift: a large one means the fit came from
+        # sliding the trace, not from the mechanism
+        zc = (r.get("final") or {}).get("zcor_s", r.get("zcor_s"))
+        if zc is None:
+            zc = (r.get("admission") or {}).get("zcor_s")
+        if zc is not None:
+            bits.append(f"zcor {zc:+g} s")
+        for tag in r.get("tags", []):
+            bits.append(tag)
+        head = " | ".join(bits)
+        return f"{head}\n{base}" if head else base
 
     entries = []
     for zf in sorted(band_dir.glob("*.Z.dat")):
@@ -584,9 +623,10 @@ def plot_band_waveforms(band_dir: Path, solution: dict,
         elif rejected:
             status, color = reasons.get(sid, "rejected"), "0.62"
         else:
-            status, color = reasons.get(sid, "eliminated by fit"), "#D55E00"
+            status, color = reasons.get(sid, "did not earn a seat"), "#D55E00"
         entries.append(dict(sid=sid, comps=comps, dist=float(hdr.dist),
-                            az=float(hdr.az), status=status, color=color))
+                            az=float(hdr.az), status=_annotate(sid, status),
+                            color=color, used=sid in used_ids))
     assert entries, f"no .dat waveforms found in {band_dir}"
     entries.sort(key=lambda e: e["dist"])
 
@@ -629,15 +669,17 @@ def plot_band_waveforms(band_dir: Path, solution: dict,
             if i == 0:
                 ax.set_title(comp, fontsize=9)
         axes[i, 0].text(
-            -0.02, 0.72, f"{e['sid'].split('.')[1]}  "
+            -0.02, 0.80, f"{e['sid'].split('.')[1]}  "
             f"{e['dist']:.0f} km  az {e['az']:.0f}°",
             transform=axes[i, 0].transAxes, ha="right", va="center",
-            fontsize=7, fontweight="bold" if e["status"] == "used" else
-            "normal", color="black" if e["status"] == "used" else "0.35")
+            fontsize=7, fontweight="bold" if e["used"] else "normal",
+            color="black" if e["used"] else "0.35")
+        lines = [ln[:64] for ln in e["status"].splitlines()][:2]
         axes[i, 0].text(
-            -0.02, 0.28, e["status"][:58], transform=axes[i, 0].transAxes,
-            ha="right", va="center", fontsize=5.5,
-            color="black" if e["status"] == "used" else e["color"])
+            -0.02, 0.32, "\n".join(lines),
+            transform=axes[i, 0].transAxes, ha="right", va="center",
+            fontsize=5.5, linespacing=1.5,
+            color="black" if e["used"] else e["color"])
     for j in range(3):
         axes[-1, j].set_xlabel("time from origin (s)", fontsize=7)
         axes[-1, j].tick_params(labelsize=6)
@@ -652,6 +694,107 @@ def plot_band_waveforms(band_dir: Path, solution: dict,
         "traces normalised per station)", fontsize=9, y=0.995)
     fig.subplots_adjust(left=0.26, right=0.985, top=1 - 0.55 / (n + 1.2),
                         bottom=0.55 / (n + 1.2), hspace=0.35, wspace=0.08)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=150)
+    plt.close(fig)
+    return out_path
+
+
+def plot_station_ledger_map(solution: dict, out_path: Path) -> Path:
+    """One-panel station ledger: every station the pipeline considered,
+    what happened to it, and why. Used for events with no coherent
+    solution (there is no mechanism to plot) and as a review aid.
+
+    Used stations are coloured by their own VR; demoted-but-used stations
+    carry a ring; rejects are marker-coded by cause (see
+    invert.reason_class). Everything is named."""
+    import cartopy.crs as ccrs
+
+    import config as _config
+    import invert as _invert
+
+    ev = solution["event"]
+    used = solution.get("stations_used", [])
+    dropped = [d for d in solution.get("stations_dropped", [])
+               if "latitude" in d]
+    roi = map_style.square_region(
+        map_style.event_region(ev, used or dropped, pad_deg=0.6))
+
+    fig = plt.figure(figsize=(8.5, 9.0))
+    ax = map_style.geo_axes(fig, [0.08, 0.10, 0.86, 0.80], roi)
+    map_style.draw_context(ax, roi, ccrs, gnss=False)
+    map_style.scale_bar(ax, roi, ccrs)
+
+    styles = {
+        "nodata": dict(marker="s", color="0.8", markeredgecolor="0.5",
+                       label="no usable data"),
+        "dead": dict(marker="v", color="0.7", markeredgecolor="0.45",
+                     label="dead channel"),
+        "amp": dict(marker="x", color="0.35", label="amplitude outlier"),
+        "not_admitted": dict(marker="^", color="white",
+                             markeredgecolor="#D55E00",
+                             label="did not earn a seat"),
+        "antifit": dict(marker="^", color="#D55E00",
+                        markeredgecolor="black", label="anti-fitting"),
+        "abort": dict(marker="^", color="0.75", markeredgecolor="0.4",
+                      label="pool (no coherent solution)"),
+        "other": dict(marker="^", color="0.85", markeredgecolor="0.5",
+                      label="other"),
+    }
+    seen = set()
+    for d in dropped:
+        cls = _invert.reason_class(d.get("reason", ""))
+        st = dict(styles.get(cls, styles["other"]))
+        lab = st.pop("label")
+        ax.plot(d["longitude"], d["latitude"], linestyle="none",
+                markersize=7, markeredgewidth=1.0,
+                label=None if lab in seen else lab,
+                transform=ccrs.PlateCarree(), zorder=5, **st)
+        seen.add(lab)
+        ax.annotate(d["station"].split(".")[1] if "." in d["station"]
+                    else d["station"],
+                    (d["longitude"], d["latitude"]), xytext=(4, -4),
+                    textcoords="offset points", fontsize=6, color="0.45",
+                    xycoords=ccrs.PlateCarree()._as_mpl_transform(ax))
+    if used:
+        vals = [r.get("final", {}).get("own_vr", r.get("station_vr", 0.0))
+                for r in used]
+        sc = ax.scatter([r["longitude"] for r in used],
+                        [r["latitude"] for r in used], c=vals,
+                        cmap="viridis", vmin=0, vmax=100, marker="^", s=110,
+                        edgecolors="black", linewidths=0.6,
+                        transform=ccrs.PlateCarree(), zorder=8,
+                        label="used")
+        for r in used:
+            if r.get("tier") == "demoted":
+                ax.plot(r["longitude"], r["latitude"], "o", mfc="none",
+                        markeredgecolor="#0072B2", markersize=15,
+                        markeredgewidth=1.4,
+                        transform=ccrs.PlateCarree(), zorder=9)
+            ax.annotate(r["station"], (r["longitude"], r["latitude"]),
+                        xytext=(5, 5), textcoords="offset points",
+                        fontsize=7, fontweight="bold",
+                        xycoords=ccrs.PlateCarree()._as_mpl_transform(ax))
+        cax = fig.add_axes([0.30, 0.055, 0.40, 0.012])
+        cb = fig.colorbar(sc, cax=cax, orientation="horizontal")
+        cb.set_label("own station VR (%)", fontsize=8)
+        cb.ax.tick_params(labelsize=7)
+    ax.plot(ev["longitude"], ev["latitude"], "*", color="#D55E00",
+            markeredgecolor="black", markersize=17,
+            transform=ccrs.PlateCarree(), zorder=10)
+    ax.legend(loc="lower left", fontsize=7, framealpha=0.9)
+
+    if _config.is_solved(solution):
+        p = solution["preferred"]
+        head = (f"{ev['public_id']}  Mw {p['mw']:.2f}  "
+                f"depth {p['depth_km']:g} km  VR {p['vr']:.0f}%  "
+                f"grade {solution['quality']['grade']}")
+    else:
+        ab = solution["abort"]
+        head = (f"{ev['public_id']}  M{ev['prelim_mag']:.1f}  "
+                f"NO COHERENT SOLUTION\n{ab['stage']}: {ab['reason']}")
+    ax.set_title(f"{head}\nstation ledger: "
+                 f"{len(used)} used, {len(dropped)} not used", fontsize=10)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=150)
     plt.close(fig)
