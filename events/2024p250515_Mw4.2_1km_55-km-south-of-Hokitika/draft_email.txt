@@ -1,0 +1,36 @@
+[auto-MT NZ] Mw 4.2 55 km south of Hokitika (2024p250515), depth 1 km
+
+Automated regional moment tensor solution — PRELIMINARY
+
+Event: 2024p250515  2024-04-02T16:34:37.899Z
+Triggered from the GeoNet rapid earthquake solution; origin time, location, preliminary magnitude and initial depth are GeoNet's (geonet.org.nz).
+Location: 55 km south of Hokitika (-43.213, 170.901)
+GeoNet preliminary magnitude: M 4.5
+
+Mw: 4.19
+Centroid depth: 1 km (GeoNet initial: 5 km)
+Variance reduction: 33%  |  DC 69% / CLVD 31%
+Filter band: 10-50 s  |  Velocity model: nz_south_ristau2008
+Nodal plane 1 (strike/dip/rake): 329/14/-18
+Nodal plane 2 (strike/dip/rake): 76/86/-103
+Stations used: 10  |  Azimuthal gap: 69 deg  |  Quality grade: D
+
+Stability (leave-one-out jackknife, n=10): Mw +/-0.05  |  DC 69 +/-15.8%  |  mechanism rotation <= 77.4 deg
+
+LIMITATIONS: deviatoric-only inversion (no isotropic component) - these mechanisms must not be interpreted in volcanic or geothermal settings, where real isotropic components are forced into DC/CLVD. Large misfit (low VR or grade C-D) indicates the automated result is unreliable and additional processing is required.
+
+Predicted peak surface displacement (Okada, both nodal planes): 1.8 cm — potentially detectable with InSAR.
+
+NISAR passes over the epicentre:
+  track 044 D: last 2026-08-28 06:38Z, next ~2026-09-09 06:38Z
+  track 051 A: last 2026-08-28 18:44Z, next ~2026-09-09 18:44Z
+  track 116 D: last 2026-08-21 06:30Z, next ~2026-09-14 06:30Z
+  track 123 A: last 2026-08-21 18:36Z, next ~2026-09-14 18:36Z
+
+--
+Automated solution (mttime 1.1.dev0, model nz_south_ristau2008, GF v1). Not reviewed by a human.
+
+This workflow was compiled with Claude (Anthropic) assistance.
+Credits: inversion by mttime, A. Chiang, LLNL (github.com/LLNL/mttime); Green's functions by Computer Programs in Seismology, R. B. Herrmann (rbherrmann.github.io/ComputerProgramsSeismology); waveform processing with ObsPy (obspy.org); waveforms and metadata from GeoNet / Earth Sciences New Zealand (geonet.org.nz, CC BY 3.0 NZ); velocity models from Ristau (2008), SRL 79(3); deformation modelling after Okada (1992) via okada4py, R. Jolivet (github.com/jolivetr/okada4py); fault dimensions from Wells & Coppersmith (1994); active faults from the NZ Active Faults Database, GNS Science (data.gns.cri.nz/af); GNSS marks from GeoNet delta (github.com/GeoNet/delta); NISAR timing from NASA CMR (cmr.earthdata.nasa.gov); colour maps by F. Crameri (fabiocrameri.ch/colourmaps).
+
+Solutions archive: github.com/Dani-Lindsay/auto_tdmt_NZ
