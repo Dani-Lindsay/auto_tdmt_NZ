@@ -1,11 +1,30 @@
 name: watch-geonet
-# Poll GeoNet every 10 minutes; process any new event above the floor and
-# email solutions that pass the publication gates. Results + state are
+# Poll GeoNet DAILY; process every new event above the floor and email
+# solutions that pass the publication gates. Results + state are
 # committed back to the repo (public archive).
+#
+# Why daily and not every 10 minutes: GitHub deprioritises scheduled
+# workflows, and a */10 cron on this repo was actually firing at a
+# MEDIAN GAP OF 214 MINUTES (measured 2026-09-05 over 15 intervals) with
+# individual gaps past 5 hours. A schedule that claims 10 minutes and
+# delivers 3.5 hours is worse than an honest daily one; NISAR and
+# Sentinel-1 passes are days apart, so nothing this pipeline is FOR is
+# lost by a daily sweep. Anything urgent: run this workflow by hand
+# (Run workflow, below) or process locally.
+#
+# 06:10 UTC is ~18:10 NZST — the day's events are complete and the
+# solutions are waiting by the following morning.
+#
+# Busy days: the watcher processes the LARGEST events first and stops
+# starting new ones after --budget-minutes, leaving the rest for the
+# next run (the state file dedupes, so nothing is lost or repeated).
+# A 25-event aftershock day therefore fits: ~20 events get processed,
+# the remainder go out the next day, and the daily email cap plus the
+# aftershock throttle keep the list quiet either way.
 
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "10 6 * * *"
   workflow_dispatch: {}
 
 concurrency:
@@ -18,7 +37,7 @@ permissions:
 jobs:
   watch:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 350
     env:
       # outputs go into the checkout so they can be committed
       AUTO_TDMT_OUTPUT: ${{ github.workspace }}/outputs_ci
@@ -54,7 +73,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
 
       - name: Poll and process
-        run: pixi run python run01_watch.py --process
+        run: pixi run python run01_watch.py --process --budget-minutes 300
 
       - name: Commit results
         run: |
