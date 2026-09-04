@@ -107,6 +107,48 @@ that motivate each item.
 
 ## 3. Fix backlog (motivating events in brackets)
 
+**Status 2026-09-05: items 1-6, 8, 9, 13 and 14 are IMPLEMENTED in
+station selection v4** (see METHOD §3.1). The funnel replaced the
+pre-filter architecture entirely: nothing usable is deleted, the
+3x-depth rule and cluster thinning became demotion tags, the
+dead-channel floor dropped to 1.2, the amplitude screen became
+one-sided (nodal-plane insight), the greedy VR-polishing pass was
+removed, bad cores can no longer veto data (pass 1 has no time shifts
+and the core must span 90 deg), the grid-edge depth guard is in,
+signal-aware windows are in, band menus escalate, and events that
+cannot be constrained now abort with "no coherent solution" instead of
+producing a junk mechanism. Remaining: 7 (sequence mode), 10 (degree-6
+/ source-type screen), 11 (coda guard), 12 (component marking on the
+figures).
+
+**New learning (2026-09-05): a station that sees no signal is not
+necessarily a bad station.** If it sits near a nodal plane its
+amplitude is genuinely small, and that small amplitude is information
+about the mechanism. Two consequences, both now implemented: the
+amplitude screen only rejects stations far ABOVE the network median
+(broken responses), never below; and low peak/noise only demotes,
+never excludes.
+
+**New learning (2026-09-05): mttime's time-shift search is unbounded**
+(a 60 s window can slide past 100 s), which is the mechanism by which a
+noise trace earns undeserved VR. Two consequences: the survey pass runs
+with shifts disabled, so its ranking cannot be gamed; and from then on
+a station whose solved shift exceeds 8 s is rejected. Archive
+calibration: stations in grade A/B solutions sit at |zcor| <= 9 s
+(p95), grade-D stations reach 0.88 of their whole travel time.
+
+**New learning (2026-09-05): what a careful analyst catalogue looks
+like.** Ristau's NZ CMT catalogue uses a median of 7 stations
+(quartiles 4-11, sometimes 1-3), runs at a median VR of 72 with a 10th
+percentile of 57, and achieves a median VR of 71 even on Mw<4.5 events
+with 6 stations. His centroid depths sit a median 4 km from the GeoNet
+hypocentre (57% within 5 km, 82% within 10 km). So: few stations are
+normal, small events CAN be fit well (ours at VR 20-30 are
+underperforming rather than at a physical limit), and a centroid depth
+far from the hypocentre is claiming something a careful catalogue
+rarely does.
+
+
 1. **Mw-triggered band escalation**: if the inverted Mw exceeds the
    menu's bracket (e.g. ≥4.7 from a 10–50 s-only run), run the next
    band up and prefer it [336046, 348732].

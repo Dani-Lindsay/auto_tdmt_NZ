@@ -18,7 +18,7 @@ permissions:
 jobs:
   watch:
     runs-on: ubuntu-latest
-    timeout-minutes: 55
+    timeout-minutes: 120
     env:
       # outputs go into the checkout so they can be committed
       AUTO_TDMT_OUTPUT: ${{ github.workspace }}/outputs_ci

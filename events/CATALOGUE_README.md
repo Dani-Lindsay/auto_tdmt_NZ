@@ -33,9 +33,9 @@ README.md for citations.
 | `Depth_DCmax` | Depth of the maximum %DC, km |
 | `Plateau_km` | Width of the near-VR-max plateau, km; large values mean depth is weakly constrained by the waveforms |
 | `Mo` | Scalar moment, dyne-cm |
-| `NS` | Number of stations used in the final solution |
-| `AzGap` | Largest azimuthal gap between used stations, degrees |
-| `Grade` | A: VR>=70, >=5 stations, gap<=180; B: VR>=60, >=3, gap<=270; C: VR>=50, >=2; D: below. Only A/B are emailed |
+| `NS` | Number of stations used in the final solution (informational — NOT a grade threshold) |
+| `AzGap` | Largest azimuthal gap between used stations, degrees (informational — NOT a grade threshold; the geometry requirement is simply that two stations are >= 90 deg apart) |
+| `Grade` | Evidence grade. **A**: VR>=70, DC>=60, every used station fitting at own VR>=40, jackknife rotation<=15 deg, interior depth agreeing with GeoNet within 8 km. **B**: VR>=60, DC>=60, min own VR>=25, rotation<=25 deg (or jackknife impossible), same depth conditions — exactly the BSL publishability rule plus the evidence checks. **C**: VR>=50, min own VR>=10. **D**: below that, or no two stations >= 90 deg apart. **X**: no coherent solution (see `Status`). Only A/B are emailed. Station count and azimuthal gap are deliberately NOT thresholds |
 | `DC`, `CLVD` | Percent double-couple / compensated linear vector dipole of the deviatoric solution |
 | `VR` | Total variance reduction, percent (distance-weighted) |
 
@@ -67,6 +67,9 @@ solutions CSV so the catalogues are directly comparable).
 |---|---|
 | `Band` | Chosen filter passband (e.g. `20-50s`); candidates tried per magnitude, best kept (VR first, %DC tie-break) |
 | `Model` | 1-D velocity model used (Ristau 2008 North/South Island) |
-| `quality_flag` | `True`, or the failed quality checks (`few_stations`, `low_VR`, `wide_az_gap`) |
+| `Status` | `solved`, or `no_coherent_solution` for an event the network could not constrain (mechanism columns are then empty and the grade is `X`) |
+| `Selection` | Station-selection/grading version that produced the row (e.g. `v4`). A catalogue mixing vintages is self-describing |
+| `Code` | Short git commit of the code that produced the row, so any solution can be reproduced exactly |
+| `quality_flag` | `True`, or the failed quality checks (`low_VR`, `station_not_fitting`, `no_90deg_azimuth_pair`, `unstable_mechanism`, `grid_edge_depth`, `low_DC`, or `no_coherent_solution:<stage>`) |
 | `publish_flag` | `True`, or why the email gate declined (`grade_C`, `too_small_no_disp`, `aftershock`, `daily_cap`) |
 | `published` | Whether this solution was emailed to the list |

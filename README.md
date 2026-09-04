@@ -33,16 +33,20 @@ settings from these solutions.
 
 ```
 GeoNet quake API (poll, 10 min cron)
-  -> processing floor (prelim M >= 4.0, NZ bbox)          run01_watch.py
+  -> processing floor (prelim M >= 3.7, NZ bbox)          run01_watch.py
   -> waveforms: GeoNet NRT FDSN, NZ broadbands <= 400 km   waveforms.py
      response removal -> ZRT -> bandpass -> 1 sps SAC
   -> Green's functions: precomputed CPS library            greens.py
      (Ristau 2008 North/South Island models, 10-500 km,
       depths 2-58 km, 10 Herrmann fundamental sources)
   -> mttime deviatoric inversion, depth search,            invert.py
-     BSL-style filter-band menu, low-VR station rejection,
-     preferred pick = max %DC within 5 VR points of max
-  -> quality gates (stations, VR, azimuthal gap, depth)    invert.py
+     station selection by FIT (the funnel: survey the whole
+     pool, keep the majority, build a clean core, then let
+     every station earn its seat back), grid-edge depth
+     guard, ordered filter-band preference
+  -> quality gates (fit, no passengers, stability, depth,  invert.py
+     azimuth pair) -> letter grade, or "no coherent
+     solution" when nothing fits
   -> Okada forward model (both nodal planes,               okada_forward.py
      Wells & Coppersmith dimensions) -> predicted peak
      surface displacement
@@ -143,42 +147,63 @@ their MT elements are in 1e20 dyne-cm).
 
 ## Quality grades — how a solution is rated
 
-Every solution gets a BSL-style letter grade from three measured
-quantities: the total variance reduction (**VR**, how much of the
-waveform data the solution explains), the number of stations in the
-final inversion (**NS**), and the largest unsampled arc of azimuths
-around the epicentre (**gap** — a mechanism constrained only from one
-side is weakly constrained no matter how well it fits). The first row
-that matches, top down:
+A grade is a statement about EVIDENCE, not about how much data went in.
+Station count and azimuthal gap are deliberately not thresholds: three
+well-fitting stations spanning 90 degrees make a good solution (standard
+BSL practice), while ten stations carrying a passenger do not. Each
+grade is the first row whose conditions all hold, top down:
 
-| Grade | VR | Stations | Azimuthal gap | Meaning |
-|---|---|---|---|---|
-| **A** | ≥ 70% | ≥ 5 | ≤ 180° | Well-fit, well-sampled: publishable as-is |
-| **B** | ≥ 60% | ≥ 3 | ≤ 270° | Solid: publishable |
-| **C** | ≥ 50% | ≥ 2 | any | Indicative only — archived, never emailed |
-| **D** | below any C bar | | | Archive/diagnostic material; treat all numbers as unreliable |
+| Grade | Fit (VR) | %DC | Every station fits | Mechanism stability | Depth | Meaning |
+|---|---|---|---|---|---|---|
+| **A** | ≥ 70% | ≥ 60 | min own VR ≥ 40 | jackknife rotation ≤ 15° (required) | interior, agrees with GeoNet | Publishable as-is |
+| **B** | ≥ 60% | ≥ 60 | min own VR ≥ 25 | rotation ≤ 25° or jackknife not possible | interior, agrees with GeoNet | Publishable |
+| **C** | ≥ 50% | — | min own VR ≥ 10 | — | — | Indicative only — archived, never emailed |
+| **D** | below any C bar, or no two stations ≥ 90° apart | | | | | Archive/diagnostic material |
+| **X** | no coherent solution — see below | | | | | No mechanism is reported at all |
+
+Grade B is exactly the BSL publishability rule (VR ≥ 60 **and** DC ≥ 60)
+plus the evidence checks. The individual criteria mean:
+
+- **min own VR** — the worst-fitting station in the solution. A single
+  "passenger" that the mechanism does not explain is a reason to
+  distrust the whole answer, however good the total.
+- **jackknife rotation** — the largest mechanism change when any one
+  station is removed ([minimum rotation angle](validation/README.md)).
+  A solution that depends on one station is not a solution.
+- **depth** — the pick must not be a single-point maximum at the edge of
+  the Green's-function depth grid (a known artifact), and the centroid
+  depth must sit within 8 km of a real GeoNet hypocentre. The depth
+  search itself is never bounded by GeoNet: it always covers the full
+  grid, and the check only flags and downgrades the result.
+- **90° azimuth pair** — the minimum geometry that can resolve a
+  mechanism at all.
 
 Only A/B solutions can pass the publication gate. The grades are
 validated against independent catalogues
-([validation/](validation/README.md)): A/B mechanisms agree with the
-Ristau NZ CMT and USGS references at a median rotation of 18° — the
-same level those two expert catalogues agree with each other — while
-C/D sits at 56°, which is exactly why C/D never publishes. A
-`depth_at_grid_edge` warning is recorded (not blocking) when the depth
-search stops at the boundary of the Green's-function grid, a known
-artifact signature.
+([validation/](validation/README.md)).
+
+## No coherent solution
+
+Some earthquakes cannot be inverted from this network: too small, too
+far offshore, or arriving inside the long-period coda of a larger event.
+Rather than publish a mechanism fitted to noise, the pipeline archives
+those events with `"status": "no_coherent_solution"` — the full station
+ledger and every pass's evidence, but no mechanism, magnitude or depth.
+They appear in the catalogue with grade `X` and empty solution columns,
+and are excluded from validation statistics.
 
 ## Operating thresholds
 
 | Stage | Rule |
 |---|---|
 | **Triggers** | GeoNet preliminary magnitude >= 4.0, inside the NZ box (33-50.5 S, 164 E-177.5 W), event type "earthquake", depth <= 30 km (GeoNet fixed placeholder depths 5/12/33 km are exempt: true depth unknown, the depth search decides) |
-| **Station selection** | NZ broadbands (HH? preferred over BH?), near-field exclusion 10 km (<M4.5) / 20 km, magnitude-scaled radius 120-300 km with a one-shot +100 km extension when fewer than 4 usable stations; peak/noise tiers in the inverted window (<2 dead, 2-5 candidate, >=5 core); amplitude screen (peak x distance within 8x of network median); cluster thinning (max 2 within 25 km); core-only depth search, then candidates admitted one at a time on own station VR >= 30 (>= 20 for sparse cores); azimuth-coverage cap (sector-best + top-4 VR when > 12); greedy earn-your-seat drops (joint VR gain >= 2) with unconditional ejection of negative own-VR stations |
-| **Depth search** | 1-5 km at 0.5 km, to 10 km at 1 km, to 30 km at 2 km, to 58 km at 4 km; always the FULL grid — solutions are independent of the GeoNet depth, which is recorded for comparison only |
-| **Filter bands** | < M4.5: 10-50 s only; M4.5-5.5: 10-50 s preferred, 20-50 s fallback (first band that produces a solution wins — VR never arbitrates across bands below M5.5); >= M5.5: 20-100 s vs 30-100 s by the VR+DC rule |
-| **Rated** | A: VR >= 70, >= 5 stations, azimuthal gap <= 180. B: VR >= 60, >= 3 stations, gap <= 270. C: VR >= 50, >= 2 stations. D: below |
+| **Station selection** | NZ broadbands (HH? preferred over BH?), near-field exclusion 10 km (<M4.5) / 20 km, magnitude-scaled radius 120-300 km with a one-shot +100 km extension when the pool is thin. NOTHING USABLE IS PRE-FILTERED OUT: only no-data, dead channels (peak/noise < 1.2) and broken-response amplitude outliers (> 8x the network median, high side only) are removed. Near-field, weak-signal and cluster-surplus stations are TAGGED and must earn a seat by fit. Then the funnel: pass 1 inverts the whole pool with NO time shifts (so nothing can slide into a chance alignment) and ranks each station by the median of its own VR across the depth plateau; the best ~10 survive, plus any station filling an empty azimuth sector; pass 2 re-searches with shifts bounded at 8 s; the core (3-6 stations, forced to span >= 90 deg) gets its own depth search as the clean reference; every other station is then added at the core depth and kept if its own VR reaches 30 (20 for a sparse core, 10 if it fills an empty sector) without costing more than 3 joint VR points; finally a full search and an unconditional cull of any station fitting worse than silence |
+| **Depth search** | 1-5 km at 0.5 km, to 10 km at 1 km, to 30 km at 2 km, to 58 km at 4 km; ALWAYS the full grid — the search is never bounded by GeoNet. A single-point VR maximum at the edge of the grid is rejected as an artifact in favour of the best interior local maximum, and the resulting depth is flagged (and capped at grade C) if it sits more than 8 km from a real GeoNet hypocentre |
+| **Filter bands** | < M4.5: 10-50 s only; M4.5-5.5: 10-50 s then 20-50 s; >= M5.5: 20-100 s then 30-100 s. The menu is an ORDERED PREFERENCE at every magnitude — the first band that passes its gates wins, because VR is not comparable across bands (a longer period is smoother and scores higher even when fitting noise). A band is escalated when the inverted Mw overshoots the preliminary magnitude by >= 0.6 |
+| **Rated** | see the grade rubric above: evidence (VR, %DC, worst station's own VR, jackknife stability, depth plausibility, a 90 deg azimuth pair), not station count or azimuthal gap |
+| **No coherent solution** | when nothing coheres (survey and majority VR both < 20, no core, or a final VR < 20) the event is archived with `status: no_coherent_solution` and grade X — station ledger kept, no mechanism reported |
 | **Publishes** | grade A or B AND (our Mw >= 5.0 OR Okada-predicted peak displacement >= 1 cm); max 3 emails/day; aftershock throttle (within 75 km/14 d of a published event, must be within 0.5 Mw of it or above the Mw gate) |
-| **Preferred solution** | highest %DC on the contiguous depth plateau within 5 VR points of the VR maximum; per-band, then across the magnitude-dependent band menu |
+| **Preferred solution** | the depth whose VR is highest, with %DC breaking near-ties only (within 2 VR points); the wider 5-point plateau is reported as `Plateau_km` — how well the depth is resolved |
 
 ## Data sources
 
