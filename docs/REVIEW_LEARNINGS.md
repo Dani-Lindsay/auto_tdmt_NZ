@@ -206,3 +206,50 @@ Items 1–3 are the highest-leverage: they address every "should be easy
 but looks bad" case found in review; item 13 joins them for East Coast
 events, and item 14 catches the grid-edge runaways (508890, 348732,
 300334 all rode a 58 km edge max).
+
+---
+
+## TODO (2026-09-05): literature review of operational TDMT station selection
+
+Before any further tuning of the funnel, review how the established
+operational moment-tensor services actually choose their stations. Our
+thresholds are currently calibrated on one reviewer's labels for 14 NZ
+events; the field has decades of practice we should be borrowing from
+and citing rather than rediscovering. Specifically:
+
+- **BSL / Berkeley** (Dreger's TDMT, the direct ancestor of this
+  pipeline): Dreger & Helmberger 1993; Dreger 2003 (IASPEI handbook
+  chapter); Pasyanos, Dreger & Romanowicz 1996 (the automated regional
+  MT system) — distance ranges, station whitelists, VR-based rejection.
+- **GeoNet / Ristau** (our reference catalogue): Ristau 2008 SRL, and
+  any later description of the operational updates. His catalogue shows
+  a median of 7 stations, quartiles 4-11, occasionally 1-3, and a
+  median VR of 72 (57 at p10) — what selection rules produce that?
+- **USGS NEIC**: regional/W-phase MT operations, automatic quality
+  criteria and station screening (Hayes et al. on W-phase; Duputel et
+  al. 2012 GJI for the W-phase quality control, which uses a
+  magnitude-scaled expected-amplitude screen and iterative misfit-based
+  rejection).
+- **INGV Italy**: Scognamiglio, Tinti & Michelini 2009 (TDMT for Italy,
+  the automated system whose 8x45-degree azimuth-sector design we
+  independently arrived at).
+- **GFZ/GEOFON, IPGP/SCARDEC, ISC, JMA/NIED F-net** (Kubo et al. 2002
+  EPS): what noise/quality criteria gate a station.
+- **ISOLA / GISOLA** (Vackar et al. 2017 GJI; Triantafyllis et al. 2022
+  SRL): frequency-dependent SNR per component, noise-covariance
+  weighting, and the "mouse" detector for long-period instrumental
+  disturbances (Zahradnik & Plesinger 2005) — the most rigorous
+  published treatment of exactly the problem this pipeline keeps
+  hitting.
+- **Kagan 1991 / 2003** for the mechanism-comparison and catalogue-
+  accuracy baselines already used in validation/.
+
+Questions to answer for each: what is excluded BEFORE inversion versus
+judged by fit; is there a per-component or frequency-dependent quality
+measure; how are time shifts bounded; how is the depth chosen and is it
+ever tied to the hypocentre; and what quality metrics gate publication.
+Then: write the comparison into METHOD (a short "how this compares to
+operational practice" section), adopt what is better, and cite properly.
+
+"I am not the first to do this and not the most qualified or
+experienced" — D. Lindsay, 2026-09-05.
