@@ -1,0 +1,35 @@
+[auto-MT NZ] Mw 4.1 30 km south-west of Haast (2022p117428), depth 1 km
+
+Automated regional moment tensor solution — PRELIMINARY
+
+Event: 2022p117428  2022-02-13T10:45:50.661Z
+Triggered from the GeoNet rapid earthquake solution; origin time, location, preliminary magnitude and initial depth are GeoNet's (geonet.org.nz).
+Location: 30 km south-west of Haast (-44.107, 168.753)
+GeoNet preliminary magnitude: M 4.8
+
+Mw: 4.12
+Centroid depth: 1 km (GeoNet initial: 3.90477 km)
+Variance reduction: 37%  |  DC 87% / CLVD 13%
+Filter band: 10-50 s  |  Velocity model: nz_south_ristau2008
+Nodal plane 1 (strike/dip/rake): 154/34/-3
+Nodal plane 2 (strike/dip/rake): 246/88/-124
+Stations used: 6  |  Azimuthal gap: 188 deg  |  Quality grade: D
+
+Stability (leave-one-out jackknife, n=6): Mw +/-0.043  |  DC 87 +/-13.8%  |  mechanism rotation <= 11.0 deg
+
+LIMITATIONS: deviatoric-only inversion (no isotropic component) - these mechanisms must not be interpreted in volcanic or geothermal settings, where real isotropic components are forced into DC/CLVD. Large misfit (low VR or grade C-D) indicates the automated result is unreliable and additional processing is required.
+
+Predicted peak surface displacement (Okada, both nodal planes): 1.6 cm — potentially detectable with InSAR.
+
+NISAR passes over the epicentre:
+  track 152 A: last 2026-08-23 18:52Z, next ~2026-09-04 18:52Z
+  track 044 D: last 2026-08-28 06:39Z, next ~2026-09-09 06:39Z
+  track 051 A: last 2026-08-28 18:44Z, next ~2026-09-09 18:44Z
+
+--
+Automated solution (mttime 1.1.dev0, model nz_south_ristau2008, GF v1). Not reviewed by a human.
+
+This workflow was compiled with Claude (Anthropic) assistance.
+Credits: inversion by mttime, A. Chiang, LLNL (github.com/LLNL/mttime); Green's functions by Computer Programs in Seismology, R. B. Herrmann (rbherrmann.github.io/ComputerProgramsSeismology); waveform processing with ObsPy (obspy.org); waveforms and metadata from GeoNet / Earth Sciences New Zealand (geonet.org.nz, CC BY 3.0 NZ); velocity models from Ristau (2008), SRL 79(3); deformation modelling after Okada (1992) via okada4py, R. Jolivet (github.com/jolivetr/okada4py); fault dimensions from Wells & Coppersmith (1994); active faults from the NZ Active Faults Database, GNS Science (data.gns.cri.nz/af); GNSS marks from GeoNet delta (github.com/GeoNet/delta); NISAR timing from NASA CMR (cmr.earthdata.nasa.gov); colour maps by F. Crameri (fabiocrameri.ch/colourmaps).
+
+Solutions archive: github.com/Dani-Lindsay/auto_tdmt_NZ
