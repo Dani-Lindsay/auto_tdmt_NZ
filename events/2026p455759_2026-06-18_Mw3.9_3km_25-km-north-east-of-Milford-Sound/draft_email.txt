@@ -1,25 +1,25 @@
-[auto-MT NZ] Mw 4.2 35 km north-east of Milford Sound (2026p660272), depth 4 km
+[auto-MT NZ] Mw 3.9 25 km north-east of Milford Sound (2026p455759), depth 3 km
 
 Automated regional moment tensor solution — PRELIMINARY
 
-Event: 2026p660272  2026-09-02T07:12:41.676Z
+Event: 2026p455759  2026-06-18T15:08:38.730Z
 Triggered from the GeoNet rapid earthquake solution; origin time, location, preliminary magnitude and initial depth are GeoNet's (geonet.org.nz).
-Location: 35 km north-east of Milford Sound (-44.453, 168.292)
-GeoNet preliminary magnitude: M 4.8
+Location: 25 km north-east of Milford Sound (-44.455, 168.117)
+GeoNet preliminary magnitude: M 4.2
 
-Mw: 4.22
-Centroid depth: 4 km (GeoNet initial: 5 km)
-Variance reduction: 61%  |  DC 84% / CLVD 16%
+Mw: 3.92
+Centroid depth: 3 km (GeoNet initial: 5 km)
+Variance reduction: 52%  |  DC 98% / CLVD 2%
 Filter band: 10-50 s  |  Velocity model: nz_south_ristau2008
-Nodal plane 1 (strike/dip/rake): 282/74/-155
-Nodal plane 2 (strike/dip/rake): 185/66/-18
-Stations used: 12  |  Azimuthal gap: 174 deg  |  Quality grade: A
+Nodal plane 1 (strike/dip/rake): 263/77/-107
+Nodal plane 2 (strike/dip/rake): 137/22/-37
+Stations used: 6  |  Azimuthal gap: 200 deg  |  Quality grade: B
 
-Stability (leave-one-out jackknife, n=12): Mw +/-0.007  |  DC 84 +/-9.9%  |  mechanism rotation <= 8.1 deg
+Stability (leave-one-out jackknife, n=6): Mw +/-0.04  |  DC 98 +/-4.1%  |  mechanism rotation <= 6.6 deg
 
 LIMITATIONS: deviatoric-only inversion (no isotropic component) - these mechanisms must not be interpreted in volcanic or geothermal settings, where real isotropic components are forced into DC/CLVD. Large misfit (low VR or grade C-D) indicates the automated result is unreliable and additional processing is required.
 
-Predicted peak surface displacement 0.07 cm — no detectable surface deformation expected.
+Predicted peak surface displacement 0.06 cm — no detectable surface deformation expected.
 
 NISAR passes over the epicentre:
   track 044 D: last 2026-08-28 06:39Z, next ~2026-09-09 06:39Z
