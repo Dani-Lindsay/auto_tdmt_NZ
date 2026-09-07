@@ -79,16 +79,24 @@ def select_stations(client, event: Event, origin: UTCDateTime,
         from obspy import read_inventory
         inv = read_inventory(str(inv_cache))
     else:
-        inv = client.get_stations(
-            network=config.NETWORK,
-            channel=",".join(config.CHANNEL_PRIORITY),
-            latitude=event.latitude,
-            longitude=event.longitude,
-            maxradius=kilometers2degrees(max_dist),
-            level="response",
-            starttime=origin,
-            endtime=origin + config.TIME_AFTER_S,
-        )
+        from obspy import Inventory
+        from obspy.clients.fdsn.header import FDSNNoDataException
+        try:
+            inv = client.get_stations(
+                network=config.NETWORK,
+                channel=",".join(config.CHANNEL_PRIORITY),
+                latitude=event.latitude,
+                longitude=event.longitude,
+                maxradius=kilometers2degrees(max_dist),
+                level="response",
+                starttime=origin,
+                endtime=origin + config.TIME_AFTER_S,
+            )
+        except FDSNNoDataException:
+            # no broadband station in the window (HTTP 204): an empty pool,
+            # recorded downstream as "no usable stations", not a crash
+            print(f"  no stations within {max_dist:.0f} km in the inventory")
+            return Inventory(networks=[], source="empty"), []
         inv.write(str(inv_cache), format="STATIONXML")
     rows = []
     for net in inv:
