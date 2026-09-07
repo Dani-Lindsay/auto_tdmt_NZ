@@ -364,22 +364,17 @@ def make_overview_map(events_dir: Path, out_path: Path) -> Path:
                "mrt", "mrf", "mtf", "exponent"]
 
     region = [163.5, 183.0, -50.7, -33.3]
-    # grey hillshade only (no elevation colours): 15 arc-second relief,
-    # gradient-shaded, drawn with a grey ramp and lightened over white
-    grid = pygmt.datasets.load_earth_relief(resolution="15s", region=region)
-    shade = pygmt.grdgradient(grid=grid, radiance=[315, 45], normalize="e0.7")
-
+    # plain grey land and a neutral blue sea: no relief, so the beachballs
+    # and faults stay readable as the archive grows
     fig = pygmt.Figure()
     pygmt.config(FONT="10p", FONT_TITLE="13p,Helvetica", MAP_FRAME_TYPE="plain",
                  FORMAT_GEO_MAP="dddF", MAP_GRID_PEN_PRIMARY="0.25p,gray55,.",
                  MAP_TITLE_OFFSET="0.15c")
-    pygmt.makecpt(cmap="gray", series=[-1.0, 1.0])
-    fig.grdimage(grid=shade, region=region, projection="M15c", cmap=True,
-                 transparency=45,
-                 frame=["WSen+tAutomated regional moment tensors, New Zealand",
-                        "xa5g5", "ya5g5"])
-    sea = "#dce9f5"
-    fig.coast(water=sea, lakes=sea, shorelines="0.35p,gray25",
+    sea, land = "#dce9f5", "#e4e4e4"
+    fig.basemap(region=region, projection="M15c",
+                frame=["WSen+tAutomated regional moment tensors, New Zealand",
+                       "xa5g5", "ya5g5"])
+    fig.coast(land=land, water=sea, lakes=sea, shorelines="0.35p,gray25",
               resolution="h")
 
     # active faults as one multi-segment line (NaN breaks the segments)
