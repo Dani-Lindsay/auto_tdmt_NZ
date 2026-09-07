@@ -159,15 +159,15 @@ data and writes stage-by-stage figures under `<event>/<band>/diagnostics/`.
 
 ## CI (GitHub Actions)
 
-- `watch.yml` — twice daily (05:37 and 17:37 UTC): poll, process every
-  new event above the floor, largest first, inside a 300-minute budget
-  (the rest wait for the next slot), email passing solutions, commit
-  results. GitHub runs scheduled workflows on a low-priority queue that
-  delayed a 10-minute cron to a median gap of 3.5 hours, so two daily
-  slots that dedupe through the state file are used instead; nothing
-  this pipeline is for is lost by it (NISAR and Sentinel-1 passes are
-  days apart). Run it by hand (`workflow_dispatch`) for anything
-  urgent — that path skips the queue.
+- `watch.yml` — twice an hour: poll, process every new event above the
+  floor, largest first, inside a 300-minute budget (the rest wait for
+  the next run), email passing solutions, commit results. This is not a
+  real-time tool: GitHub queues scheduled workflows at low priority, so
+  a new event is typically picked up within one to a few hours; the
+  state file dedupes, so frequent polling never repeats work, and
+  nothing this pipeline is for is lost by the delay (NISAR and
+  Sentinel-1 passes are days apart). Run it by hand
+  (`workflow_dispatch`) for anything urgent — that path skips the queue.
 - `process.yml` — manual reprocess of one publicID.
 - `publish.yml` — manual email of one processed event.
 - `human_catalogue.yml` — rebuilds the human catalogue on PR merge.

@@ -1,16 +1,16 @@
 name: watch-geonet
-# Poll GeoNet every 10 minutes; process every new event above the floor
+# Poll GeoNet twice an hour; process every new event above the floor
 # and email solutions that pass the publication gates. Results + state
 # are committed back to the repo (public archive).
 #
-# Schedule reality: GitHub runs "schedule" triggers on a shared
-# low-priority queue, so the cron is an upper bound on attempts, not a
-# guarantee. Measured on this repo: a */10 cron fired at a median gap of
-# 214 minutes (2026-09-05, 15 intervals); two fixed daily slots fired
-# about once a day, ~5 hours late, with slots dropped. More attempts
-# means lower latency, and each attempt that finds nothing new costs
-# under a minute (the repo is public, so runner minutes are free). The
-# state file dedupes, so frequent polling never repeats work.
+# This is not a real-time tool. GitHub runs "schedule" triggers on a
+# shared low-priority queue, so the cron is an upper bound on attempts,
+# not a guarantee: measured on this repo, a */10 cron fired at a median
+# gap of 214 minutes (2026-09-05, 15 intervals), and two fixed daily
+# slots fired about once a day, ~5 hours late. Expect a new event to be
+# picked up within one to a few hours. Each attempt that finds nothing
+# new costs under a minute (public repo: runner minutes are free) and
+# the state file dedupes, so polling never repeats work.
 # workflow_dispatch skips the queue entirely for anything urgent.
 #
 # Busy days: the watcher processes the LARGEST events first and stops
@@ -22,7 +22,7 @@ name: watch-geonet
 
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "7,37 * * * *"
   workflow_dispatch: {}
 
 concurrency:
