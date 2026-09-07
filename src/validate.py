@@ -269,13 +269,13 @@ def main() -> None:
 
     def _density(ax, x, y, bin_size, xext, yext=None):
         """Scatter shaded by a Gaussian kernel-density estimate of each
-        point's neighbourhood (light grey = isolated, black = the dense
+        point's neighbourhood (devon ramp: pale = isolated, dark = the dense
         core), densest points drawn last. Reads at a few hundred events
         where a binned heat map is still sparse; bin_size only sets the
         kernel scale relative to the axis range."""
         x = np.asarray(x, float); y = np.asarray(y, float)
         if len(x) < 4:
-            ax.scatter(x, y, s=16, c="0.4", linewidths=0, zorder=3)
+            ax.scatter(x, y, s=18, c="#4a3f8a", linewidths=0, zorder=3)
             return
         yext = yext or xext
         xs = (x - xext[0]) / (xext[1] - xext[0])    # equalise the axes
@@ -284,8 +284,9 @@ def main() -> None:
             np.vstack([xs, ys]))
         z = z / z.max()
         order = np.argsort(z)
-        ax.scatter(x[order], y[order], c=z[order], cmap="gray_r",
-                   vmin=-0.35, vmax=1.0, s=16, linewidths=0, zorder=3)
+        from cmcrameri import cm as _cmc
+        ax.scatter(x[order], y[order], c=z[order], cmap=_cmc.devon_r,
+                   vmin=-0.15, vmax=1.0, s=18, linewidths=0, zorder=3)
 
     def _fit_text(ax, x, y, unit):
         x = np.asarray(x, float); y = np.asarray(y, float)
