@@ -1,28 +1,30 @@
-[auto-MT NZ] Mw 5.4 105 km west of Snares Islands (2026p047833), depth 3 km
+[auto-MT NZ] Mw 5.7 45 km south-west of Milford Sound (2026p530771), depth 58 km
 
 Automated regional moment tensor solution — PRELIMINARY
 
-Event: 2026p047833  2026-01-18T16:45:10.278Z
+Event: 2026p530771  2026-07-16T09:14:53.863Z
 Triggered from the GeoNet rapid earthquake solution; origin time, location, preliminary magnitude and initial depth are GeoNet's (geonet.org.nz).
-Location: 105 km west of Snares Islands (-48.237, 165.164)
-GeoNet preliminary magnitude: M 5.7
+Location: 45 km south-west of Milford Sound (-45.006, 167.585)
+GeoNet preliminary magnitude: M 6.3
 
-Mw: 5.38
-Centroid depth: 3 km (GeoNet initial: 33 km)
-Variance reduction: 30%  |  DC 95% / CLVD 5%
-Filter band: 30-100 s  |  Velocity model: nz_south_ristau2008
-Nodal plane 1 (strike/dip/rake): 44/90/97
-Nodal plane 2 (strike/dip/rake): 134/7/0
-Stations used: 3  |  Azimuthal gap: 337 deg  |  Quality grade: C
+Mw: 5.74
+Centroid depth: 58 km (GeoNet initial: 50.1968 km)
+Variance reduction: 68%  |  DC 100% / CLVD 0%
+Filter band: 20-100 s  |  Velocity model: nz_south_ristau2008
+Nodal plane 1 (strike/dip/rake): 41/36/19
+Nodal plane 2 (strike/dip/rake): 295/79/125
+Stations used: 13  |  Azimuthal gap: 197 deg  |  Quality grade: A
 
-Stability: jackknife skipped (fewer than 4 stations)
+Stability (leave-one-out jackknife, n=13): Mw +/-0.005  |  DC 100 +/-1.5%  |  mechanism rotation <= 2.7 deg
 
 LIMITATIONS: deviatoric-only inversion (no isotropic component) - these mechanisms must not be interpreted in volcanic or geothermal settings, where real isotropic components are forced into DC/CLVD. Large misfit (low VR or grade C-D) indicates the automated result is unreliable and additional processing is required.
 
-Predicted peak surface displacement (Okada, both nodal planes): 6.5 cm — potentially detectable with InSAR.
+Predicted peak surface displacement 0.08 cm — no detectable surface deformation expected.
 
 NISAR passes over the epicentre:
-  track 145 D: last 2026-08-11 06:48Z, next ~2026-09-16 06:48Z
+  track 080 A: last 2026-08-30 19:00Z, next ~2026-09-11 19:00Z
+  track 145 D: last 2026-09-04 06:47Z, next ~2026-09-16 06:47Z
+  track 152 A: last 2026-09-04 18:52Z, next ~2026-09-16 18:52Z
 
 --
 Automated solution (mttime 1.1.dev0, model nz_south_ristau2008, GF v1). Not reviewed by a human.

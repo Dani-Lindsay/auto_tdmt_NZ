@@ -143,7 +143,9 @@ def ledger_rows(s: dict) -> list[dict]:
     }
 
     def _row(r: dict, used: bool) -> dict:
-        snr = r.get("snr") or {}
+        snr = r.get("snr")
+        if not isinstance(snr, dict):   # v3/v4 rows stored a single number
+            snr = {}
         return {
             **common,
             "Station": r.get("station") if "." in str(r.get("station", ""))
