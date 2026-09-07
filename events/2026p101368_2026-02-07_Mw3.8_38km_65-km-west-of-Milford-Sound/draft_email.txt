@@ -1,21 +1,21 @@
-[auto-MT NZ] Mw 4.0 160 km north-west of Snares Islands (2026p060826), depth 22 km
+[auto-MT NZ] Mw 3.8 65 km west of Milford Sound (2026p101368), depth 38 km
 
 Automated regional moment tensor solution — PRELIMINARY
 
-Event: 2026p060826  2026-01-23T12:07:52.234Z
+Event: 2026p101368  2026-02-07T12:09:21.389Z
 Triggered from the GeoNet rapid earthquake solution; origin time, location, preliminary magnitude and initial depth are GeoNet's (geonet.org.nz).
-Location: 160 km north-west of Snares Islands (-46.713, 165.634)
+Location: 65 km west of Milford Sound (-44.773, 167.063)
 GeoNet preliminary magnitude: M 4.4
 
-Mw: 4.00
-Centroid depth: 22 km (GeoNet initial: 5 km)
-Variance reduction: 31%  |  DC 55% / CLVD 45%
+Mw: 3.76
+Centroid depth: 38 km (GeoNet initial: 12 km)
+Variance reduction: 41%  |  DC 96% / CLVD 4%
 Filter band: 10-50 s  |  Velocity model: nz_south_ristau2008
-Nodal plane 1 (strike/dip/rake): 154/44/67
-Nodal plane 2 (strike/dip/rake): 5/50/111
-Stations used: 4  |  Azimuthal gap: 306 deg  |  Quality grade: C
+Nodal plane 1 (strike/dip/rake): 40/42/9
+Nodal plane 2 (strike/dip/rake): 304/84/131
+Stations used: 3  |  Azimuthal gap: 250 deg  |  Quality grade: C
 
-Stability (leave-one-out jackknife, n=4): Mw +/-0.01  |  DC 55 +/-6.9%  |  mechanism rotation <= 10.7 deg
+Stability: jackknife skipped (fewer than 4 stations)
 
 LIMITATIONS: deviatoric-only inversion (no isotropic component) - these mechanisms must not be interpreted in volcanic or geothermal settings, where real isotropic components are forced into DC/CLVD. Large misfit (low VR or grade C-D) indicates the automated result is unreliable and additional processing is required.
 
@@ -23,7 +23,8 @@ Predicted peak surface displacement 0.00 cm — no detectable surface deformatio
 
 NISAR passes over the epicentre:
   track 080 A: last 2026-08-30 19:00Z, next ~2026-09-11 19:00Z
-  track 145 D: last 2026-08-11 06:48Z, next ~2026-09-16 06:48Z
+  track 145 D: last 2026-09-04 06:47Z, next ~2026-09-16 06:47Z
+  track 152 A: last 2026-09-04 18:52Z, next ~2026-09-16 18:52Z
 
 --
 Automated solution (mttime 1.1.dev0, model nz_south_ristau2008, GF v1). Not reviewed by a human.
