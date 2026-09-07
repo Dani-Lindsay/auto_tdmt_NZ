@@ -25,7 +25,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 CFG_PATH = Path(os.environ.get(
-    "AUTO_TDMT_CFG", Path(__file__).resolve().parent / "auto_tdmt.cfg"))
+    "AUTO_TDMT_CFG", Path(__file__).resolve().parents[1] / "auto_tdmt.cfg"))
 
 # ---------------------------------------------------------------------------
 # Defaults: the value "auto" resolves to. Keep the cfg comments in step.

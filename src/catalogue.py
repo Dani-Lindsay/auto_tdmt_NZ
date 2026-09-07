@@ -1,9 +1,13 @@
 """Task 5 — the archive tables, regenerated from every solution.json.
 
-    events/catalogue.csv          one row per event (solved or not)
-    events/not_published.csv      every processed event that did NOT email, and why
-    events/station_ledger.csv     one row per station per event: the year-one
-                                  learning table ("which stations get picked")
+    catalogue.csv          one row per event (solved or not)
+    not_published.csv      every processed event that did NOT email, and why
+    station_ledger.csv     one row per station per event: the year-one
+                           learning table ("which stations get picked")
+
+The tables sit at the REPOSITORY ROOT when the archive is the repo's
+events/ (so they are the first thing on the GitHub page); for a scratch
+archive elsewhere they sit next to it (tables_dir()).
 
 All three are BUILD PRODUCTS derived from the archived sidecars, never
 edited by hand. Column conventions follow the published NZ regional CMT
@@ -168,9 +172,17 @@ def ledger_rows(s: dict) -> list[dict]:
                if "network" in r or "." in str(r.get("station", ""))])
 
 
+def tables_dir(events_dir: Path | None = None) -> Path:
+    """Where the CSV tables live for this archive."""
+    events_dir = Path(events_dir or config.EVENTS_DIR).resolve()
+    return (config.REPO_DIR if events_dir == (config.REPO_DIR / "events").resolve()
+            else events_dir)
+
+
 def build_catalogue(events_dir: Path | None = None) -> Path | None:
     """Scan <events_dir>/*/solution.json -> the three tables."""
     events_dir = events_dir or config.EVENTS_DIR
+    out_dir = tables_dir(events_dir)
     solutions = sorted(events_dir.glob("*/solution.json"))
     if not solutions:
         return None
@@ -200,17 +212,17 @@ def build_catalogue(events_dir: Path | None = None) -> Path | None:
             })
 
     rows.sort(key=lambda r: r["Date"])
-    out = events_dir / "catalogue.csv"
+    out = out_dir / "catalogue.csv"
     _write(out, COLUMNS, rows)
     unpublished.sort(key=lambda r: r["Date"])
-    _write(events_dir / "not_published.csv",
+    _write(out_dir / "not_published.csv",
            ["PublicID", "Date", "GeoNet_M", "Mw", "Depth", "Grade", "VR",
             "DC", "NS", "PredDisp_cm", "Why_not", "Tags", "Selection"],
            unpublished)
     ledger.sort(key=lambda r: (r["Date"], r["PublicID"], r["Station"]))
-    _write(events_dir / "station_ledger.csv", LEDGER_COLUMNS, ledger)
+    _write(out_dir / "station_ledger.csv", LEDGER_COLUMNS, ledger)
     print(f"catalogue: {len(rows)} events ({len(unpublished)} not published, "
-          f"{len(ledger)} station rows) -> {events_dir}")
+          f"{len(ledger)} station rows) -> {out_dir}")
     return out
 
 

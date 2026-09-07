@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Rebuild catalogue_human.csv
-        run: python3 catalogue_human.py
+        run: python3 src/catalogue_human.py
 
       - name: Commit if changed
         run: |

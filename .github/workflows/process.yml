@@ -49,7 +49,7 @@ jobs:
 
       - name: Process
         run: |
-          pixi run python run02_process.py --event "${{ inputs.event_id }}" \
+          pixi run python src/run02_process.py --event "${{ inputs.event_id }}" \
             ${{ inputs.debug && '--debug' || '' }}
 
       - name: Commit results

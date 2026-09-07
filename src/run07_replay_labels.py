@@ -29,7 +29,7 @@ import os
 import time
 from pathlib import Path
 
-LABELS = (Path(__file__).resolve().parent / "docs" / "review_labels"
+LABELS = (Path(__file__).resolve().parents[1] / "docs" / "review_labels"
           / "station_labels.json")
 
 

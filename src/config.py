@@ -21,7 +21,7 @@ P = params.load()
 # Code repo (this directory) is ~/tools/internal/auto_tdmt_NZ.
 # Local outputs live in ~/work/proj_tdmt_NZ; CI overrides OUTPUT_BASE to the
 # repo checkout so results commit into events/.
-REPO_DIR = Path(__file__).resolve().parent
+REPO_DIR = Path(__file__).resolve().parents[1]   # src/ is one below the repo root
 
 OUTPUT_BASE = Path(
     os.environ.get("AUTO_TDMT_OUTPUT", Path.home() / "work" / "proj_tdmt_NZ")

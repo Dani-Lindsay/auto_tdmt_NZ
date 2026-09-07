@@ -16,7 +16,7 @@ Event detection and every original hypocentre (time, location, preliminary
 magnitude, initial depth) come from GeoNet; this project adds the moment
 tensor, the revised centroid depth, and the displacement forecast on top
 of that origin, and records both the GeoNet values and the revisions in
-[`events/catalogue.csv`](events/catalogue.csv). GeoNet's own moment
+[`catalogue.csv`](catalogue.csv). GeoNet's own moment
 tensors are computed by an analyst; this is an automated, unreviewed
 alternative built by Danielle Lindsay.
 
@@ -39,11 +39,13 @@ as **five tasks**, each one module that can be run on its own, and
 MintPy style, with the citation for its default on the same line. The
 rules are deliberately simple: an automated system is best when its
 thresholds are few, clear and defensible. The plan is to run it
-unattended for a year and let [`events/station_ledger.csv`](events/station_ledger.csv)
+unattended for a year and let [`station_ledger.csv`](station_ledger.csv)
 show which stations are consistently picked or dropped before adding
 anything cleverer.
 
 ## The five tasks
+
+All code is in [`src/`](src/):
 
 ```
  1  geonet    poll the quake API, apply the processing floor      geonet.py  trigger.py  run01_watch.py
@@ -54,8 +56,8 @@ anything cleverer.
  5  publish   figures, catalogue tables, publish decision, email  figure.py catalogue.py trigger.py publish.py
 ```
 
-`run02_process.py --event <publicID>` runs 2 → 5 for one event; the
-watcher (`run01_watch.py`) runs task 1 and calls it for every new event.
+`src/run02_process.py --event <publicID>` runs 2 → 5 for one event; the
+watcher (`src/run01_watch.py`) runs task 1 and calls it for every new event.
 Each task has a walkthrough notebook — [`docs/task_1_geonet.ipynb`](docs/task_1_geonet.ipynb)
 … [`docs/task_5_publish.ipynb`](docs/task_5_publish.ipynb) — that
 imports the module and calls its functions on a real event, so you can
@@ -102,7 +104,7 @@ loop, the event is archived with `"status": "no_coherent_solution"`
 and grade `X` — the full station ledger, no mechanism — rather than a
 number fitted to noise. F-net simply does not publish below its floor;
 GeoNet fall back to USGS for such events. The reason is printed in
-`events/not_published.csv` and by the human-review notebook.
+`not_published.csv` and by the human-review notebook.
 
 ## Outputs
 
@@ -111,12 +113,12 @@ GeoNet fall back to USGS for such events. The reason is printed in
   not with its SNR, own VR, time shift and reason, the jackknife, the
   quality block, the forward model, and `provenance.params` (the
   resolved parameter file the solution was made with).
-- [`events/catalogue.csv`](events/catalogue.csv) — one row per event
+- [`catalogue.csv`](catalogue.csv) — one row per event
   (column reference: [`events/CATALOGUE_README.md`](events/CATALOGUE_README.md)).
-- [`events/not_published.csv`](events/not_published.csv) — every
+- [`not_published.csv`](not_published.csv) — every
   event that did not email, and why.
-- [`events/station_ledger.csv`](events/station_ledger.csv) — one row
-  per station per event; [`events/station_performance.csv`](events/station_performance.csv)
+- [`station_ledger.csv`](station_ledger.csv) — one row
+  per station per event; [`station_performance.csv`](station_performance.csv)
   is its per-station aggregate.
 - Figures per event: stations + displacement field, depth sensitivity,
   mttime waveform fits, and the all-station waveform figure showing
@@ -142,7 +144,7 @@ pixi install
 pixi run test                 # anchor tests, including one that checks
                               # auto_tdmt.cfg and params.py agree
 pixi run get-gfs              # one-time Green's function download (~1 GB)
-pixi run python run02_process.py --event 2026p669681 --debug
+pixi run python src/run02_process.py --event 2026p669681 --debug
 pixi run params               # print every resolved parameter
 ```
 
@@ -171,7 +173,7 @@ The GF libraries are attached to the `gf-latest` release as
 re-upload after any velocity-model change:
 
 ```sh
-pixi run python greens.py --build
+pixi run python src/greens.py --build
 cd ~/work/proj_tdmt_NZ && cp -r gf_library gf_cache \
   && tar --zstd -cf gf_library.tar.zst gf_cache && rm -r gf_cache
 gh release create gf-latest gf_library.tar.zst --notes "GF libraries"
@@ -198,13 +200,15 @@ and mechanism rotation, and says which version of the selection its
 numbers describe. `Selection` and `Code` columns in the catalogue make a
 mixed-vintage catalogue self-describing; `tools/regrade_archive.py`
 re-grades the archive under the current table without reprocessing.
+The four CSV tables live at the repository root so they are the first
+thing on the page.
 
 ## For the next maintainer
 
 1. Change a number in `auto_tdmt.cfg`; `pixi run test` tells you if you
    broke the contract between the cfg and the code.
 2. Run one task at a time with its notebook or its `--event` CLI.
-3. After a year: `events/station_performance.csv` says which stations
+3. After a year: `station_performance.csv` says which stations
    are consistently dropped and by which rule; that is the evidence for
    the next change. `docs/METHOD.md` §10 lists what to add next
    (distance-dependent bandwidth, MouseTrap, the condition number, a

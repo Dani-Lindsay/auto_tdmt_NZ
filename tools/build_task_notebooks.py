@@ -38,7 +38,7 @@ PREAMBLE = f'''
 import os, sys, json
 from pathlib import Path
 ROOT = Path.cwd().parent if Path.cwd().name == "docs" else Path.cwd()
-sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "src"))
 os.chdir(ROOT)
 # work in a scratch archive so the real events/ are untouched
 os.environ.setdefault("AUTO_TDMT_EVENTS", str(Path.home() / "work" / "proj_tdmt_NZ" / "notebook_runs"))
@@ -290,20 +290,19 @@ print(subject); print(body[:1500])
         md("## 5.2 The tables"),
         code("""
 import pandas as pd
-ev_dir = Path(config.REPO_DIR, "events")
-cat = pd.read_csv(ev_dir / "catalogue.csv")
+cat = pd.read_csv(config.REPO_DIR / "catalogue.csv")
 print(cat["Grade"].value_counts().sort_index().to_dict(), "of", len(cat), "events")
 display(cat[cat.PublicID == EVENT].T)
-npub = pd.read_csv(ev_dir / "not_published.csv")
+npub = pd.read_csv(config.REPO_DIR / "not_published.csv")
 print(f"{len(npub)} not published; reasons:")
 print(npub["Tags"].value_counts().head(10))
-ledger = pd.read_csv(ev_dir / "station_ledger.csv")
+ledger = pd.read_csv(config.REPO_DIR / "station_ledger.csv")
 display(ledger[ledger.PublicID == EVENT][["Station", "Distance_km", "Azimuth", "SNR_med", "Used", "Reason_class", "Station_VR", "Shift_s"]])
 """),
         md("""
 ## What to check
-- `events/not_published.csv` says why each event did not email.
-- `events/station_ledger.csv` is the year-one learning table: after a year,
+- `not_published.csv` (repo root) says why each event did not email.
+- `station_ledger.csv` is the year-one learning table: after a year,
   `station_performance.csv` (its aggregate) shows which stations are
   consistently picked or dropped, and by which rule.
 """),

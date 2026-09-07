@@ -10,7 +10,7 @@ Layouts supported:
   events_human/<event_dir>/<reviewer-slug>/solution.json   (current)
   events_human/<event_dir>/solution.json                   (legacy)
 
-    python3 catalogue_human.py
+    python3 src/catalogue_human.py
 """
 from __future__ import annotations
 
@@ -19,9 +19,9 @@ import json
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]
 HUMAN = ROOT / "events_human"
-sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "src"))
 
 import catalogue  # noqa: E402
 

@@ -37,7 +37,7 @@ jobs:
 
       - name: Publish
         run: |
-          pixi run python run03_publish.py --event "${{ inputs.event_id }}" \
+          pixi run python src/run03_publish.py --event "${{ inputs.event_id }}" \
             ${{ inputs.force && '--force' || '' }}
 
       - name: Commit state

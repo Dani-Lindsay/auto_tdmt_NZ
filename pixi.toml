@@ -15,9 +15,9 @@ platforms = ["osx-arm64", "linux-64"]
 version = "0.1.0"
 
 [tasks]
-watch = "python run01_watch.py"
-process = "python run02_process.py"
-publish = "python run03_publish.py"
+watch = "python src/run01_watch.py"
+process = "python src/run02_process.py"
+publish = "python src/run03_publish.py"
 test = "pytest -q"
 # one-command Green's function download for students (extracts gf_cache/):
 get-gfs = """test -d gf_cache && echo 'gf_cache already present' || \
@@ -26,7 +26,7 @@ get-gfs = """test -d gf_cache && echo 'gf_cache already present' || \
 review = "jupyter notebook human_review.ipynb"
 # rebuild the per-task walkthrough notebooks (docs/task_*.ipynb); --execute runs them
 notebooks = "python tools/build_task_notebooks.py"
-params = "python params.py"
+params = "python src/params.py"
 
 [dependencies]
 python = "3.12.*"

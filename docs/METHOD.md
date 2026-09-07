@@ -102,7 +102,7 @@ invention; every rule is one line in `auto_tdmt.cfg` §2 with its source.
 
 Everything that enters and leaves is recorded with a reason string in a
 shared vocabulary (`invert.reason_class`), so the all-station waveform
-figure and `events/station_ledger.csv` show why.
+figure and `station_ledger.csv` show why.
 
 ### 3.2 Pre-processing
 
@@ -233,7 +233,7 @@ Publication gate, applied to **our inverted Mw**: grade A or B and
 at most three emails a day; within 75 km and 14 days of a published
 event, a smaller event must be within 0.5 Mw of it to publish.
 Everything processed is archived regardless, and every event that did
-not publish is listed with its reason in `events/not_published.csv`.
+not publish is listed with its reason in `not_published.csv`.
 
 ## 7. Deformation forward model (`okada_forward.py`)
 

@@ -80,7 +80,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
 
       - name: Poll and process
-        run: pixi run python run01_watch.py --process --budget-minutes 300
+        run: pixi run python src/run01_watch.py --process --budget-minutes 300
 
       - name: Commit results
         run: |

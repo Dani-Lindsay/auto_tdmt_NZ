@@ -1,6 +1,6 @@
 # Validation — how this catalogue is checked, and how it stacks up
 
-Every solution in [`events/catalogue.csv`](../events/catalogue.csv) is
+Every solution in [`catalogue.csv`](../catalogue.csv) is
 produced fully automatically and **independently** of any reference
 catalogue (the depth search always covers the full Green's-function
 grid; GeoNet's depth is recorded for comparison only). This directory

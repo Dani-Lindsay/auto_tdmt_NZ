@@ -1,4 +1,4 @@
-"""Per-station aggregate of events/station_ledger.csv — "which stations
+"""Per-station aggregate of station_ledger.csv — "which stations
 consistently get picked or dropped", the year-one learning table.
 
 Regenerated with the catalogue after each event. Per station:
@@ -32,7 +32,8 @@ COLUMNS = (["station", "n_seen", "n_used", "use_rate", "med_snr",
 
 def build_station_performance(events_dir: Path | None = None) -> Path | None:
     events_dir = events_dir or config.EVENTS_DIR
-    ledger_path = events_dir / "station_ledger.csv"
+    out_dir = catalogue.tables_dir(events_dir)
+    ledger_path = out_dir / "station_ledger.csv"
     if not ledger_path.exists():
         catalogue.build_catalogue(events_dir)
     if not ledger_path.exists():
@@ -70,7 +71,7 @@ def build_station_performance(events_dir: Path | None = None) -> Path | None:
     def _med(xs, nd=1):
         return round(float(np.median(xs)), nd) if xs else ""
 
-    out = events_dir / "station_performance.csv"
+    out = out_dir / "station_performance.csv"
     with open(out, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=COLUMNS)
         w.writeheader()
