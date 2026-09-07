@@ -359,7 +359,7 @@ def make_overview_map(events_dir: Path, out_path: Path) -> Path:
             "grade": sol["quality"].get("grade", "?"), "mw": pref["mw"],
             "date": ev["origin_time"][:10],
         })
-    df = pd.DataFrame(rows)
+    df = pd.DataFrame(rows, columns=["longitude", "latitude", "depth", "mrr", "mtt", "mff", "mrt", "mrf", "mtf", "exponent", "grade", "mw", "date"])
     mt_cols = ["longitude", "latitude", "depth", "mrr", "mtt", "mff",
                "mrt", "mrf", "mtf", "exponent"]
 
