@@ -268,20 +268,24 @@ def main() -> None:
               df[df.grade.isin(["C", "D"])])]
 
     def _density(ax, x, y, bin_size, xext, yext=None):
+        """Scatter shaded by a Gaussian kernel-density estimate of each
+        point's neighbourhood (light grey = isolated, black = the dense
+        core), densest points drawn last. Reads at a few hundred events
+        where a binned heat map is still sparse; bin_size only sets the
+        kernel scale relative to the axis range."""
         x = np.asarray(x, float); y = np.asarray(y, float)
+        if len(x) < 4:
+            ax.scatter(x, y, s=16, c="0.4", linewidths=0, zorder=3)
+            return
         yext = yext or xext
-        xe = np.arange(xext[0], xext[1] + bin_size, bin_size)
-        ye = np.arange(yext[0], yext[1] + bin_size, bin_size)
-        counts, _, _ = np.histogram2d(x, y, bins=[xe, ye])
-        ix, iy = np.nonzero(counts)
-        c = counts[ix, iy] / counts.max()
-        order = np.argsort(c)
-        cx = 0.5 * (xe[ix] + xe[ix + 1]); cy = 0.5 * (ye[iy] + ye[iy + 1])
-        # a few hundred events, so a single-count cell reads light grey
-        # and only the densest cells go black
-        ax.scatter(cx[order], cy[order], c=c[order], cmap="gray_r",
-                   vmin=-0.25, vmax=1.0, marker="s", s=14, linewidths=0,
-                   zorder=3)
+        xs = (x - xext[0]) / (xext[1] - xext[0])    # equalise the axes
+        ys = (y - yext[0]) / (yext[1] - yext[0])
+        z = _stats.gaussian_kde(np.vstack([xs, ys]), bw_method=0.12)(
+            np.vstack([xs, ys]))
+        z = z / z.max()
+        order = np.argsort(z)
+        ax.scatter(x[order], y[order], c=z[order], cmap="gray_r",
+                   vmin=-0.35, vmax=1.0, s=16, linewidths=0, zorder=3)
 
     def _fit_text(ax, x, y, unit):
         x = np.asarray(x, float); y = np.asarray(y, float)
