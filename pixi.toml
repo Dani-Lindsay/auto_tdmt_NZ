@@ -23,6 +23,7 @@ backsweep = "python src/backsweep.py"          # process a date range, never ema
 validate = "python src/validate.py"            # archive vs Ristau / GCMT catalogues
 sync = "python src/sync_repo.py"               # local archive -> repo, tables, validate, commit
 replay-labels = "python src/replay_labels.py"  # station-selection acceptance test
+tables = "python tools/rebuild_tables.py"      # tables + overview map from the archive
 test = "pytest -q"
 # one-command Green's function download for students (extracts gf_cache/):
 get-gfs = """test -d gf_cache && echo 'gf_cache already present' || \

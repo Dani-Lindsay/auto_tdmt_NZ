@@ -36,7 +36,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: gf_cache
-          key: gf-${{ hashFiles('models/*.d', 'config.py') }}-v1
+          key: gf-${{ hashFiles('models/*.d', 'src/config.py') }}-v1
 
       - name: Fetch GF libraries from release
         if: steps.gf.outputs.cache-hit != 'true'
@@ -56,8 +56,15 @@ jobs:
         run: |
           git config user.name "auto-tdmt-bot"
           git config user.email "actions@github.com"
-          git add events/
+          # tables and overview map are build products: rebuilt after the
+          # rebase from the merged archive, never merged as files
+          PRODUCTS="catalogue.csv not_published.csv station_ledger.jsonl station_performance.csv events/solutions_map.jpg"
+          git add events/ ':!events/solutions_map.jpg'
           git diff --cached --quiet && exit 0
           git commit -m "auto: reprocess ${{ inputs.event_id }}"
+          git checkout -- $PRODUCTS
           git pull --rebase origin ${{ github.ref_name }}
+          pixi run tables
+          git add $PRODUCTS
+          git diff --cached --quiet || git commit -m "auto: tables rebuilt"
           git push

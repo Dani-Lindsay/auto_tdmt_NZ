@@ -1,25 +1,17 @@
 name: watch-geonet
-# Poll GeoNet DAILY; process every new event above the floor and email
-# solutions that pass the publication gates. Results + state are
-# committed back to the repo (public archive).
+# Poll GeoNet every 10 minutes; process every new event above the floor
+# and email solutions that pass the publication gates. Results + state
+# are committed back to the repo (public archive).
 #
-# Why daily and not every 10 minutes: GitHub deprioritises scheduled
-# workflows, and a */10 cron on this repo was actually firing at a
-# MEDIAN GAP OF 214 MINUTES (measured 2026-09-05 over 15 intervals) with
-# individual gaps past 5 hours. A schedule that claims 10 minutes and
-# delivers 3.5 hours is no better than a daily one; NISAR and
-# Sentinel-1 passes are days apart, so nothing this pipeline is for is
-# lost by a daily sweep. Anything urgent: run this workflow by hand
-# (Run workflow, below) or process locally.
-#
-# Two slots a day, at odd minutes: GitHub runs "schedule" triggers on a
-# shared lowest-priority queue and warns that the top of the hour is the
-# worst time; our 06:10 slot was firing ~4 h late. Each run dedupes via
-# the state file, so the second slot costs nothing when there is nothing
-# new and simply catches up when the first is delayed. 05:37 UTC is
-# ~17:37 NZST (the day's events, waiting by morning); 17:37 UTC is
-# ~05:37 NZST. workflow_dispatch skips the queue entirely for anything
-# urgent.
+# Schedule reality: GitHub runs "schedule" triggers on a shared
+# low-priority queue, so the cron is an upper bound on attempts, not a
+# guarantee. Measured on this repo: a */10 cron fired at a median gap of
+# 214 minutes (2026-09-05, 15 intervals); two fixed daily slots fired
+# about once a day, ~5 hours late, with slots dropped. More attempts
+# means lower latency, and each attempt that finds nothing new costs
+# under a minute (the repo is public, so runner minutes are free). The
+# state file dedupes, so frequent polling never repeats work.
+# workflow_dispatch skips the queue entirely for anything urgent.
 #
 # Busy days: the watcher processes the LARGEST events first and stops
 # starting new ones after --budget-minutes, leaving the rest for the
@@ -30,8 +22,7 @@ name: watch-geonet
 
 on:
   schedule:
-    - cron: "37 5 * * *"
-    - cron: "37 17 * * *"
+    - cron: "*/10 * * * *"
   workflow_dispatch: {}
 
 concurrency:
@@ -68,7 +59,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: gf_cache
-          key: gf-${{ hashFiles('models/*.d', 'config.py') }}-v1
+          key: gf-${{ hashFiles('models/*.d', 'src/config.py') }}-v1
 
       - name: Fetch GF libraries from release
         if: steps.gf.outputs.cache-hit != 'true'
@@ -86,8 +77,15 @@ jobs:
         run: |
           git config user.name "auto-tdmt-bot"
           git config user.email "actions@github.com"
-          git add events/
+          # the tables and overview map are build products of events/:
+          # never merged as files — dropped, rebased, rebuilt from the union
+          PRODUCTS="catalogue.csv not_published.csv station_ledger.jsonl station_performance.csv events/solutions_map.jpg"
+          git add events/ ':!events/solutions_map.jpg'
           git diff --cached --quiet && exit 0
           git commit -m "auto: solutions $(date -u +%Y-%m-%dT%H:%MZ)"
+          git checkout -- $PRODUCTS
           git pull --rebase origin ${{ github.ref_name }}
+          pixi run tables
+          git add $PRODUCTS
+          git diff --cached --quiet || git commit -m "auto: tables rebuilt"
           git push
