@@ -1,23 +1,36 @@
-# Literature review: station selection and QC in operational MT systems
+# Literature review: station selection and quality control in operational moment-tensor systems
 
-Started 2026-09-05, at the pipeline author's request:
+Before settling the station-selection and grading rules of this
+pipeline, we reviewed how established operational regional
+moment-tensor services make the same decisions. The aim was to adopt
+published practice wherever it exists, cite it, and reserve invention
+for the few places where the literature is silent.
 
-> "Can you make sure we do a proper literature review and sweep of other
-> operational tdmt globally and find out what strategies they do for site
-> selection. I am not the first to do this and not the most qualified or
-> experienced." — D. Lindsay
+The review asked six questions of each system:
 
-Every rule in this pipeline's station selection was derived from one
-reviewer's labels on 14 NZ events plus an audit of our own archive.
-Operational services have decades of published practice on the same
-problem. The point of this review is to adopt what is better, cite what
-we already match, and stop inventing rules that exist in the literature.
+1. What is excluded **before** the inversion, and what is judged by fit afterwards?
+2. How is signal quality measured (SNR definition; per station or per component)?
+3. How are per-station time shifts bounded or vetted?
+4. What distance range and azimuthal coverage are required?
+5. How is source depth chosen, and is the search tied to the hypocentre?
+6. What quality metrics gate publication?
 
-Questions asked of every system: (a) what is excluded BEFORE inversion
-versus judged by fit; (b) the signal-quality metric and its definition;
-(c) how per-station time shifts are bounded or vetted; (d) distance and
-azimuth requirements; (e) how depth is chosen and whether it is ever
-tied to the hypocentre; (f) what gates publication.
+Files:
 
-Files here are the raw findings per system. Conclusions and what we
-adopt belong in `docs/METHOD.md`, cited.
+- [`operational_systems.md`](operational_systems.md) — the review across
+  twelve systems (Berkeley/SCSN, GeoNet/Ristau, Herrmann/CPS, USGS
+  W-phase, INGV, ISOLA/Gisola/scisola/BMKG, NIED F-net, GFZ/gempa, SED,
+  SCARDEC, AutoBATS), a comparison table, and for each recommendation
+  its status in the current pipeline (adopted, adapted, or deferred).
+- [`neic.md`](neic.md) — a closer look at the USGS NEIC stack, including
+  the operational SynDepth parameters.
+
+Conventions: **[verified]** means read in the primary source, code or
+configuration file; **[secondary]** means reported only via a citing
+paper; **[not verified]** means it could not be confirmed and is
+flagged rather than assumed. No number or DOI in these documents is
+inferred; where a source could not be obtained, that is stated.
+
+The rules that resulted are listed with their sources in the README
+("The rules and where they come from") and in `auto_tdmt.cfg`, where
+each parameter's default carries its citation.

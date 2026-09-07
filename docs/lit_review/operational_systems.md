@@ -1,384 +1,324 @@
-# Station selection and QC across operational MT systems
+# Station selection and quality control in operational moment-tensor systems
 
-Reviewed 2026-09-05. Twelve systems: Berkeley/SCSN (the lineage this
-pipeline descends from), GeoNet/Ristau, Herrmann CPS, USGS W-phase,
-INGV, ISOLA / Bayesian ISOLA / Gisola / scisola / BMKG, NIED F-net,
-GFZ-gempa, SED ZUR_RMT, SCARDEC, AutoBATS Taiwan.
+A review of how twelve operational regional (and, for context, two
+teleseismic) moment-tensor systems select stations, measure signal
+quality, bound time shifts, choose depth and gate publication — and
+what this pipeline adopted from each. Reviewed September 2026.
 
-[verified] = read in the primary source, code or config; [secondary] =
-via a citing paper; [not verified] = could not confirm, flagged rather
-than guessed.
+Status markers used below: **ADOPTED** (implemented in the current
+pipeline, selection v5), **ADAPTED** (implemented with a stated
+modification), **DEFERRED** (published practice deliberately left for
+a later version; listed in `docs/METHOD.md` §10), **NOT APPLICABLE**
+(teleseismic or otherwise outside this pipeline's scope).
 
----
-
-## THE PAPER WE SHOULD HAVE READ FIRST
-
-**Clinton, Hauksson & Solanki (2006), BSSA 96(5), 1689-1705,
-doi:10.1785/0120050241** — the Dreger TDMT code, automated for southern
-California, with every rule written down. Its architecture is almost
-exactly our funnel, published twenty years ago. [verified]
-
-Their loop, verbatim: *"(1) gather all available data and perform
-initial quality control; (2) select stations for the initial inversion
-by choosing waveforms from different azimuths at optimal distance for
-best signal-to-noise ratio; (3) perform inversion; (4) if the inversion
-results do not satisfy the desired quality, reject stations with the
-poorest waveform fits, and select new stations subject to the
-constraint of maximizing the available azimuthal distribution; repeat
-(2) and (3); (5) if the station list is exhausted... the quality
-required is relaxed."*
-
-- Pre-inversion hard screens: sensor corner period >= 100 s; distance
-  **45-700 km**; peak amplitude **< 80% of the clip level**.
-  **No SNR threshold at all** - handled structurally.
-- Geometry: **six azimuthal sectors**, subdivided until six are
-  populated; first pick per sector is the station **nearest 60 km**.
-- Bands by ML: <4.2 -> 10-50 s; 4.2-5.5 -> 20-50 s; >5.5 -> 20-100 s.
-- Depth: fixed trial set 5, 8, 11, 15, 18, 21 km, max overall VR.
-- Grades (OVR = overall VR, IVR = individual station VR):
-  **A+** 6 stations, OVR > 85%, reject IVR < max(OVR-10, 75);
-  **A** 6 stations, OVR > 60%, reject IVR < max(OVR-10, 50)
-  -> PUBLISHED WITHOUT REVIEW;
-  **B** 4 stations (max IVR per quadrant), OVR > 40% -> Mw only,
-  mechanism *"not considered stable enough for distribution"*;
-  **C** 4 highest-IVR stations, azimuth ignored -> not distributed.
-
-**Their time-shift rule is better than ours.** They regress the
-cross-correlation shift against distance over all quality-A solutions:
-**ZCOR_expected = 0.13 r + 1.42 s** (r in km), and *"if the difference
-between the observed and expected individual station ZCOR is greater
-than 9 sec, that station is automatically removed"*. Motive: teleseismic
-energy from a distant large event can otherwise be modelled as a local
-source (their case: a local ML 3.0 given Mw 4.45 at 39% VR because of
-an Mw 5.7 some 2000 km away).
+Evidence markers: **[verified]** read in the primary source, code or
+configuration; **[secondary]** via a citing paper; **[not verified]**
+could not be confirmed.
 
 ---
 
-## THE DEPTH QUESTION, ANSWERED
+## 1. Berkeley / SCSN — the TDMT lineage this pipeline descends from
 
-Most systems do NOT tie centroid depth to the hypocentre - but nearly
-every one BOUNDS THE SEARCH around it, and one ties it outright.
+The method is Dreger & Helmberger (1993), *JGR* 98, 8107–8125,
+doi:10.1029/93JB00023, and Dreger (2003), *TDMT_INV*, IASPEI Handbook
+81B, p. 1627; the automated Berkeley system is Pasyanos, Dreger &
+Romanowicz (1996), *BSSA* 86(5), 1255–1269 (full text not obtained).
+Berkeley's own operational thresholds are not documented publicly
+beyond "automatically produced solutions of high quality" being
+published to the web [verified, BSL annual report].
 
-| system | depth search |
-|---|---|
-| NIED F-net | **JMA hypocentral depth +/- 30 km**, 3 km steps (ties it) |
-| Gisola | **+/-31 km about the hypocentral depth**, 2 km, floored 1 km |
-| USGS W-phase | 3-D grid about the PDE, **+/-50 km**, min centroid **12 km** |
-| SCARDEC | z_n **+/-50 km** about NEIC, floor 12 km (4-6 km after 2016) |
-| AutoBATS | **+/-12 km about the CWB hypocentre**, 1 km |
-| BMKG | absolute **5-40 km**, 2.5 km |
-| SCSN | fixed set 5/8/11/15/18/21 km |
-| SLU / Herrmann | 1-29 km at 1 km |
-| INGV | grid search, range/step not published |
-| **ours** | **full 1-58 km, unbounded** |
+The fully documented automation of the same code is **Clinton,
+Hauksson & Solanki (2006)**, *An evaluation of the SCSN moment tensor
+solutions*, *BSSA* 96(5), 1689–1705, doi:10.1785/0120050241
+[verified]. Its rules:
 
-We are more permissive than every operational system reviewed. The
-resolution of "independent vs forced to GeoNet" is therefore: **bound
-the search, never force the answer**. A bounded window is the norm, not
-a compromise of independence. Our free grid plus a >8 km downgrade flag
-remains defensible, but it is a deliberate DEPARTURE from practice and
-should be presented as one.
+- Pre-inversion screens: sensor corner period ≥ 100 s; epicentral
+  distance 45–700 km; peak amplitude below 80% of the clip level. No
+  SNR threshold.
+- Geometry: six azimuthal sectors, subdivided until six are populated;
+  the initial pick per sector is the station nearest 60 km.
+- Filter bands by ML: < 4.2 → 10–50 s; 4.2–5.5 → 20–50 s; > 5.5 →
+  20–100 s.
+- Depth: fixed trial set 5, 8, 11, 15, 18, 21 km; maximum overall VR.
+- The selection loop: gather data, select by azimuth at optimal
+  distance, invert, reject the stations with the poorest individual
+  fits, reselect to maximise azimuthal distribution, repeat; relax the
+  required quality if the station list is exhausted.
+- Grades on overall VR (OVR) and individual-station VR (IVR): **A**
+  (published without review) six stations, OVR > 60%, reject IVR <
+  max(OVR − 10, 50); **B** four stations, OVR > 40%, reject IVR <
+  max(OVR − 15, 25), Mw distributed but the mechanism withheld; **C**
+  not distributed.
+- Time shifts vetted against a distance regression: ZCOR_expected =
+  0.13 r + 1.42 s, station removed when |observed − expected| > 9 s.
 
-Caveats worth knowing: W-phase's 12 km floor is a known artefact source
-(shallow events pile up on it; an Mww depth of 11.5 km means "at or
-below the floor", not "resolved"). And at very shallow depths ISO and
-CLVD become nearly indistinguishable (Cesca & Heimann 2018), so a %DC
-gate does not mean the same thing at 2 km as at 20 km.
+**ADOPTED**: the selection loop; the filter-band menu (near-identical);
+the quality-B own-VR floor of 25 as a fixed bar. **ADAPTED**: the
+relative rule (IVR < OVR − 10) is off by default — without SCSN's
+reselection step it ratchets, because every removal raises the overall
+VR and therefore the bar (observed: a 16-station M4.9 reduced to 3
+stations in three rounds); it remains available as `stationVRDrop`.
+**DEFERRED**: the distance-regressed time-shift residual; the clipping
+screen.
 
----
+## 2. GeoNet / Ristau — the reference catalogue
 
-## THE SHARPEST CRITICISM OF OUR DESIGN
+Ristau (2008), *SRL* 79(3), 400–415, doi:10.1785/gssrl.79.3.400, and
+Ristau (2013), *BSSA* 103(4), 2520–2533, doi:10.1785/0120120339. The
+full texts could not be obtained for this review [not verified], so no
+selection thresholds are attributed to them here. What is verifiable
+from the GeoNet/data README [verified]: moment tensors have been
+computed since August 2003 for M > ~4, currently by an analyst;
+solutions from 2003-08-21 to 2020-06-18 used the Dreger/Berkeley code
+(Method 1), and all solutions since 2020-06-18 use Herrmann's Computer
+Programs in Seismology (Method 2); the published quality fields are
+station count, %DC and VR, with no stated publication threshold; for
+Dusky Sound 2009 and Kaikōura 2016 the catalogue carries USGS W-phase
+solutions because a regional solution could not be obtained. Note that
+the README's DOI for Ristau (2013) is incorrect (it gives Dreger &
+Helmberger 1993); the correct DOI is 10.1785/0120120339.
 
-**Triantafyllis, Sokos, Ilias & Zahradnik (2016), SRL 87(1), 157-163**
-(scisola), verbatim:
+**ADOPTED**: the velocity models (Ristau 2008, Table 1); "no solution
+below the floor" as a legitimate outcome. Obtaining the Ristau papers'
+own selection rules remains the most valuable open item.
 
-> *"Stations with large amplitudes may have an instrumental
-> disturbance; these signals could be well fitted, but actually just
-> these should be removed from the inversion (Zahradnik and Plesinger,
-> 2005, 2010). This is why we do not support the idea of repeating the
-> automatic inversion by simply keeping only stations with large VR."*
+## 3. Herrmann / CPS — the engine under both GeoNet and this pipeline
 
-Their demonstration, a shallow Mw ~4 with 10 stations inside 100 km:
+Herrmann (2013), *SRL* 84, 1081–1088, doi:10.1785/0220110096, with the
+CPS moment-tensor course notes and the routine SLU solution pages
+[verified]. Regional traces to 700 km with interactive per-trace
+quality control (P polarity consistent on Z and R, no P on T, Rayleigh
+particle motion); redundant stations at the same distance and azimuth
+removed; depth grid-searched at 1 km with the maximum fit taken; per-
+station time shifts and VR published for every solution, the shifts
+fitted to A + B cos(az) + C sin(az) to diagnose a mislocation; a
+factor-of-two amplitude misfit flagged for inspection.
 
-| stations | VR | condition number | FMVAR | verdict |
-|---|---|---|---|---|
-| 10 | ~0.7 | ~5 | ~10 deg | good |
-| 2 | **0.8-0.9** | **>10** | 20-40 deg | bad |
-| 1 | ~0.98 | - | - | *"always dangerous"* |
+Herrmann, Benz & Ammon (2011), *Monitoring the earthquake source
+process in North America*, *BSSA* 101(6), 2609–2625,
+doi:10.1785/0120110095 (abstract only [not verified]) reports routine
+regional moment tensors in the **0.02–0.10 Hz** passband down to
+**Mw 3.7**, limited by station density and signal-to-noise. This is the
+closest published analogue to the present pipeline.
 
-**VR is anti-correlated with station count, so any gate phrased purely
-as "VR > X" is gameable by our own funnel.**
+**ADOPTED**: the 0.02–0.10 Hz band for small events; the Mw 3.7
+processing floor; the group-velocity record window (SLU cut
+dist/3.3 km/s ± 40 s; here 2.5 km/s plus a magnitude-dependent tail
+for slower NZ paths); per-station time shift and VR as published
+diagnostics. **DEFERRED**: the azimuthal fit of the shifts as a
+mislocation test.
 
-**The cleanest published defence is INGV\'s quality table**, read from
-their legend (terremoti.ingv.it/en/help#TDMT) - the VR bar FALLS as
-station count rises:
+## 4. USGS NEIC — regional practice, and two ideas from the teleseismic stack
+
+NEIC's regional moment tensors (Mwr, 0–10°) follow Herrmann, Benz &
+Ammon (2011) above. The W-phase (Kanamori & Rivera 2008; Hayes, Rivera
+& Kanamori 2009, *SRL* 80(5), 817–822; **Duputel, Rivera, Kanamori &
+Hayes 2012**, *GJI* 189(2), 1125–1147,
+doi:10.1111/j.1365-246X.2012.05419.x [verified]) and the SynDepth
+depth-modelling tool (Yeck et al. 2025, *SRL* 96(6),
+doi:10.1785/0220240372; code doi:10.5066/P924LDLT [verified]) are
+**teleseismic** and **NOT APPLICABLE** as methods here. Two design
+elements transfer:
+
+- A strictly **two-stage** screen: rejections that need no forward
+  model first (instrument response fit, pre-event noise against a noise
+  model, completeness, a median amplitude screen rejecting traces below
+  0.1× or above 3× the event median), then iterative rejection by
+  misfit after a first inversion. Duputel et al. note the amplitude
+  screen's known failure mode: it can reject a nodal station.
+- Magnitude-scaled **time-shift caps** in SynDepth: 6, 8, 10 s for
+  Mw < 5.5, 5.5–6.0, ≥ 6.0, applied by clipping the cross-correlation
+  search; and printed depth diagnostics including "on grid edge" flags.
+
+NEIC publishes no numeric quality threshold for any moment tensor;
+solutions are released automatically as preliminary and promoted after
+analyst review. See `neic.md` for the details.
+
+**ADOPTED**: the two-stage architecture; the 8 s time-shift cap.
+**ADAPTED**: the amplitude screen is applied on the high side only (a
+station far above the network median indicates a broken response; a
+station far below may be nodal and is kept). **DEFERRED**: a
+noise-model (PSD) screen.
+
+## 5. INGV Italy
+
+Scognamiglio, Tinti & Michelini (2009), *BSSA* 99(4), 2223–2242,
+doi:10.1785/0120080104 (full text not obtained); Scognamiglio et al.
+(2012), *Ann. Geophys.* 55(4), doi:10.4401/ag-6159 [verified];
+Scognamiglio et al. (2016), *GJI* 206(2), 792–806,
+doi:10.1093/gji/ggw173 [verified]; the INGV TDMT quality legend
+[verified]. Automatic TDMT at ML ≥ 3.5 within 6–10 minutes, analyst-
+reviewed for the catalogue. Stations chosen from eight 45° sectors with
+a distance–magnitude weight (closer stations below M4.5, more distant
+above, to avoid tilt and saturation), refined by a geometric-
+uniformity optimisation; SNR > 5 on a 500 s window; a common time shift
+across the three components of a station; no per-station VR cut-off
+(a reviewed solution retained a station at VR −1.2%); small events
+inverted at 0.02–0.10 Hz, larger at 0.02–0.05 Hz. The quality code's
+first character depends jointly on station count and VR:
 
 | N stations | D | C | B | A |
 |---|---|---|---|---|
-| 1 | VR < 50% | >= 50% | - | - |
-| 2 | < 30% | 30-70% | >= 70% | - |
-| 3 | < 20% | 20-70% | >= 70% | - |
-| 4 | < 20% | 20-40% | 40-60% | >= 60% |
-| 5-8 | < 15% | 15-40% | 40-60% | >= 60% |
-| > 8 | < 15% | 15-30% | 30-50% | >= 50% |
+| 1 | VR < 50% | ≥ 50% | — | — |
+| 2 | < 30% | 30–70% | ≥ 70% | — |
+| 3 | < 20% | 20–70% | ≥ 70% | — |
+| 4 | < 20% | 20–40% | 40–60% | ≥ 60% |
+| 5–8 | < 15% | 15–40% | 40–60% | ≥ 60% |
+| > 8 | < 15% | 15–30% | 30–50% | ≥ 50% |
 
-Second character: `a` = %DC >= 60, `b` = %DC < 60. Structurally,
-**grade A is unreachable with <= 3 stations and B with 1 station**.
-Gisola encodes the same idea in code (a 2-station solution needs
-VR >= 0.7 for B; a 5-station solution needs 0.6 for A), and gempa puts
-a floor under pruning: `minimumFinalStationFit = 0.3`, *"Stations are
-removed below this threshold unless the minimum station count has been
-reached"*.
+with a second character `a`/`b` for %DC ≥ 60 / < 60. The VR bar falls
+as the station count rises, so a solution cannot improve its grade by
+shedding stations.
 
-Since our funnel deliberately shrinks the station set, our flat VR gate
-is the wrong shape.
+**ADOPTED**: the grade table (rows 3, 4, 5–8, > 8) with the `a` rule as
+a requirement for A/B; eight azimuth sectors; higher frequencies for
+small events. **ADAPTED**: sectors are used to order candidates
+round-robin rather than to cap them (see §6).
 
----
+## 6. The ISOLA family — ISOLA, Bayesian ISOLA, Gisola, scisola, BMKG
 
-## WHERE WE ALREADY MATCH PUBLISHED PRACTICE
+Zahradník & Sokos (2018), *ISOLA code for multiple-point source
+modeling — review*, doi:10.1007/978-3-319-77359-9_1 [verified];
+Vackář, Burjánek, Gallovič, Zahradník & Clinton (2017), *Bayesian
+ISOLA*, *GJI* 210(2), 693–705, doi:10.1093/gji/ggx158 [verified];
+Triantafyllis, Sokos, Ilias & Zahradník (2016), *scisola*, *SRL* 87(1),
+157–163; Triantafyllis et al. (2022), *Gisola*, *SRL* 93(2A), 957–966
+(configuration and source [verified]); Halauwet et al. (2024), *GJI*
+239(2), 1000–1020, doi:10.1093/gji/ggae309 (BMKG) [verified].
 
-1. **Two-stage architecture** (hard rejects needing no forward model,
-   then fit-based pruning) = Duputel et al. 2012 sec 3.2, Clinton 2006.
-2. **The funnel** = Clinton\'s five-step loop; described almost word for
-   word for SED\'s Dreger workflow in Vackar et al. 2017: *"select the
-   optimal set of stations and event depth that produces the best MT,
-   taking into account the Variance Reduction and the % Double Couple,
-   whilst retaining as many stations as possible."*
-3. **Worst-station VR as a gate** = Clinton\'s IVR floor and gempa\'s
-   `minimumFinalStationFit = 0.3`.
-4. **Depth searched, not fixed** - universal.
-5. **Core forced to span >= 90 deg** = a weaker form of SCSN\'s six
-   sectors, Gisola\'s 3-of-8, INGV/scisola/BMKG\'s 8 sectors.
-6. **Grading on VR + %DC + jackknife** = Gisola\'s letter+digit and
-   ISOLA\'s VR/CN/FMVAR/STVAR.
-7. **10-300 km magnitude-scaled** brackets Gisola\'s 10-250 km (M4-5)
-   and 40-300 km (M5.1-5.5).
-8. **Cross-correlation off in the survey pass** is mttime\'s own default
-   (`correlate 0` in the shipped BSL example), and necessary because
-   `Inversion._correlate()` searches the entire lag range unbounded.
-9. **Distance weighting** (`weight = distance`): F-net\'s published VR
-   definition weights stations *"proportional to the epicentral
-   distance"* - our choice has an operational precedent.
-10. **Small events pushed to HIGHER frequencies**: INGV inverts
-    ML >= 3.8 at 0.02-0.05 Hz but *"Lower magnitude earthquakes were
-    inverted in the frequency band of 0.02-0.1 Hz"* - exactly our
-    10-50 s for the smallest events.
-11. **The jackknife as the instrument for detecting a bad station**:
-    NIED state in print that automatic detection is unsolved *because
-    the misfit does not necessarily localise on the offending station*,
-    and conclude the jackknife is the only way (Fukuyama et al. 1998
-    sec 5). Strong support for grading on jackknife stability rather
-    than per-station VR alone.
-12. **"No coherent solution" as an outcome**: GeoNet themselves fall
-    back to USGS W-phase for Dusky Sound 2009 and Kaikoura 2016
-    *"as a reliable regional moment tensor solution could not be
-    calculated"*.
+Key practice: magnitude-scaled distance windows (Gisola: 10–250 km for
+M4–5, 40–300 km for M5–5.5, up to 700 km for M6+); eight 45° sectors
+with a minimum number populated and a maximum per sector (Gisola: at
+least 3 sectors, at most 2 per sector, 24 stations overall); a depth
+grid of ± 31 km about the hypocentral depth (Gisola) or a free
+space–time grid (Bayesian ISOLA); no SNR threshold in Bayesian ISOLA,
+which instead weights by a noise covariance matrix; a defined SNR in
+BMKG (RMS of 200 s after P over 200 s before, per component, threshold
+2, components below it ignored); the MouseTrap detector for long-period
+instrumental disturbances (Vackář, Burjánek & Zahradník 2015, *SRL*
+86(2A), 442–450); a trust criterion in Bayesian ISOLA of VR > 0.5,
+condition number < 8, DC > 50% and bounded posterior spreads; letter
+grades from VR × station count in Gisola and BMKG, with the condition
+number as a second digit.
 
----
+Two cautions from this literature shaped the pipeline. Triantafyllis
+et al. (2016) demonstrate that repeatedly re-inverting while keeping
+only high-VR stations degrades the solution: ten stations at VR ≈ 0.7
+with condition number ≈ 5 become two stations at VR 0.8–0.9 with
+condition number > 10. And the "ten minimum shear wavelengths" rule
+(Zahradník & Sokos 2018) limits the usable high-frequency corner with
+distance.
 
-## RANKED CHANGES WORTH MAKING
+**ADOPTED**: the magnitude-scaled distance window; the 16-station cap;
+the per-component RMS SNR with threshold 2; the ± 30 km depth window;
+the principle that a VR gate must depend on station count (via the
+INGV table). **ADAPTED**: the SNR window is the record window actually
+inverted rather than a fixed 200 s (a fixed 200 s diluted an M3.7
+event's 60 s train to noise), and a station is usable when its best
+component clears the bar, so a nodal component does not veto the
+station; sectors order candidates round-robin without a per-sector
+cap, so a one-sided offshore geometry is not starved. **DEFERRED**:
+MouseTrap; the condition number; distance-dependent bandwidth;
+noise-covariance weighting in place of thresholds.
 
-1. **Make the VR threshold a function of station count** (INGV table
-   above; Gisola in code). One-line change, citable precedent, and the
-   direct antidote to our funnel inflating VR by shrinking the set.
-2. **Replace the absolute 8 s shift bound with a residual-against-
-   expectation bound** (SCSN): fit our own ZCOR-vs-distance regression
-   on accepted solutions, drop stations whose residual exceeds ~9 s.
-   Then fit survivors to **A + B cos(az) + C sin(az)** (Herrmann\'s
-   routine practice = GeoNet\'s current code family) and report the
-   implied origin-time and epicentre correction - turning time shifts
-   from a nuisance into a mislocation diagnostic. Reference points:
-   gempa 10 s body / 30 s surface; AutoBATS **+/-2 s "following Dreger
-   (2003)"**; ISOLA treats a shift *"> 10 seconds"* as an indication the
-   velocity model is inapplicable.
-3. **Adopt a defined per-COMPONENT SNR and retire peak/noise 1.2.**
-   Every system that specifies a unit screens per component, not per
-   station - NEIC routinely keeps a vertical and drops both horizontals
-   *"the horizontal components usually being noisier"*. Best specified:
-   AutoBATS (3-component average point-by-point spectral SNR, 150 s
-   windows either side of P, 5-point smoothing, **threshold 2.0**);
-   simplest: BMKG (**RMS 200 s after P / RMS 200 s before P, per
-   component, threshold 2**); INGV uses **SNR > 5** on a 500 s window.
-   Ours at 1.2 is "signal 20% above noise", which no published system
-   would accept.
-4. **Make the usable bandwidth DISTANCE-DEPENDENT** - the most repeated
-   advice in the ISOLA literature and absent from our pipeline.
-   Zahradnik & Sokos: waveforms cannot be modelled beyond ~**10 minimum
-   shear wavelengths**, so at beta = 3 km/s, 0.1 Hz is usable only to
-   ~300 km. Bayesian ISOLA: for distance > 100 km, cap the high corner
-   so the minimum wavelength is no shorter than distance/5. Pooling
-   10-300 km in one fixed band under-uses our near stations and
-   over-trusts our far ones.
-5. **Put a floor under the funnel that pruning cannot breach**
-   (gempa\'s rule), because of the scisola criticism.
-6. **Add the CONDITION NUMBER** - the one diagnostic our grading lacks,
-   and precisely the one that detects "high VR from too few or too
-   clustered stations". CN > 5-10 => ill-posed (Zahradnik & Sokos);
-   Bayesian ISOLA requires **CN < 8**, trusted solutions cluster at
-   2-4; BMKG\'s top grade is CN < 5. One SVD of G.
-7. **Long-period disturbance detection (MouseTrap).** Step-like
-   instrumental disturbances survive bandpass filtering, carry huge
-   false amplitudes and FIT WELL - so neither our amplitude screen nor
-   our VR-based funnel catches them. Every ISOLA-family system runs it
-   by default. Open source Python. Vackar, Burjanek & Zahradnik 2015
-   SRL 86(2A) 442-450, doi:10.1785/0220140168.
-8. **Clipping screen** - absent from our hard rejects. SCSN: reject if
-   peak amplitude exceeds **80% of the clip level**, because
-   *"broadband sensors can have a nonlinear response significantly
-   short of their expected clip level"*. F-net swaps to a strong-motion
-   sensor instead. Matters for our 10 km stations.
-9. **Two-side the amplitude screen?** Duputel et al. 2012 reject if
-   peak-to-peak **< 0.1x or > 3x the event median**. NOTE THE TENSION:
-   the authors state its known failure mode is *"can accidentally
-   reject some good data (e.g. a nodal station)"* - which is exactly
-   the objection that made us go one-sided on 2026-09-04. Both
-   positions are defensible and the nodal case is acknowledged in the
-   literature, not denied. Needs a decision, not a default.
-10. **Near-field stations: invert both WITH and WITHOUT** (ISOLA\'s
-    prescription) rather than only tagging. Our 10 km inner limit is
-    far closer than SCSN\'s 45 km, AutoBATS\'s 30 km *"to reduce the
-    mislocation effect"*, F-net\'s 50 km or Bayesian ISOLA\'s 2 km.
-11. **Decluster by azimuth, not distance.** SCARDEC: *"When several
-    stations are present in a 10 deg azimuthal range, we only select
-    the one with the best signal-to-noise ratio."* Gisola: max 2
-    stations per 45 deg sector. INGV goes further with an explicit
-    geometric-uniformity optimisation (graph theory, minimising the
-    spread of distances and adjacent azimuth gaps; Scognamiglio et al.
-    2012, Ann. Geophys. 55(4), doi:10.4401/ag-6159). This would also
-    strengthen our 90 deg span requirement - 90 deg spanned by two
-    clusters is not 90 deg spanned by two stations.
-12. **Keep excluded stations as PREDICTIONS.** Stich et al. 2003:
-    excluded stations *"predictions are still calculated to confirm a
-    basic compatibility with the obtained moment tensor solution"*.
-    Nearly free (we have the Green\'s functions) and turns every
-    exclusion into an independent check - ideal for a system that has
-    to justify itself in an email.
-13. **Bound the depth grid** (table above).
-14. **Two cheap validation ideas**: AutoBATS runs **three station
-    selections in parallel - best azimuth, best SNR, shortest
-    distance - and treats their agreement as the stability test**;
-    SCARDEC and Bernardi et al. both define parameter uncertainty as
-    *"misfit not exceeding the optimum by more than 10%"*.
+## 7. NIED F-net (Japan)
 
----
+Fukuyama, Ishida, Dreger & Kawai (1998), *Zisin* 51(1), 149–156,
+doi:10.4294/zisin1948.51.1_149 [verified, Japanese]; Fukuyama & Dreger
+(2000), *Earth Planets Space* 52, 383–392 [verified]; Kubo, Fukuyama,
+Kawai & Nonomura (2002), *Tectonophysics* 356, 23–48 (full text not
+obtained); the F-net method page [verified]. The most minimal
+long-running design: hypocentral distance 50–400 km; at most three
+stations, taken in order of increasing distance among those with good
+data (maximum amplitude and completeness checks; no SNR); deliberately
+no azimuthal requirement; time shifts by cross-correlation against the
+Green's functions with no published bound; depth searched every 3 km
+within ± 30 km of the JMA hypocentre; VR weighted proportional to
+epicentral distance; publication when M > 3.5 and VR > 50%, calibrated
+in 1998 against first-motion mechanisms. Fukuyama et al. (1998) state
+that automatically detecting a station gone bad is difficult because
+the misfit does not necessarily localise on that station, and that the
+jackknife is the reliable way to remove anomalous data.
 
-## SYSTEM NOTES
+**ADOPTED**: the ± 30 km depth window about the hypocentre; distance
+weighting (`weight = distance` in mttime); the jackknife as the
+stability evidence in the grade; withholding a solution below the
+floor rather than publishing it.
 
-**NIED F-net** - the most minimal design, and instructive for that.
-Hypocentral distance **50-400 km hard**, then *"we used at most three
-station whose hypocentral distance is between 50 km and 400 km and
-whose data quality is good"*, chosen by increasing distance. **No
-azimuthal requirement, deliberately** - the 1998 conclusion is that the
-solution is recovered accurately even when stations do not surround the
-source, which is why it suits offshore trench events. Screening is
-maximum amplitude plus completeness; no SNR. Time shift by 8
-cross-correlations against the Green\'s function components, taking the
-largest absolute lag; no published maximum. Publication gate, explicit:
-*"We only show reliable solutions which satisfy the criteria that
-magnitude is greater than 3.5 and quality (variance reduction) is
-greater than 50 %"* - calibrated in 1998 against first-motion
-mechanisms via P-wave radiation-pattern cross-correlation (for M >= 4
-and VR >= 50%, correlation >= 0.7). NIED\'s own caveat: *"When you use
-automatically determined moment tensor solutions, due to unexpected
-noise the result might happen to be completely wrong."*
+## 8. GFZ / gempa AUTOMT (SeisComP)
 
-**INGV** - AUTO-TDMT at ML >= 3.5, solution in 6-10 min, *"automatically
-published on the World Wide Web for solution qualities exceeding a
-predefined threshold"*, plus an analyst-reviewed REV-TDMT catalogue.
-8 x 45 deg sectors with a distance-magnitude weight that *"avoids very
-close stations that may be affected by equipment tilting and
-significant centroid location errors, and privileges stations at
-greater distances for larger magnitudes to avoid using saturated
-waveforms"*. **No per-station VR cut-off**: a reviewed 7-station
-solution retained a station at **VR -1.2%** - our unconditional
-anti-fitting cull is stricter than INGV. SNR > 5 on a 500 s window.
-Time shift *"forced to be the same for the three station components"*,
-no published maximum.
+Documented defaults [verified, docs.gempa.de]: distance ≤ 70°; minimum
+six stations; minimum overall fit 0.3; a per-station fit floor of 0.3
+below which stations are removed **unless the minimum station count
+has been reached**; SNR minima of 2–3 by wave type (definition not
+documented); time-shift caps of 10 s (body), 30 s (surface), 45 s
+(mantle), 60 s (W-phase); depth searched coarse-to-fine, unconstrained
+by default; no azimuthal-gap gate.
 
-**GeoNet** [verified from the GeoNet/data README] - MT computed since
-2003-08 for M > ~4, and *"At the moment these are computed manually"*:
-we are automating something GeoNet does by hand. **Method 2, all
-solutions since 2020-06-18, is Herrmann\'s CPS** - the same family as
-our Green\'s functions, so Herrmann\'s documented practice is the
-closest thing to a house style we have. Published quality fields are
-only NS, DC and VR, with no stated publication thresholds.
-WARNING: the README prints the WRONG DOI for Ristau (2013) - it gives
-10.1029/93JB00023, which is Dreger & Helmberger 1993. The correct DOI
-is **10.1785/0120120339**.
+**ADOPTED**: a fixed per-station fit floor that pruning cannot breach
+below the minimum station count.
 
-**USGS W-phase** - the most rigorously specified screening pipeline,
-strictly two-stage. Pre-inversion: instrument response fit within 3%;
-pre-event PSD rejected against the New High Noise Model over 1-10 mHz;
-completeness; **median screening, reject if peak-to-peak < 0.1x or >
-3x the event median**. Post-inversion: iterative misfit rejection at
-**three thresholds 3.0 -> 2.0 -> 1.0**, discarding on average **50% of
-channels**. The rejection unit is the CHANNEL, never the station.
-Single global centroid delay; no per-station shifts.
+## 9. SED (ETH), SCARDEC (IPGP), AutoBATS (Taiwan), Ibero-Maghreb
 
----
+- Bernardi, Braunmiller, Kradolfer & Giardini (2004), *GJI* 157(2),
+  703–716: a first inversion at a fixed depth removes traces with
+  normalised variance ≥ 0.8 or large re-alignment; depth uncertainty as
+  the range within a 10% variance increase.
+- Vallée et al. (2011), *SCARDEC*, *GJI* 184(1), 338–358 (teleseismic):
+  one station per 10° azimuth bin chosen on SNR; depth free within
+  ± 50 km of the reference; uncertainty as misfit within 10% of the
+  optimum.
+- Jian, Tseng, Liang & Huang (2018), *AutoBATS*, *BSSA* 108,
+  doi:10.1785/0120170231: a defined spectral SNR (three-component
+  average, 150 s windows either side of P, threshold 2.0); stations
+  beyond 30 km; time shifts ± 2 s; depth ± 12 km about the hypocentre;
+  three parallel station selections (azimuth, SNR, distance) whose
+  agreement is the stability test; publication gates on ISO ≤ 20%,
+  CLVD ≤ 30%, non-DC ≤ 40%.
+- Stich, Ammon & Morales (2003), *JGR* 108(B3): excluded stations'
+  predictions are still computed as a compatibility check; station
+  permutations tested to detect a controlling station.
 
-## BIGGEST GAP - ACTION FOR DANI
+**ADOPTED**: depth uncertainty as the range of depths within 10% of the
+maximum VR (Bernardi et al.; Vallée et al.); best-SNR ordering within
+azimuth bins. **DEFERRED**: predictions for excluded stations; the
+three-selection agreement test; a stricter shift cap.
 
-**Ristau (2008) SRL 79(3) 400-415 and Ristau (2013) BSSA 103(4)
-2520-2533 could not be obtained** (SRL/BSSA 403; the VUW open-access
-thesis and its DSpace mirror behind Cloudflare; the Springer 2018
-chapter behind auth). We therefore cannot say what our own reference
-catalogue\'s published station-selection and quality rules actually
-are. With institutional access this is the single highest-value half
-hour available. Also unverified: the "VR > 65%" filter used by
-downstream NZ studies could not be traced to Ristau\'s own text.
+## 10. Network geometry and resolvability
 
-Other gaps: Kubo et al. 2002 full text; Bernardi et al. 2004 Table 2;
-Pasyanos et al. 1996 (the Berkeley PDF is 404); gempa\'s SNR definition
-(thresholds documented, metric not); INGV\'s depth range and step.
+Johnson et al. (2016), *GJI* 206(1), 525–556, doi:10.1093/gji/ggw141
+(synthetic and real tests with CPS: focal-plane constraint depends on
+geometry and faulting style more than on station count; stations
+within ~30° of each other add little; Dufumier & Cara 1995 recommend at
+least three stations 60° apart); Zahradník & Custódio (2012), *BSSA*
+102(3), 1235–1254 (resolvability maps from geometry, model and band
+alone); Ford, Dreger & Walter (2010), *BSSA* 100(5A), 1962–1970
+(network sensitivity solutions); Sokos & Zahradník (2013), *SRL* 84(4),
+656–665 (FMVAR/STVAR); Cesca & Heimann (2018),
+doi:10.1007/978-3-319-77359-9_7 (ISO/CLVD trade-off at shallow depth).
 
----
+## Comparison across the six questions
 
-## KEY REFERENCES
+| | Pre-inversion vs fit-based rejection | Signal metric | Time shift | Distance and azimuth | Depth | Publication gate |
+|---|---|---|---|---|---|---|
+| SCSN | both; sensor corner, distance, clipping; then IVR loop with reselection | none (structural) | residual vs 0.13r + 1.42 s, drop if > 9 s | 45–700 km, six sectors | fixed set, max VR | A: 6 stations, OVR > 60 |
+| GeoNet | [not verified] | [not verified] | [not verified] | [not verified] | [not verified] | NS/DC/VR reported; analyst |
+| Herrmann/CPS | interactive per-trace QC | physical checks; amplitude factor 2 flag | fitted to A + B cos + C sin | < 700 km | 1–29 km at 1 km, max fit | analyst |
+| NEIC W-phase (teleseismic) | two-stage: response, PSD, completeness, median 0.1–3×; then misfit ladder | PSD vs noise model | single centroid delay | 5–90°; N ≥ 30, gap ≤ 270° for the full search | inverted, ± 50 km, 12 km floor | analyst review |
+| INGV | sectors + uniformity; no per-station cut | SNR > 5 | common per station, unbounded | 8 sectors | grid search, max VR | VR × N table |
+| Bayesian ISOLA | pre only: MouseTrap, gaps, < 2 km | none; noise covariance | centroid time | r < 2^(2 ML) km | free grid | VR > 0.5, CN < 8, DC > 50 |
+| Gisola | pre only: clip, PPSD, MouseTrap | optional STA/LTA + SNR 5 | centroid time grid | 10–700 km by M; ≥ 3 of 8 sectors, ≤ 2 each | ± 31 km about hypocentre | VR × N letter, CLVD digit |
+| BMKG | SNR < 2 per component, MouseTrap | RMS 200 s after/before P | ± 3 s | 8 sectors, 3–8 stations | 5–40 km, 15 km radius | VR × N letter, CN digit |
+| F-net | amplitude, completeness | none | cross-correlation, unbounded | 50–400 km, ≤ 3 stations, no azimuth rule | JMA ± 30 km at 3 km | M > 3.5, VR > 50 |
+| gempa | post: station fit < 0.3, floored at 6 stations | SNR 2–3 | 10–60 s by wave type | ≤ 70°, no gap gate | free, coarse-to-fine | fit ≥ 0.3, ≥ 6 stations |
+| AutoBATS | SNR ≥ 2 | spectral, 150 s windows | ± 2 s | > 30 km; 3–7 stations, three selections | ± 12 km at 1 km | ISO/CLVD/non-DC limits, misfit classes |
+| **this pipeline (v5)** | unusable data, SNR, amplitude (high side); then the fit loop | RMS over the inverted window, best component ≥ 2 | ± 8 s cap | 120–300 km by M; 8 sectors round-robin to 16 | GeoNet ± 30 km, max VR, 10% band | INGV table + DC ≥ 60 + jackknife ≤ 25° |
 
-- Clinton, Hauksson & Solanki (2006). BSSA 96(5), 1689-1705.
-  doi:10.1785/0120050241
-- Dreger & Helmberger (1993). JGR 98, 8107-8125. doi:10.1029/93JB00023
-- Pasyanos, Dreger & Romanowicz (1996). BSSA 86(5), 1255-1269.
-- Dreger (2003). TDMT_INV. IASPEI Handbook 81B, 1627.
-- Ristau (2008). SRL 79(3), 400-415. doi:10.1785/gssrl.79.3.400
-- Ristau (2013). BSSA 103(4), 2520-2533. doi:10.1785/0120120339
-- Herrmann (2013). CPS. SRL 84, 1081-1088. doi:10.1785/0220110096
-- Herrmann, Malagnini & Munafo (2011). BSSA 101(3), 975-993.
-  doi:10.1785/0120100184
-- Duputel, Rivera, Kanamori & Hayes (2012). GJI 189(2), 1125-1147.
-  doi:10.1111/j.1365-246X.2012.05419.x
-- Scognamiglio, Tinti & Michelini (2009). BSSA 99(4), 2223-2242.
-  doi:10.1785/0120080104
-- Scognamiglio et al. (2012). Ann. Geophys. 55(4). doi:10.4401/ag-6159
-- Scognamiglio, Magnoni, Tinti & Casarotti (2016). GJI 206(2), 792-806.
-  doi:10.1093/gji/ggw173
-- Fukuyama, Ishida, Dreger & Kawai (1998). Zisin 51(1), 149-156.
-  doi:10.4294/zisin1948.51.1_149
-- Fukuyama & Dreger (2000). Earth Planets Space 52, 383-392.
-- Kubo, Fukuyama, Kawai & Nonomura (2002). Tectonophysics 356(1-3),
-  23-48. doi:10.1016/S0040-1951(02)00375-X
-- Zahradnik & Sokos (2018). Springer. doi:10.1007/978-3-319-77359-9_1
-- Vackar, Burjanek, Gallovic, Zahradnik & Clinton (2017). GJI 210(2),
-  693-705. doi:10.1093/gji/ggx158
-- Triantafyllis et al. (2016). scisola. SRL 87(1), 157-163.
-- Triantafyllis et al. (2022). Gisola. SRL 93(2A), 957-966.
-- Halauwet et al. (2024). GJI 239(2), 1000-1020. doi:10.1093/gji/ggae309
-- Bernardi, Braunmiller, Kradolfer & Giardini (2004). GJI 157(2),
-  703-716. doi:10.1111/j.1365-246X.2004.02215.x
-- Vallee, Charlety, Ferreira, Delouis & Vergoz (2011). GJI 184(1),
-  338-358. doi:10.1111/j.1365-246X.2010.04836.x
-- Jian, Tseng, Liang & Huang (2018). AutoBATS. BSSA 108.
-  doi:10.1785/0120170231
-- Stich, Ammon & Morales (2003). JGR 108(B3).
-- Johnson, Hayes, Herrmann, Benz, McNamara & Bergman (2016). GJI
-  206(1), 525-556. doi:10.1093/gji/ggw141
-- Zahradnik & Custodio (2012). BSSA 102(3), 1235-1254.
-  doi:10.1785/0120110216
-- Ford, Dreger & Walter (2010). BSSA 100(5A), 1962-1970.
-  doi:10.1785/0120090140
-- Sokos & Zahradnik (2013). SRL 84(4), 656-665. doi:10.1785/0220130002
-- Vackar, Burjanek & Zahradnik (2015). MouseTrap. SRL 86(2A), 442-450.
-  doi:10.1785/0220140168
-- Zahradnik & Plesinger (2005). BSSA 95(5). doi:10.1785/0120040210
-- Cesca & Heimann (2018). Springer. doi:10.1007/978-3-319-77359-9_7
+## What was not verified
+
+Ristau (2008, 2013) full texts; the "VR > 65%" filter used in some NZ
+studies (not traceable to Ristau's text); INGV's depth grid; Kubo et
+al. (2002) full text; Bernardi et al. (2004) Table 2; Pasyanos et al.
+(1996); gempa's SNR definition; Herrmann, Benz & Ammon (2011) beyond
+the abstract. Readers with access to these are invited to correct this
+document.
