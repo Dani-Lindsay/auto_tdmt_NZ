@@ -1,4 +1,4 @@
-[auto-MT NZ] Mw 4.3 45 km north of Te Kaha (2026p598118), depth 58 km
+[auto-MT NZ] Mw 4.3 45 km north of Te Kaha (2026p598118), depth 46 km
 
 Automated regional moment tensor solution — PRELIMINARY
 
@@ -7,23 +7,23 @@ Triggered from the GeoNet rapid earthquake solution; origin time, location, prel
 Location: 45 km north of Te Kaha (-37.304, 177.630)
 GeoNet preliminary magnitude: M 4.7
 
-Mw: 4.31
-Centroid depth: 58 km (GeoNet initial: 12 km)
-Variance reduction: 59%  |  DC 98% / CLVD 2%
+Mw: 4.30
+Centroid depth: 46 km (GeoNet initial: 12 km)
+Variance reduction: 40%  |  DC 91% / CLVD 9%
 Filter band: 10-50 s  |  Velocity model: nz_north_ristau2008
-Nodal plane 1 (strike/dip/rake): 217/17/107
-Nodal plane 2 (strike/dip/rake): 19/73/85
-Stations used: 6  |  Azimuthal gap: 192 deg  |  Quality grade: C
+Nodal plane 1 (strike/dip/rake): 194/30/94
+Nodal plane 2 (strike/dip/rake): 10/60/88
+Stations used: 7  |  Azimuthal gap: 192 deg  |  Quality grade: B
 
-Stability (leave-one-out jackknife, n=6): Mw +/-0.023  |  DC 98 +/-7.0%  |  mechanism rotation <= 6.9 deg
+Stability (leave-one-out jackknife, n=7): Mw +/-0.014  |  DC 91 +/-10.8%  |  mechanism rotation <= 10.1 deg
 
 LIMITATIONS: deviatoric-only inversion (no isotropic component) - these mechanisms must not be interpreted in volcanic or geothermal settings, where real isotropic components are forced into DC/CLVD. Large misfit (low VR or grade C-D) indicates the automated result is unreliable and additional processing is required.
 
 Predicted peak surface displacement 0.00 cm — no detectable surface deformation expected.
 
 NISAR passes over the epicentre:
-  track 166 A: last 2026-08-24 18:12Z, next ~2026-09-05 18:12Z
   track 087 D: last 2026-08-31 06:12Z, next ~2026-09-12 06:12Z
+  track 166 A: last 2026-08-24 18:12Z, next ~2026-09-17 18:12Z
 
 --
 Automated solution (mttime 1.1.dev0, model nz_north_ristau2008, GF v1). Not reviewed by a human.

@@ -7,24 +7,24 @@ Triggered from the GeoNet rapid earthquake solution; origin time, location, prel
 Location: 45 km west of Twizel (-44.153, 169.526)
 GeoNet preliminary magnitude: M 3.9
 
-Mw: 4.47
+Mw: 4.53
 Centroid depth: 4 km (GeoNet initial: 5 km)
-Variance reduction: 12%  |  DC 30% / CLVD 70%
+Variance reduction: 8%  |  DC 77% / CLVD 23%
 Filter band: 10-50 s  |  Velocity model: nz_south_ristau2008
-Nodal plane 1 (strike/dip/rake): 67/89/-153
-Nodal plane 2 (strike/dip/rake): 337/63/-1
-Stations used: 3  |  Azimuthal gap: 215 deg  |  Quality grade: D
+Nodal plane 1 (strike/dip/rake): 14/44/60
+Nodal plane 2 (strike/dip/rake): 233/53/116
+Stations used: 3  |  Azimuthal gap: 334 deg  |  Quality grade: D
 
 Stability: jackknife skipped (fewer than 4 stations)
 
 LIMITATIONS: deviatoric-only inversion (no isotropic component) - these mechanisms must not be interpreted in volcanic or geothermal settings, where real isotropic components are forced into DC/CLVD. Large misfit (low VR or grade C-D) indicates the automated result is unreliable and additional processing is required.
 
-Predicted peak surface displacement 0.12 cm — no detectable surface deformation expected.
+Predicted peak surface displacement 0.34 cm — no detectable surface deformation expected.
 
 NISAR passes over the epicentre:
-  track 152 A: last 2026-08-23 18:52Z, next ~2026-09-04 18:52Z
   track 044 D: last 2026-08-28 06:39Z, next ~2026-09-09 06:39Z
   track 051 A: last 2026-08-28 18:44Z, next ~2026-09-09 18:44Z
+  track 152 A: last 2026-09-04 18:52Z, next ~2026-09-16 18:52Z
 
 --
 Automated solution (mttime 1.1.dev0, model nz_south_ristau2008, GF v1). Not reviewed by a human.
