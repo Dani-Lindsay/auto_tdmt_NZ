@@ -20,10 +20,12 @@ import config
 
 
 def wells_coppersmith_lw(mw: float) -> tuple[float, float]:
-    """(length_m, width_m) from Wells & Coppersmith (1994), all slip types."""
+    """(length_m, width_m) from Wells & Coppersmith (1994), all slip types;
+    coefficients in auto_tdmt.cfg (forward.wcLength / wcWidth)."""
     assert 3.0 < mw < 9.0, f"Mw {mw} outside regression range"
-    length_km = 10 ** (-2.44 + 0.59 * mw)
-    width_km = 10 ** (-1.01 + 0.32 * mw)
+    (a_l, b_l), (a_w, b_w) = config.P.forward.wcLength, config.P.forward.wcWidth
+    length_km = 10 ** (a_l + b_l * mw)
+    width_km = 10 ** (a_w + b_w * mw)
     return length_km * 1e3, width_km * 1e3
 
 
@@ -46,8 +48,10 @@ def predicted_displacement(
     # window scales with the source so the fault plane and its near-field
     # lobes fill the plot at any magnitude (capped for very large events)
     if halfwidth_km is None:
-        halfwidth_km = float(np.clip(8.0 * length_m / 1e3, 20.0, 200.0))
-    step_km = step_km or 2.0 * halfwidth_km / 120.0
+        cfg = config.P.forward.gridHalfwidthKm
+        halfwidth_km = (float(np.clip(8.0 * length_m / 1e3, 20.0, 200.0))
+                        if str(cfg).lower() == "auto" else float(cfg))
+    step_km = step_km or 2.0 * halfwidth_km / config.P.forward.gridPoints
     m0_nm = m0_dyne_cm_to_nm(m0_dyne_cm)
     slip_m = m0_nm / (config.SHEAR_MODULUS_PA * length_m * width_m)
 

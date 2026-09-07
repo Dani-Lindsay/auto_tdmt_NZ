@@ -29,14 +29,17 @@ README.md for citations.
 | `strike1,dip1,rake1` / `strike2,dip2,rake2` | Nodal planes of the DC part, degrees, Aki & Richards convention; the data cannot distinguish which plane is the fault |
 | `Mw` | Moment magnitude from the inversion |
 | `Depth` | Our centroid depth, km — the FINAL pick (VR-first, %DC tie-break on the contiguous plateau). The full depth grid is always searched; nothing is constrained toward GeoNet |
+| `Depth_lo`, `Depth_hi` | Range of depths whose VR is within 10% of the maximum — the depth uncertainty (Vallée et al. 2011) |
 | `Depth_VRmax` | Depth of the maximum variance reduction, km |
+| `dZ_GeoNet` | Our centroid depth minus the GeoNet hypocentre depth, km (the search is bounded to ± 30 km around it, never forced) |
 | `Depth_DCmax` | Depth of the maximum %DC, km |
 | `Plateau_km` | Width of the near-VR-max plateau, km; large values mean depth is weakly constrained by the waveforms |
 | `Mo` | Scalar moment, dyne-cm |
-| `NS` | Number of stations used in the final solution (informational — NOT a grade threshold) |
+| `NS` | Number of stations used in the final solution (sets the row of the grade table) |
 | `AzGap` | Largest azimuthal gap between used stations, degrees (informational — NOT a grade threshold; the geometry requirement is simply that two stations are >= 90 deg apart) |
-| `Grade` | Evidence grade. **A**: VR>=70, DC>=60, every used station fitting at own VR>=40, jackknife rotation<=15 deg, interior depth agreeing with GeoNet within 8 km. **B**: VR>=60, DC>=60, min own VR>=25, rotation<=25 deg (or jackknife impossible), same depth conditions — exactly the BSL publishability rule plus the evidence checks. **C**: VR>=50, min own VR>=10. **D**: below that, or no two stations >= 90 deg apart. **X**: no coherent solution (see `Status`). Only A/B are emailed. Station count and azimuthal gap are deliberately NOT thresholds |
+| `Grade` | INGV table on (VR, N stations): the VR bar falls as N rises (3 stations: B ≥ 70; 4: B ≥ 40, A ≥ 60; 5-8: B ≥ 40, A ≥ 60; >8: B ≥ 30, A ≥ 50); A/B also need DC ≥ 60 and jackknife rotation ≤ 25°. X = no coherent solution. Only A/B are emailed |
 | `DC`, `CLVD` | Percent double-couple / compensated linear vector dipole of the deviatoric solution |
+| `MinStaVR` | Own VR of the worst-fitting used station |
 | `VR` | Total variance reduction, percent (distance-weighted) |
 
 ## Stability (leave-one-station-out jackknife at the preferred depth)
@@ -70,6 +73,16 @@ solutions CSV so the catalogues are directly comparable).
 | `Status` | `solved`, or `no_coherent_solution` for an event the network could not constrain (mechanism columns are then empty and the grade is `X`) |
 | `Selection` | Station-selection/grading version that produced the row (e.g. `v4`). A catalogue mixing vintages is self-describing |
 | `Code` | Short git commit of the code that produced the row, so any solution can be reproduced exactly |
-| `quality_flag` | `True`, or the failed quality checks (`low_VR`, `station_not_fitting`, `no_90deg_azimuth_pair`, `unstable_mechanism`, `grid_edge_depth`, `low_DC`, or `no_coherent_solution:<stage>`) |
+| `quality_flag` | `True`, or the failed checks (`VR_below_grade_B`, `low_DC`, `unstable_mechanism`, `few_stations`, or `no_coherent_solution:<stage>`) |
 | `publish_flag` | `True`, or why the email gate declined (`grade_C`, `too_small_no_disp`, `aftershock`, `daily_cap`) |
 | `published` | Whether this solution was emailed to the list |
+
+## Companion tables
+
+- `not_published.csv` — every processed event that did NOT email, with
+  `Why_not` (the publish decision's reasons) and `Tags`.
+- `station_ledger.csv` — one row per station per event: distance,
+  azimuth, sector, SNR per component, amplitude ratio, window, whether it
+  was used, the reason class and reason if not, its own VR and time
+  shift, and the event's band/depth/Mw/VR/grade. The year-one learning
+  table; `station_performance.csv` is its per-station aggregate.

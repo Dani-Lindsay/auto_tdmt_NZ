@@ -1,136 +1,92 @@
-"""Per-station performance ledger, aggregated from every archived
-solution.json — the raw material for "we know this station does well".
+"""Per-station aggregate of events/station_ledger.csv — "which stations
+consistently get picked or dropped", the year-one learning table.
 
-Regenerated alongside the catalogue after each event and consumed by the
-validation scripts. Collected per station:
-
-- n_seen / n_used / use_rate: how often the station enters the pool and
-  survives selection;
-- med_station_vr: median individual variance reduction when used (fit
-  quality track record);
-- mean_dv_pct / med_abs_dv_pct: signed and absolute velocity-model
-  deviation from solved zcor — a consistent sign is a path anomaly, a
-  large scatter is an unreliable station;
-- med_amp_ratio: median distance-corrected amplitude vs network median —
-  drift flags response-metadata problems (e.g. NZ.RDHZ at ~100x, or a
-  dead channel near 0x);
-- n_snr_drop (SNR or peak/noise floor) / n_amp_outlier / n_eliminated: why it gets excluded.
-
-A future selection prior can read this table directly; today it is the
-audit trail.
+Regenerated with the catalogue after each event. Per station:
+  n_seen / n_used / use_rate     entered the pool / survived the loop
+  med_snr                        median of its median component SNR
+  med_station_vr                 median own VR when used
+  med_shift_s, med_abs_shift_s   solved time shift (a consistent sign is a
+                                 path/velocity-model anomaly)
+  med_amp_ratio                  distance-corrected amplitude vs the network
+                                 median (drift = response metadata problem)
+  n_<reason class>               why it was left out
 """
 
 from __future__ import annotations
 
 import csv
-import json
-import re
 from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
 
+import catalogue
 import config
-import invert
 
-COLUMNS = [
-    "station", "n_seen", "n_used", "use_rate", "n_used_demoted",
-    "med_station_vr", "mean_dv_pct", "med_abs_dv_pct", "med_amp_ratio",
-    "n_nodata", "n_dead", "n_amp_outlier", "n_not_admitted", "n_antifit",
-    "n_abort", "last_event",
-]
+CLASSES = ("nodata", "snr", "amp", "not_selected", "fit", "shift", "abort",
+           "other")
+COLUMNS = (["station", "n_seen", "n_used", "use_rate", "med_snr",
+            "med_station_vr", "med_shift_s", "med_abs_shift_s",
+            "med_amp_ratio"] + [f"n_{c}" for c in CLASSES] + ["last_event"])
 
 
 def build_station_performance(events_dir: Path | None = None) -> Path | None:
     events_dir = events_dir or config.EVENTS_DIR
-    solutions = sorted(events_dir.glob("*/solution.json"))
-    if not solutions:
+    ledger_path = events_dir / "station_ledger.csv"
+    if not ledger_path.exists():
+        catalogue.build_catalogue(events_dir)
+    if not ledger_path.exists():
         return None
+    acc: dict[str, dict] = defaultdict(
+        lambda: {"seen": 0, "used": 0, "snr": [], "vr": [], "shift": [],
+                 "amp": [], "last": "", **{f"n_{c}": 0 for c in CLASSES}})
 
-    ledger: dict[str, dict] = defaultdict(
-        lambda: {"used": [], "dv": [], "amp": [], "seen": 0, "last": "",
-                 "demoted_used": 0,
-                 "nodata": 0, "dead": 0, "amp_out": 0, "not_admitted": 0,
-                 "antifit": 0, "abort": 0, "other": 0})
+    def _f(x):
+        try:
+            return float(x)
+        except (TypeError, ValueError):
+            return None
 
-    def _key(sid: str) -> str:
-        parts = sid.split(".")
-        return ".".join(parts[:2]) if len(parts) >= 2 else sid
-
-    for path in solutions:
-        s = json.loads(path.read_text())
-        date = s["event"]["origin_time"][:10]
-        for r in s.get("stations_used", []):
-            k = f"{r['network']}.{r['station']}"
-            e = ledger[k]
+    with open(ledger_path) as f:
+        for r in csv.DictReader(f):
+            k = ".".join(r["Station"].split(".")[:2])
+            e = acc[k]
             e["seen"] += 1
-            e["last"] = max(e["last"], date)
-            if "station_vr" in r:
-                e["used"].append(r["station_vr"])
-            if "zcor_s" in r and r.get("distance_km"):
-                e["dv"].append(
-                    r["zcor_s"] / (r["distance_km"]
-                                   / config.GROUP_VELOCITY_KMS) * 100.0)
-            if "amp_ratio" in r:
-                e["amp"].append(r["amp_ratio"])
-            if r.get("tier") == "demoted":
-                e["demoted_used"] += 1
-        for d in s.get("stations_dropped", []):
-            k = _key(d["station"])
-            e = ledger[k]
-            e["seen"] += 1
-            e["last"] = max(e["last"], date)
-            reason = d.get("reason", "")
-            if "amp_ratio" in d:
-                e["amp"].append(d["amp_ratio"])
-            # ONE shared vocabulary with figure.py (invert.reason_class);
-            # legacy v3 strings fall through to "other"
-            cls = invert.reason_class(reason)
-            if cls == "nodata":
-                e["nodata"] += 1
-            elif cls == "dead":
-                e["dead"] += 1
-            elif cls == "amp":
-                e["amp_out"] += 1
-            elif cls == "not_admitted":
-                e["not_admitted"] += 1
-            elif cls == "antifit":
-                e["antifit"] += 1
-            elif cls == "abort":
-                e["abort"] += 1
+            e["last"] = max(e["last"], r["Date"])
+            for key, col in (("snr", "SNR_med"), ("amp", "Amp_ratio")):
+                v = _f(r[col])
+                if v is not None:
+                    e[key].append(v)
+            if r["Used"] == "True":
+                e["used"] += 1
+                for key, col in (("vr", "Station_VR"), ("shift", "Shift_s")):
+                    v = _f(r[col])
+                    if v is not None:
+                        e[key].append(v)
             else:
-                e["other"] += 1
+                cls = r["Reason_class"] if r["Reason_class"] in CLASSES else "other"
+                e[f"n_{cls}"] += 1
+
+    def _med(xs, nd=1):
+        return round(float(np.median(xs)), nd) if xs else ""
 
     out = events_dir / "station_performance.csv"
     with open(out, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=COLUMNS)
         w.writeheader()
-        for k in sorted(ledger):
-            e = ledger[k]
-            n_used = len(e["used"])
+        for k in sorted(acc):
+            e = acc[k]
             w.writerow({
-                "station": k,
-                "n_seen": e["seen"],
-                "n_used": n_used,
-                "use_rate": round(n_used / e["seen"], 2) if e["seen"] else 0,
-                "med_station_vr": (round(float(np.median(e["used"])), 1)
-                                   if e["used"] else ""),
-                "mean_dv_pct": (round(float(np.mean(e["dv"])), 1)
-                                if e["dv"] else ""),
-                "med_abs_dv_pct": (round(float(np.median(np.abs(e["dv"]))), 1)
-                                   if e["dv"] else ""),
-                "med_amp_ratio": (round(float(np.median(e["amp"])), 2)
-                                  if e["amp"] else ""),
-                "n_used_demoted": e["demoted_used"],
-                "n_nodata": e["nodata"],
-                "n_dead": e["dead"],
-                "n_amp_outlier": e["amp_out"],
-                "n_not_admitted": e["not_admitted"],
-                "n_antifit": e["antifit"],
-                "n_abort": e["abort"],
+                "station": k, "n_seen": e["seen"], "n_used": e["used"],
+                "use_rate": round(e["used"] / e["seen"], 2) if e["seen"] else 0,
+                "med_snr": _med(e["snr"]), "med_station_vr": _med(e["vr"]),
+                "med_shift_s": _med(e["shift"]),
+                "med_abs_shift_s": _med([abs(x) for x in e["shift"]]),
+                "med_amp_ratio": _med(e["amp"], 2),
+                **{f"n_{c}": e[f"n_{c}"] for c in CLASSES},
                 "last_event": e["last"],
             })
-    print(f"station performance: {len(ledger)} stations -> {out}")
+    print(f"station performance: {len(acc)} stations -> {out}")
     return out
 
 

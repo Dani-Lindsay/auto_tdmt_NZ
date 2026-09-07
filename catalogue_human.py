@@ -1,12 +1,14 @@
 """Rebuild events_human/catalogue_human.csv from every reviewed
-solution.json — the CSV is a BUILD PRODUCT, never hand-edited or
-hand-merged, so student Pull Requests can never conflict on it.
+solution.json — a BUILD PRODUCT, never hand-edited, so student Pull
+Requests can never conflict on it.
+
+Same columns as the automated catalogue (catalogue.COLUMNS: origin,
+planes, Mw, depth range, quality, the full moment tensor, provenance)
+plus the review fields, so the two catalogues line up column for column.
 
 Layouts supported:
   events_human/<event_dir>/<reviewer-slug>/solution.json   (current)
   events_human/<event_dir>/solution.json                   (legacy)
-
-Standard library only (runs on a bare GitHub Actions runner):
 
     python3 catalogue_human.py
 """
@@ -14,66 +16,36 @@ from __future__ import annotations
 
 import csv
 import json
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 HUMAN = ROOT / "events_human"
+sys.path.insert(0, str(ROOT))
 
-COLUMNS = [
-    "PublicID", "Date", "Latitude", "Longitude",
-    "strike1", "dip1", "rake1", "strike2", "dip2", "rake2",
-    "GeoNet_M", "GeoNet_depth", "Mw", "Depth", "NS", "AzGap",
-    "Grade", "DC", "VR", "Band", "Model",
-    "Reviewer", "ReviewDate", "Decision", "Changes",
-    "Auto_Mw", "Auto_Depth", "Auto_Grade",
-]
+import catalogue  # noqa: E402
 
-
-def band_tag(band_hz) -> str:
-    try:
-        lo, hi = float(band_hz[0]), float(band_hz[1])
-        return f"{round(1 / hi)}-{round(1 / lo)}s"
-    except Exception:  # noqa: BLE001 - band is optional provenance
-        return ""
+REVIEW_COLUMNS = ["Reviewer", "ReviewDate", "Decision", "Changes", "Notes",
+                  "Auto_Mw", "Auto_Depth", "Auto_Grade"]
+COLUMNS = [c for c in catalogue.COLUMNS if c != "published"] + REVIEW_COLUMNS
 
 
 def row_from(sol: dict) -> dict:
-    ev = sol["event"]
-    p = sol["preferred"]
-    q = sol["quality"]
+    row = catalogue.row_from(sol)
     hr = sol.get("human_review", {})
     ref = sol.get("automated_reference", {})
-    prov = sol.get("provenance", {})
-    return {
-        "PublicID": ev["public_id"],
-        "Date": ev["origin_time"][:10],
-        "Latitude": ev["latitude"],
-        "Longitude": ev["longitude"],
-        "strike1": round(p["plane1"]["strike"]),
-        "dip1": round(p["plane1"]["dip"]),
-        "rake1": round(p["plane1"]["rake"]),
-        "strike2": round(p["plane2"]["strike"]),
-        "dip2": round(p["plane2"]["dip"]),
-        "rake2": round(p["plane2"]["rake"]),
-        "GeoNet_M": round(ev.get("prelim_mag", float("nan")), 2),
-        "GeoNet_depth": round(ev.get("depth_km", float("nan")), 1),
-        "Mw": round(p["mw"], 2),
-        "Depth": p["depth_km"],
-        "NS": q["n_stations_used"],
-        "AzGap": round(q["azimuthal_gap_deg"]),
-        "Grade": q["grade"],
-        "DC": round(p["pdc"]),
-        "VR": round(p["vr"], 1),
-        "Band": band_tag(sol.get("filter_band_hz", ())),
-        "Model": prov.get("velocity_model", sol.get("model", "")),
-        "Reviewer": hr.get("reviewer", ""),
-        "ReviewDate": hr.get("date", ""),
-        "Decision": hr.get("decision", ""),
-        "Changes": hr.get("changes", ""),
-        "Auto_Mw": ref.get("mw", ""),
-        "Auto_Depth": ref.get("depth_km", ""),
+    if not row.get("Band"):
+        b = sol.get("filter_band_hz")
+        if b:
+            row["Band"] = f"{round(1 / b[1])}-{round(1 / b[0])}s"
+    row.update({
+        "Reviewer": hr.get("reviewer", ""), "ReviewDate": hr.get("date", ""),
+        "Decision": hr.get("decision", ""), "Changes": hr.get("changes", ""),
+        "Notes": hr.get("notes", ""),
+        "Auto_Mw": ref.get("mw", ""), "Auto_Depth": ref.get("depth_km", ""),
         "Auto_Grade": ref.get("grade", ""),
-    }
+    })
+    return row
 
 
 def build() -> Path:
@@ -89,7 +61,8 @@ def build() -> Path:
     with open(out, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=COLUMNS)
         w.writeheader()
-        w.writerows(rows)
+        for r in rows:
+            w.writerow({k: r.get(k, "") for k in COLUMNS})
     print(f"wrote {out} ({len(rows)} reviews)")
     return out
 

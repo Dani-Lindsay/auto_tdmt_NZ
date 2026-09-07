@@ -1,12 +1,19 @@
-"""Central configuration for the auto_tdmt_NZ pipeline.
+"""Infrastructure configuration: paths, services, the precomputed Green's-
+function grid, channel codes, and the names other modules import.
 
-Every threshold, filter band, grid definition and path lives here so nothing
-is scattered or hardcoded in the processing modules. Values that are physics
-(not preference) carry their derivation in a comment.
+EVERY SCIENTIFIC CHOICE LIVES IN auto_tdmt.cfg (loaded by params.py) —
+thresholds, distances, bands, the depth window, the grade table, the
+publish gates. This module only re-exports those values under the names
+the task modules use, so that the cfg is the single place to change a
+number. If you are looking for a threshold, open auto_tdmt.cfg.
 """
 
 import os
 from pathlib import Path
+
+import params
+
+P = params.load()
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -21,11 +28,8 @@ OUTPUT_BASE = Path(
 )
 EVENTS_DIR = Path(os.environ.get("AUTO_TDMT_EVENTS", OUTPUT_BASE / "outputs"))
 GF_LIBRARY_DIR = Path(os.environ.get("AUTO_TDMT_GF", OUTPUT_BASE / "gf_library"))
-# Raw-waveform download cache (laptop iteration): miniSEED + StationXML per
-# event, written on first download and reused by every later sweep, so
-# repeated rule-testing does not re-download from GeoNet. DISPOSABLE —
-# delete the whole directory at any time (rm -rf), nothing else references
-# it; a README.txt inside says the same.
+# Raw-waveform download cache: miniSEED + StationXML per event, reused by
+# every later run. DISPOSABLE — delete the whole directory at any time.
 WF_CACHE_DIR = Path(os.environ.get("AUTO_TDMT_WFCACHE", OUTPUT_BASE / "wfcache"))
 CPS_BIN = Path(
     os.environ.get("AUTO_TDMT_CPS_BIN", OUTPUT_BASE / "cps" / "PROGRAMS.330" / "bin")
@@ -33,12 +37,13 @@ CPS_BIN = Path(
 STATE_FILE = REPO_DIR / "events" / "index.json"
 
 # ---------------------------------------------------------------------------
-# Code version stamped into every solution and catalogue row, so a catalogue
-# with mixed-vintage rows is self-describing and any solution can be traced
-# to the exact code that produced it (git tag selection-v3 = the pre-funnel
-# state). Bump SELECTION_VERSION whenever selection or grading rules change.
+# Code version stamped into every solution and catalogue row. Bump
+# SELECTION_VERSION whenever selection or grading rules change.
+#   selection-v3  the pre-funnel state       (git tag)
+#   selection-v4  the four-pass funnel       (git tag)
+#   v5            the published-rules version (Clinton loop, INGV grades)
 # ---------------------------------------------------------------------------
-SELECTION_VERSION = "v4"
+SELECTION_VERSION = "v5"
 
 
 def code_version() -> str:
@@ -62,8 +67,7 @@ def code_version() -> str:
 
 
 # Archive status: an event either has a solution or is recorded as having
-# no coherent one (see invert.no_solution_record). Every consumer branches
-# on is_solved() rather than assuming "preferred" exists.
+# no coherent one. Every consumer branches on is_solved().
 STATUS_SOLVED = "solved"
 STATUS_NO_SOLUTION = "no_coherent_solution"
 
@@ -79,15 +83,17 @@ def slugify(text: str) -> str:
 
 
 def event_dir_name(public_id: str, mw: float, depth_km: float,
-                   locality: str) -> str:
-    return (f"{public_id}_Mw{mw:.1f}_{depth_km:g}km_"
+                   locality: str, origin_time: str = "") -> str:
+    """<publicID>_<YYYY-MM-DD>_Mw<mw>_<depth>km_<locality>."""
+    date = f"_{origin_time[:10]}" if origin_time else ""
+    return (f"{public_id}{date}_Mw{mw:.1f}_{depth_km:g}km_"
             f"{slugify(locality)[:40]}")
 
 
-def no_solution_dir_name(public_id: str, locality: str) -> str:
-    """Directory name for an event with no coherent solution — visibly
-    different from a solved event's Mw/depth name."""
-    return f"{public_id}_NOSOL_{slugify(locality)[:40]}"
+def no_solution_dir_name(public_id: str, locality: str,
+                         origin_time: str = "") -> str:
+    date = f"_{origin_time[:10]}" if origin_time else ""
+    return f"{public_id}{date}_NOSOL_{slugify(locality)[:40]}"
 
 
 def find_event_dir(public_id: str, events_dir: Path | None = None):
@@ -107,327 +113,72 @@ GEONET_CMT_CSV = (
     "moment-tensor/GeoNet_CMT_solutions.csv"
 )
 USER_AGENT = "auto_tdmt_NZ/0.1 (research MT pipeline; danielle.lindsay@earthsciences.nz)"
-
-# NRT window: events older than this must use the archive FDSN services.
-NRT_WINDOW_DAYS = 8
+NRT_WINDOW_DAYS = 8  # older events must use the archive FDSN services
 
 # ---------------------------------------------------------------------------
-# Processing trigger (applied to GeoNet PRELIMINARY magnitude, which is a mix
-# of M/MLv/mB summary magnitudes — deliberately loose; everything above this
-# floor is processed and archived, publication is decided later on OUR Mw)
+# Task 1 — processing floor (auto_tdmt.cfg section 1)
 # ---------------------------------------------------------------------------
-# Lowered 4.0 -> 3.7 (2026-09-04) after the small-event review: GeoNet
-# preliminary M runs ~0.2-0.3 above the final Mw for small events, so a
-# 3.7 prelim floor reaches true Mw ~3.4-3.5 - the smallest this network
-# + 10-50 s band demonstrably constrains (2026p216882 Mw 3.6 grade C,
-# 2026p221690 Mw 3.77 grade B). A 3.5 prelim floor would mostly add
-# unsolvable Mw~3.2 events (+30% compute) below Ristau's own coverage.
-PROCESS_MIN_PRELIM_MAG = 3.7
-# Events deeper than this cannot produce measurable surface displacement
-# at these magnitudes (the purpose of this tool). GeoNet PLACEHOLDER depths
-# (incl. 33 km) are exempt: their true depth is unknown and often shallow,
-# so they are processed and the depth search decides.
-MAX_PROCESS_DEPTH_KM = 30.0
-# The distance > 3x depth far-field guard is a SHALLOW-source rule; beyond
-# this depth every station is far-field and the rule is skipped.
-DIST_DEPTH_RULE_MAX_DEPTH_KM = 40.0
-# Restrict to events GeoNet can actually constrain (their network interest
-# region); drop teleseisms tagged "outside of network interest".
+PROCESS_MIN_PRELIM_MAG = P.geonet.minPrelimMag
+MAX_PROCESS_DEPTH_KM = P.geonet.maxDepthKm
+PLACEHOLDER_DEPTHS_KM = set(P.geonet.placeholderDepthsKm)
 PROCESS_EVENT_TYPES = {"earthquake"}
-# Rough NZ bounding box guard (lat, lon); events outside are skipped.
-NZ_BBOX = {"lat_min": -50.5, "lat_max": -33.0, "lon_min": 164.0, "lon_max": 182.5}
+NZ_BBOX = dict(zip(("lat_min", "lat_max", "lon_min", "lon_max"),
+                   P.geonet.bbox))
 
 # ---------------------------------------------------------------------------
-# Publication gate (applied to OUR inverted Mw after quality gates)
+# Task 5 — publication gate (auto_tdmt.cfg section 5)
 # ---------------------------------------------------------------------------
-PUBLISH_MIN_MW = 5.0
-PUBLISH_MIN_PRED_DISP_M = 0.01  # 1 cm predicted max surface displacement
-MAX_POSTS_PER_DAY = 3
-# Aftershock throttle: within this space/time window of an already-published
-# event, a new event only publishes if within AFTERSHOCK_MW_MARGIN of the
-# published mainshock Mw, or above PUBLISH_MIN_MW regardless.
-AFTERSHOCK_RADIUS_KM = 75.0
-AFTERSHOCK_WINDOW_DAYS = 14.0
-AFTERSHOCK_MW_MARGIN = 0.5
+PUBLISH_MIN_GRADE = P.publish.minGrade
+PUBLISH_MIN_MW = P.publish.minMw
+PUBLISH_MIN_PRED_DISP_M = P.publish.minDisplacementM
+MAX_POSTS_PER_DAY = P.publish.maxPerDay
+AFTERSHOCK_RADIUS_KM = P.publish.aftershockRadiusKm
+AFTERSHOCK_WINDOW_DAYS = P.publish.aftershockWindowDays
+AFTERSHOCK_MW_MARGIN = P.publish.aftershockMwMargin
 
 # ---------------------------------------------------------------------------
-# Waveform selection / pre-processing (EPS207 recipe; validated retrospectively)
+# Task 2 — stations and waveforms (auto_tdmt.cfg section 2)
 # ---------------------------------------------------------------------------
 NETWORK = "NZ"
 CHANNEL_PRIORITY = ("HH?", "BH?")  # broadband only; short-period useless at LP
-MAX_STATION_DIST_KM = 300.0  # base ceiling; see station_max_dist_km
-MIN_STATION_DIST_KM = 20.0  # near-field exclusion radius (larger events)
-
-
-def station_min_dist_km(prelim_mag: float) -> float:
-    """Near-field exclusion. Small shallow events put their information in
-    the close stations (2026-09-03 review: 'we are missing out on info');
-    an M4 rupture is ~1 km so the point-source assumption already holds at
-    10 km. Larger events keep the 20 km exclusion."""
-    return 10.0 if prelim_mag < 4.5 else MIN_STATION_DIST_KM
-
-
-# When fewer than this many stations enter the pool, the search radius is
-# extended once by RADIUS_EXTEND_KM (offshore events: 2026p047833 review)
-# and the annulus is fetched and processed too.
-MIN_USABLE_BEFORE_EXTEND = 4
+station_min_dist_km = P.min_dist_km
+station_max_dist_km = P.max_dist_km
+# one-shot radius extension when the usable pool is thin (offshore events)
+MIN_USABLE_BEFORE_EXTEND = P.invert.minStations + 1
 RADIUS_EXTEND_KM = 100.0
-
-# Station clustering: dense sub-networks (e.g. the Ruapehu volcano ring)
-# would let one site dominate an azimuth sector. Beyond CLUSTER_MAX_STATIONS
-# within CLUSTER_RADIUS_KM, a station is TAGGED "cluster_surplus" — a
-# DEMOTION, NEVER AN EXCLUSION (v4): it still gets its seat-earning test in
-# the funnel, but must not reduce the joint fit to be admitted.
-CLUSTER_RADIUS_KM = 25.0
-CLUSTER_MAX_STATIONS = 2
-
-
-def station_max_dist_km(prelim_mag: float) -> float:
-    """Magnitude-scaled search radius: small events attenuate below
-    usefulness at far field, larger events still carry information there."""
-    if prelim_mag < 4.0:
-        return 120.0
-    if prelim_mag < 4.5:
-        return 180.0
-    if prelim_mag < 5.0:
-        return 250.0
-    return MAX_STATION_DIST_KM
-
-
-# Amplitude-consistency screen: a station whose distance-corrected peak
-# amplitude (peak x distance) is more than this factor from the network
-# median has broken response metadata or severe site pathology and would
-# steer the least-squares moment — drop it before inversion.
-AMPLITUDE_OUTLIER_FACTOR = 8.0
-# The screen needs a network median to compare against; 3 is the minimum
-# that gives one (was 4, which left the sparsest events unprotected —
-# 2026p101368 used RDHZ at station VR -40 because the screen never ran).
-AMP_SCREEN_MIN_STATIONS = 3
-# Station distance below ~3x source depth violates the point-source /
-# far-field heuristic (EPS207 §3.1) — but the CPS Green's functions are
-# complete-wavefield solutions including the near-field terms, and the
-# 2026-09-04 audit found this rule removing the CLOSEST station in every
-# event it touched (94% of those ended C/D). It is now a DEMOTION TAG
-# ("near_field"), NEVER AN EXCLUSION: the fit decides.
-MIN_DIST_DEPTH_RATIO = 3.0
-MAX_POOL_STATIONS = 30  # pool safety cap; the funnel prunes by fit
-
-# Zero-phase Butterworth passbands in Hz, ordered candidate lists per
-# preliminary magnitude (BSL TDMT practice: a small menu of period bands,
-# longer periods as magnitude grows). The pipeline tries each candidate and
-# keeps the solution with the best variance reduction.
-def band_candidates(prelim_mag: float) -> list[tuple[float, float]]:
-    assert 0.0 < prelim_mag < 10.0, f"implausible magnitude {prelim_mag}"
-    if prelim_mag < 4.5:
-        # 10-50 s only: small events carry no coherent energy above ~20 s
-        # period, and every reviewed case (2026-09-03) preferred 10-50 s;
-        # the 20-50 s trials only ever fit noise (Mw inflation). Other
-        # bands remain testable via run02 --band.
-        return [(0.02, 0.10)]
-    if prelim_mag < 5.5:
-        # ORDERED PREFERENCE (first gate-passer wins below M5.5 — see
-        # run02): 10-50 s first — the band where signal lives at these
-        # magnitudes; 20-50 s is the fallback. 20-100 s pruned 2026-09-03
-        # (won 1/19 in this bin and only ever fit noise on the losers).
-        return [(0.02, 0.10), (0.02, 0.05)]
-    return [(0.01, 0.05), (0.01, 0.033)]  # 20-100 s, 30-100 s
+band_candidates = P.bands_hz
+window_tail_s = P.window_tail_s
+FILTER_CORNERS = P.station.filterCorners
 
 
 def band_tag(band_hz: tuple[float, float]) -> str:
     return f"band_{round(1/band_hz[1]):d}-{round(1/band_hz[0]):d}s"
 
-# (Removed 2026-09-04: the greedy "test-drop what improves joint VR" pass.
-# It was evicting well-fitting stations to polish a number — 2026p091845
-# lost THZ/MRZ/WRRZ at station VR 54-65 — which is VR vanity at the cost of
-# azimuth coverage. Stations now leave only if they anti-fit.)
 
-# The %DC tie-break only engages when the fit is meaningful; below this
-# VR maximum the event is junk-grade and DC differences are noise — take
-# the plain VR maximum (2026p348732: VR max 7.7 made the whole grid a
-# "plateau" and DC alone chose the depth).
-DC_TIEBREAK_MIN_VR = 20.0
-
-# Distance-adaptive inversion window (record length), ALL magnitudes: a
-# close station's surface-wave train is over quickly regardless of event
-# size, and fitting the empty tail only taxes VR. Per-station window =
-# 30 s pre-origin + dist/group_vel + tail(M), clamped; the tail grows
-# with magnitude because larger sources ring longer.
-# 2.5 km/s (was 2.8): 2026p091845 review showed the tail of the
-# surface-wave train clipped at the old velocity; the slower bound
-# plus the longer small-event tail keeps the full packet in-window
-WINDOW_GROUP_VEL_KMS = 2.5
-WINDOW_MIN_S = 60.0
-
-
-def window_tail_s(prelim_mag: float) -> float:
-    if prelim_mag < 4.5:
-        return 30.0
-    if prelim_mag < 5.5:
-        return 40.0
-    return 60.0
-
-# Preferred-solution rule (EPS207 §3.3: VR alone is a weak depth
-# discriminator; %DC is more diagnostic): among solutions whose VR is within
-# this many percentage points of the maximum, prefer the highest %DC. Applied
-# to the depth pick, the station-rejection reference and the band choice.
-PREFER_DC_VR_TOLERANCE = 5.0
-# ...but the DC tie-break itself uses a TIGHTER window (2026-09-05): DC
-# may break a near-tie in VR, it must not buy a 5-point VR loss. At the
-# old tolerance the pick landed on the EDGE of the plateau (2026p091845:
-# 24 km at VR 60.5/DC 98 chosen over 18-22 km at VR 65/DC 88-93).
-# Measured over 343 archived events with a Ristau reference depth:
-# tolerance 5 -> median |dZ| 9.0 km, tolerance 2 -> 8.0 km (61 events
-# move), and DC contributes nothing beyond that (tolerance 0 is also 8.0).
-DEPTH_DC_TOLERANCE = 2.0
-
-# Depth plausibility vs the GeoNet hypocentre. The search stays FULLY
-# INDEPENDENT — this only flags and downgrades, never forces. Threshold
-# set by D. Lindsay (2026-09-05): our centroid depth and GeoNet's
-# hypocentre should agree within 8 km. Calibration from the Ristau
-# catalogue (343 matched events): his centroid depths sit a median 4 km
-# from the GeoNet hypocentre, 57% within 5 km and 82% within 10 km — so
-# 8 km is close to his typical agreement, and a solution outside it is
-# claiming something a trusted analyst catalogue rarely does. Placeholder
-# GeoNet depths (5/12/33 km) are exempt: those are not measurements.
-DEPTH_PLAUSIBLE_MAX_KM = 8.0
+def sector(azimuth: float) -> int:
+    """Azimuth -> sector index (P.station.sectors equal sectors)."""
+    width = 360.0 / P.station.sectors
+    return int(azimuth // width) % P.station.sectors
 
 # Sample spacing / windows — locked between data prep and the GF library,
-# following the mttime example notebooks (Chiang) exactly:
-# data trimmed origin-30 s .. origin+200 s at dt=1 s; GFs computed with
-# npts=256 (FK needs a power of 2), vred=0 and t0=0 so they start at origin;
-# station-table ts=30 samples, inversion window npts=150.
+# following the mttime example notebooks (Chiang) exactly: data trimmed
+# origin-30 s .. origin+200 s at dt=1 s; GFs computed with npts=256 (FK
+# needs a power of 2), vred=0 and t0=0 so they start at origin; station-
+# table ts=30 samples. The inversion window per station ends at
+# station.maxWindowS after origin at most (INV_NPTS).
 DT = 1.0  # s
 GF_NPTS = 256
-INV_NPTS = 150
 TIME_BEFORE_S = 30
 TIME_AFTER_S = 200
-FILTER_CORNERS = 3  # obspy corners, zerophase=True; notebook-02 values, applied
-# identically to data and Green's functions (only consistency matters)
+INV_NPTS = int(TIME_BEFORE_S + P.station.maxWindowS)
+assert INV_NPTS <= GF_NPTS, (
+    f"station.maxWindowS {P.station.maxWindowS:g} s exceeds the Green's "
+    f"functions ({GF_NPTS - TIME_BEFORE_S} s after origin)")
 # Response-removal pre-filter (Hz), from mttime example notebook 01.
 RESPONSE_PRE_FILT = (0.004, 0.007, 10.0, 20.0)
 
 # ---------------------------------------------------------------------------
-# Station selection v4 — the funnel (2026-09-04)
-#
-# Design (D. Lindsay): use ALL stations, drop the worst-VR ones keeping the
-# majority (~10), re-run, choose the best 4-6 as the core, then incrementally
-# add every other station back and decide which are useful, considering
-# azimuth spread and individual fit. Nothing usable is deleted by a
-# pre-filter; the fit decides. Motivation: the 693-event audit found 61% of
-# all station exclusions were decided by the solution itself, and 69% of
-# those vetoes were issued by cores whose own VR was below 20.
-# ---------------------------------------------------------------------------
-
-# Peak-to-noise station quality: median over Z/R/T of
-# peak|signal| / RMS(pre-event noise), signal measured ONLY inside the
-# distance-adaptive window actually inverted — an impulsive surface-wave
-# packet is a spike above background, which RMS-over-200s could not see.
-# Below PEAK_NOISE_DEAD the channel carries nothing and is hard-rejected
-# (data still written for the figures); between DEAD and STRONG the station
-# is TAGGED "weak_signal" and must earn its seat in the funnel.
-PEAK_NOISE_DEAD = 1.2
-PEAK_NOISE_STRONG = 5.0
-
-# Time-shift (zcor) sanity. mttime's cross-correlation search is unbounded
-# (a 60 s window can slide >100 s), which is exactly how a noise trace finds
-# a chance alignment and earns undeserved VR. Archive calibration: stations
-# used in grade A/B solutions have |zcor| <= 9 s at p95, while grade-D
-# stations reach 0.88 of their whole travel time. Pass 1 therefore runs with
-# NO shifts at all, and from pass 2 on a station whose solved shift exceeds
-# this bound is rejected (its fit is not evidence).
-ZCOR_MAX_S = 8.0
-
-# Pass 1: survey inversion over the whole pool, coarse depth grid (every
-# PASS1_DEPTH_STRIDE-th library depth plus both ends). Stations are ranked by
-# the MEDIAN of their own VR over the contiguous VR plateau — chance
-# alignment is depth-specific, real coherence is not.
-PASS1_DEPTH_STRIDE = 2
-PASS1_KEEP_N = 10          # "keep the majority"
-PASS1_KEEP_MAX = 12        # after filling empty azimuth sectors
-PASS1_KEEP_VR_MIN = 10.0   # a station must fit at least this well to survive
-
-# Pass 2 -> core: the best few by own VR, big enough to constrain a
-# mechanism, small enough to stay clean. The core must contain two stations
-# at least AZ_PAIR_MIN_DEG apart or it cannot resolve a mechanism at all.
-CORE_SIZE_MIN = 3
-CORE_SIZE_MAX = 6
-CORE_VR_MIN = 30.0
-
-# Pass 3 — earn your seat: every non-core station (tagged ones included) is
-# added at the core depth and kept if the core solution predicts its
-# waveform. Sparse cores relax the floor: with 3-4 stations, extra azimuth
-# coverage is worth a weaker individual fit (2026p189537 review).
-ADMIT_VR_MIN = 30.0
-ADMIT_VR_MIN_SPARSE = 20.0
-SPARSE_CORE_COUNT = 5
-# A station that fills an EMPTY azimuth sector is worth admitting on a
-# weaker fit — geometry is the scarcer commodity in NZ.
-ADMIT_SECTOR_VR_MIN = 10.0
-# ...but no addition may cost more than this many joint VR points unless it
-# brings a new sector.
-ADMIT_MAX_JOINT_VR_DROP = 3.0
-# Upper bound on the used set (2026p033598 review: an over-full network
-# diluted %DC from 98 to 46).
-MAX_USED_STATIONS = 12
-
-# A station whose own VR is negative fits worse than silence: it only steers
-# the tensor, so it is culled unconditionally (no joint-gain test, no
-# sector protection — 2026p238013 NNZ sat at -41 behind a passing joint VR).
-ANTIFIT_VR = 0.0
-
-# Below this joint VR nothing coheres: the event is archived as
-# "no coherent solution" rather than publishing a junk mechanism.
-NO_SOLUTION_VR = 20.0
-
-# Depth-pick guard: a VR maximum sitting on the first/last grid depth with a
-# zero-width plateau is an artifact (the smoothest GFs absorb noise). Prefer
-# the best INTERIOR local maximum within this tolerance — 2026p508890 rode a
-# 58 km edge (VR 22.7) over the physical 8 km peak (VR 18.3, DC 88-96).
-GRID_EDGE_VR_TOLERANCE = 5.0
-
-# Mechanism geometry sanity: two used stations at least this far apart in
-# azimuth. Every grade A/B solution in the archive already satisfies it;
-# 330 of 559 grade-D solutions do not.
-AZ_PAIR_MIN_DEG = 90.0
-
-# Band escalation: if the inverted Mw overshoots the preliminary magnitude
-# by this much, the event is bigger than the band menu assumed — run the
-# next band up and prefer it if it fits at least as well (2026p336046:
-# prelim 4.2 -> Mw 5.01 out of a 10-50 s-only run).
-BAND_ESCALATE_DMW = 0.6
-
-# ---------------------------------------------------------------------------
-# Quality grades v2 (2026-09-04) — evidence, not station counts
-#
-# Station count and azimuthal gap are GONE as thresholds (D. Lindsay: "so
-# long as you have stations 90 degrees from each other you can make a good
-# solution"; 3 well-fitting stations can be grade A, as at BSL). What
-# remains is measured evidence: how well the solution explains the data
-# (VR), whether every used station actually fits (no passengers), whether
-# the mechanism survives leaving a station out (jackknife rotation), and
-# whether the depth is a real interior plateau rather than a grid-edge
-# artifact. B additionally requires DC >= 60, which makes B exactly the
-# BSL publishability rule (VR >= 60 and DC >= 60).
-#
-# Thresholds are the archive's own A/B statistics: min own-station VR p25
-# 41 (A) / 35 (B); jackknife max rotation p90 12 deg (A), p75 14.5 (B).
-# DC never enters SELECTION — a noise station can inflate it.
-# ---------------------------------------------------------------------------
-GRADE_RUBRIC = {
-    "A": dict(vr=70.0, dc=60.0, min_own_vr=40.0, jk_rot_max=15.0,
-              need_jackknife=True),
-    "B": dict(vr=60.0, dc=60.0, min_own_vr=25.0, jk_rot_max=25.0,
-              need_jackknife=False),
-    "C": dict(vr=50.0, min_own_vr=10.0),
-}
-
-
-def sector(azimuth: float) -> int:
-    """Azimuth -> one of 8 x 45 degree sectors."""
-    return int(azimuth // 45) % 8
-
-# ---------------------------------------------------------------------------
-# Green's function library grid
+# Green's function library grid (precomputed; see auto_tdmt.cfg footer)
 # ---------------------------------------------------------------------------
 GF_DIST_KM = list(range(10, 505, 5))
 # Fine near the surface where depth discrimination happens (0.5 km to 5 km,
@@ -442,44 +193,34 @@ GF_DEPTHS_KM = (
 # Ristau (2008) SRL 79(3) Table 1 — the models GeoNet's own regional CMT
 # analysis was built on, so our solutions are directly comparable.
 GF_MODELS = ("nz_south_ristau2008", "nz_north_ristau2008")
+GF_VERSION = "v1"
 
 
 def model_for_event(latitude: float, longitude: float) -> str:
-    """Crude North/South Island split (Cook Strait); refine if offshore
-    regions ever need their own model."""
+    """Crude North/South Island split (Cook Strait)."""
     if latitude <= -40.5 and (longitude < 175.0 or longitude > 200.0):
         return "nz_south_ristau2008"
     return "nz_north_ristau2008"
-GF_VERSION = "v1"
 
 # ---------------------------------------------------------------------------
-# Inversion / quality gates
+# Task 3 — inversion (auto_tdmt.cfg section 3)
 # ---------------------------------------------------------------------------
-INVERSION_DEGREE = 5  # deviatoric
-MIN_STATIONS_USED = 3
-# The depth search always covers the full GF grid (INDEPENDENT BY CHOICE,
-# 2026-09-03): bounding it around GeoNet's depth would force agreement and
-# destroy the catalogue's value as an independent check.
-PLACEHOLDER_DEPTHS_KM = {5.0, 12.0, 33.0}  # GeoNet fixed-depth values
-
+INVERSION_DEGREE = P.invert.degree
+MIN_STATIONS_USED = P.invert.minStations
 # Surface-wave group velocity used to convert per-station zcor into a
 # velocity-model deviation percentage, dV% = zcor / (dist / v_group) * 100
 # (EPS207 velocity-model analysis; ~Love-wave group velocity).
 GROUP_VELOCITY_KMS = 3.0
 
 # ---------------------------------------------------------------------------
-# Okada forward model
+# Task 4 — Okada forward model (auto_tdmt.cfg section 4)
 # ---------------------------------------------------------------------------
-SHEAR_MODULUS_PA = 3.0e10
-POISSON_NU = 0.25
-FORWARD_GRID_HALFWIDTH_KM = 60.0
-FORWARD_GRID_STEP_KM = 1.0
-# NISAR L-band LOS geometry defaults (right-looking, ~34-48 deg incidence);
-# per-track values refined in nisar_dates.py when a real granule is found.
+SHEAR_MODULUS_PA = P.forward.shearModulusPa
+POISSON_NU = P.forward.poissonRatio
 NISAR_REPEAT_DAYS = 12
 
 # ---------------------------------------------------------------------------
-# Publishing
+# Publishing transports
 # ---------------------------------------------------------------------------
 BLUESKY_HANDLE_ENV = "BLUESKY_HANDLE"
 BLUESKY_APP_PASSWORD_ENV = "BLUESKY_APP_PASSWORD"

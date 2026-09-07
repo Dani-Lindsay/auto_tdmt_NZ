@@ -1,53 +1,49 @@
-"""SAC preparation — attribution and provenance.
+"""Task 2 — station selection and waveform processing.
 
-This module was compiled with Claude (Anthropic) assistance. The processing
-chain follows the mttime example notebooks by Andrea Chiang (LLNL),
-specifically 01_Data_Processing and 02_Prepare_Data_and_Synthetics_For_
-Inversion: https://github.com/LLNL/mttime/tree/master/examples/notebooks
-(mttime: https://github.com/LLNL/mttime, LLNL-CODE-814839), implemented
-with ObsPy (https://github.com/obspy/obspy).
+    pixi run python waveforms.py --event 2026p666955      # run this task alone
 
-Deviations from the original notebooks: GeoNet NRT/archive FDSN sources
-with retry logic; automated station pooling (magnitude-scaled distance
-window with one-shot radius extension, HH?>BH? priority); peak-to-noise
-quality measured in the distance-adaptive inversion window;
-magnitude-dependent filter-band menu applied per event rather than fixed
-corners; fail-loud drop accounting (every rejected station recorded with
-a reason).
+Chain (mttime example notebooks 01+02 by Andrea Chiang, LLNL,
+https://github.com/LLNL/mttime/tree/master/examples/notebooks, with
+ObsPy): inventory -> broadband selection -> download -> response removal
+to displacement -> rotate to ZRT -> bandpass -> 1 sps -> trim
+origin-30 s .. origin+200 s -> cm -> SAC "NET.STA.LOC.{Z,R,T}.dat".
 
-Selection v4 (2026-09-04): this module DELETES ONLY UNUSABLE DATA — no
-waveform, no response, gaps, a dead channel, or a broken-response
-amplitude outlier. Everything else enters the pool carrying demotion
-TAGS (near_field / weak_signal / cluster_surplus) and earns or loses its
-seat by FIT, in the funnel in invert.py. The previous scheme's
-pre-filters were removing good data: the 3x-depth rule alone took the
-closest station out of every event it touched.
+Selection rules, each with its source (details in auto_tdmt.cfg §2):
+  1. distance window scaled by magnitude            (Gisola; Triantafyllis et al. 2022)
+  2. unusable data rejected: no waveform/response, gaps, wrong sample count
+  3. per-component SNR = RMS(signal) / RMS(noise) over the inverted
+     window; station usable when its BEST component >= snrMin
+                                                     (BMKG; Halauwet et al. 2024)
+  4. amplitude outliers above amplitudeMaxRatio x the network median
+     rejected (broken response); the LOW side is kept - a nodal station
+     genuinely has small amplitude                   (Duputel et al. 2012)
+  5. candidates ranked by SNR and taken ROUND-ROBIN across azimuth
+     sectors until maxStations, so coverage is balanced when the geometry
+     allows it and never starved when it does not    (Gisola; SCARDEC; INGV)
+The fit then decides (task 3). Nothing else is filtered here.
 
-Waveform acquisition and pre-processing to mttime-ready SAC files.
-
-Chain (mttime example notebooks 01+02, matching the EPS207 recipe):
-  inventory -> broadband selection -> download -> response removal to
-  displacement -> rotate ZNE -> NE->RT -> bandpass -> decimate to 1 sps ->
-  trim origin-30s..origin+200s -> m to cm -> SAC "NET.STA.LOC.{Z,R,T}.dat"
-
-Every dropped station/trace is recorded with a reason; nothing is padded or
-substituted silently.
+Every station that enters and leaves is recorded with a reason string in
+the shared vocabulary (invert.reason_class) so the figures and the
+station ledger can show why.
 """
 
 from __future__ import annotations
 
+import argparse
 from pathlib import Path
 
+import numpy as np
 from obspy import Stream, UTCDateTime, read
 from obspy.core.util.attribdict import AttribDict
 from obspy.geodetics.base import gps2dist_azimuth, kilometers2degrees
 
 import config
+from config import P
 from geonet import Event, fdsn_client
 
 
 def _cache_dir(public_id: str) -> Path:
-    """Per-event raw-download cache (see config.WF_CACHE_DIR: disposable)."""
+    """Per-event raw-download cache (config.WF_CACHE_DIR: disposable)."""
     d = config.WF_CACHE_DIR / public_id
     d.mkdir(parents=True, exist_ok=True)
     readme = config.WF_CACHE_DIR / "README.txt"
@@ -55,18 +51,25 @@ def _cache_dir(public_id: str) -> Path:
         readme.write_text(
             "auto_tdmt_NZ raw-waveform download cache.\n"
             "Everything here is re-downloadable from GeoNet FDSN and is\n"
-            "DISPOSABLE: delete this directory at any time (rm -rf) —\n"
-            "nothing else references it; the next run just re-downloads.\n")
+            "DISPOSABLE: delete this directory at any time (rm -rf).\n")
     return d
 
+
+def station_id(row: dict) -> str:
+    return f"{row['network']}.{row['station']}.{row['location']}"
+
+
+# ---------------------------------------------------------------------------
+# 2a. candidate inventory
+# ---------------------------------------------------------------------------
 
 def select_stations(client, event: Event, origin: UTCDateTime,
                     max_dist_km: float | None = None):
     """Broadband NZ stations within the working distance range.
 
-    Returns (inventory, station_rows) where station_rows is a list of dicts
-    with one preferred (channel-band, location) per station, nearest first.
-    ``max_dist_km`` overrides the magnitude-scaled radius (radius extension).
+    Returns (inventory, rows): one preferred (channel band, location) per
+    station, nearest first. ``max_dist_km`` overrides the magnitude-scaled
+    radius (used by the one-shot radius extension).
     """
     max_dist = max_dist_km or config.station_max_dist_km(event.prelim_mag)
     min_dist = config.station_min_dist_km(event.prelim_mag)
@@ -90,170 +93,193 @@ def select_stations(client, event: Event, origin: UTCDateTime,
     rows = []
     for net in inv:
         for sta in net:
-            # channels present for this station, grouped by (loc, band)
-            groups = {}
+            groups: dict = {}
             for cha in sta:
-                band = cha.code[:2]
-                groups.setdefault((cha.location_code, band), set()).add(cha.code)
-            # prefer HH over BH; need all three components in one group
+                groups.setdefault((cha.location_code, cha.code[:2]),
+                                  set()).add(cha.code)
             chosen = None
-            for prio in config.CHANNEL_PRIORITY:
-                band = prio[:2]
+            for prio in config.CHANNEL_PRIORITY:   # HH over BH
                 for (loc, b), codes in sorted(groups.items()):
-                    if b == band and len(codes) >= 3:
-                        chosen = (loc, band)
+                    if b == prio[:2] and len(codes) >= 3:
+                        chosen = (loc, b)
                         break
                 if chosen:
                     break
             if chosen is None:
                 continue
             dist_m, az, baz = gps2dist_azimuth(
-                event.latitude, event.longitude, sta.latitude, sta.longitude
-            )
+                event.latitude, event.longitude, sta.latitude, sta.longitude)
             dist_km = dist_m / 1000.0
             if not (min_dist <= dist_km <= max_dist):
                 continue
-            rows.append(
-                dict(
-                    network=net.code,
-                    station=sta.code,
-                    location=chosen[0],
-                    band=chosen[1],
-                    latitude=sta.latitude,
-                    longitude=sta.longitude,
-                    distance_km=dist_km,
-                    azimuth=az,
-                    back_azimuth=baz,
-                )
-            )
+            rows.append(dict(
+                network=net.code, station=sta.code, location=chosen[0],
+                band=chosen[1], latitude=sta.latitude, longitude=sta.longitude,
+                distance_km=dist_km, azimuth=az, back_azimuth=baz,
+                sector=config.sector(az),
+            ))
     rows.sort(key=lambda r: r["distance_km"])
     assert rows, "no broadband stations found in distance range"
     return inv, rows
 
 
-def demotion_tags(row: dict, event: Event) -> list[str]:
-    """Demotion tags for a pool station — reasons to be SUSPICIOUS, never
-    reasons to exclude. The funnel tests every tagged station anyway; the
-    tags only shift the burden of proof (and appear on the figures).
+# ---------------------------------------------------------------------------
+# 2b. signal quality
+# ---------------------------------------------------------------------------
 
-    - near_field: inside 3x the source depth, where the point-source
-      far-field heuristic is uncomfortable. The CPS Green's functions are
-      complete-wavefield (near-field terms included), so the fit decides.
-    - weak_signal: peak/noise below PEAK_NOISE_STRONG.
-    """
-    tags = []
-    if (event.depth_km not in config.PLACEHOLDER_DEPTHS_KM
-            and event.depth_km <= config.DIST_DEPTH_RULE_MAX_DEPTH_KM
-            and row["distance_km"] < config.MIN_DIST_DEPTH_RATIO
-            * event.depth_km):
-        tags.append("near_field")
-    if row.get("pk_n", 0.0) < config.PEAK_NOISE_STRONG:
-        tags.append("weak_signal")
-    return tags
+def component_snr(st: Stream, origin: UTCDateTime, distance_km: float,
+                  signal_end_s: float, window_s: float | None = None
+                  ) -> dict[str, float]:
+    """Per-component SNR = RMS(signal window after P) / RMS(same length
+    before P), on the filtered traces (Halauwet et al. 2024, GJI 239,
+    BMKG). The signal window is the one actually inverted — P to
+    ``signal_end_s`` after origin — capped at snrWindowS: BMKG's fixed
+    200 s suits their M >= 5 events, but on an M3.7 the surface-wave
+    train is over in 60 s and a 200 s window dilutes it to noise
+    (2026p669681: every station scored ~1.2 that way). P is estimated
+    kinematically at 6 km/s; the exact pick does not matter here."""
+    t_p = origin + distance_km / 6.0
+    window_s = min(window_s or P.station.snrWindowS,
+                   max(20.0, signal_end_s - distance_km / 6.0))
+    out = {}
+    for tr in st:
+        comp = tr.stats.channel[-1]
+        t = tr.times(reftime=t_p)
+        noise = tr.data[(t >= -window_s) & (t < 0)]
+        signal = tr.data[(t >= 0) & (t < window_s)]
+        assert len(noise) > 10 and len(signal) > 10, (
+            f"{tr.id}: SNR windows too short ({len(noise)}/{len(signal)})")
+        rms_n = float(np.sqrt(np.mean(noise ** 2)))
+        rms_s = float(np.sqrt(np.mean(signal ** 2)))
+        out[comp] = round(rms_s / rms_n, 2) if rms_n > 0 else float("inf")
+    return out
 
+
+def signal_window_end_s(st: Stream, origin: UTCDateTime, distance_km: float,
+                        prelim_mag: float) -> int:
+    """End of the inversion window, seconds after origin: the kinematic
+    minimum (distance / groupVel + tail), extended to where the smoothed
+    3-component envelope decays back toward the pre-event level (slow
+    Hikurangi paths), never shorter than the kinematic value and capped
+    at maxWindowS."""
+    kin = max(P.station.windowMinS - config.TIME_BEFORE_S,
+              distance_km / P.station.groupVelKms
+              + config.window_tail_s(prelim_mag))
+    # the extension exists for slow paths that add tens of seconds, not
+    # for noise: it is bounded to windowExtendMaxS beyond the kinematic
+    # end (2026p669681: a 23 km station was extended to 187 s of noise
+    # and "aligned" at -21 s)
+    cap = min(P.station.maxWindowS, kin + P.station.windowExtendMaxS)
+    tt = st[0].times(reftime=origin)
+    env = np.max([np.abs(tr.data) for tr in st], axis=0)
+    win = max(1, int(round(15.0 / config.DT)))          # 15 s smoothing
+    env = np.convolve(env, np.ones(win) / win, mode="same")
+    pre = env[(tt > tt[0] + 5) & (tt < -2)]
+    noise_lvl = float(np.median(pre)) if pre.size else 0.0
+    thresh = max(3.0 * noise_lvl, 0.1 * float(env.max()))
+    live = (tt >= kin) & (tt <= cap) & (env > thresh)
+    tend = tt[live].max() + 10.0 if live.any() else kin    # +10 s pad
+    return int(min(cap, max(kin, tend)))
+
+
+# ---------------------------------------------------------------------------
+# 2c. azimuth-balanced selection
+# ---------------------------------------------------------------------------
+
+def select_by_sector(rows: list[dict], max_stations: int | None = None,
+                     n_sectors: int | None = None) -> tuple[list, list]:
+    """Rank by SNR, then take stations round-robin across populated azimuth
+    sectors until ``max_stations``. Balanced coverage when the geometry
+    allows it; a one-sided (offshore) geometry still fills up from its
+    best stations rather than being starved by a per-sector cap.
+    Returns (selected, left_out)."""
+    max_stations = max_stations or P.station.maxStations
+    n_sectors = n_sectors or P.station.sectors
+    by_sector: dict[int, list] = {}
+    for r in sorted(rows, key=lambda r: -r.get("snr_best", r["snr_med"])):
+        by_sector.setdefault(int(r["azimuth"] // (360.0 / n_sectors))
+                             % n_sectors, []).append(r)
+    selected: list[dict] = []
+    while len(selected) < max_stations and any(by_sector.values()):
+        for k in sorted(by_sector):
+            if by_sector[k] and len(selected) < max_stations:
+                selected.append(by_sector[k].pop(0))
+    left = [r for r in rows if r not in selected]
+    return selected, left
+
+
+# ---------------------------------------------------------------------------
+# 2d. the task
+# ---------------------------------------------------------------------------
 
 def fetch_and_process(
     event: Event, workdir: Path, band_hz: tuple[float, float],
     stages: dict | None = None,
 ) -> tuple[list[dict], list[dict]]:
-    """Download and pre-process waveforms for one event.
+    """Download and pre-process waveforms for one event and one band.
 
-    Writes SAC files ``<workdir>/NET.STA.LOC.{Z,R,T}.dat`` and returns
-    (pool_rows, dropped). The pool is every station with usable data, each
-    row carrying pk_n, window_end_s, sector, tier ("trusted"/"demoted")
-    and tags; ``dropped`` holds only unusable data, each with a reason
-    string in the shared vocabulary (see invert.reason_class).
+    Writes SAC files ``<workdir>/NET.STA.LOC.{Z,R,T}.dat`` for the selected
+    stations (``rejected_`` prefix for the rest, so the all-station figure
+    can show them) and returns (pool, dropped): the selected station rows
+    (with snr, snr_med, window_end_s, sector, amp_ratio) and every other
+    candidate with a reason.
 
-    If ``stages`` (a dict) is passed, copies of every pool station's stream
-    are stored under keys "raw", "displacement", "final" for QC plotting.
+    If ``stages`` (a dict) is passed, copies of every usable station's
+    stream are stored under "raw", "displacement", "final" for QC plots.
     """
     origin = UTCDateTime(event.origin_time)
     client = fdsn_client(origin)
     inv, rows = select_stations(client, event, origin)
-
     workdir.mkdir(parents=True, exist_ok=True)
     fmin, fmax = band_hz
     if stages is not None:
-        stages.update({"raw": Stream(), "displacement": Stream(), "final": Stream()})
+        stages.update({"raw": Stream(), "displacement": Stream(),
+                       "final": Stream()})
+    pre_s = P.station.snrWindowS + config.TIME_BEFORE_S + 60.0
 
-    # azimuth-sector-interleaved candidate order (8 x 45 deg sectors,
-    # nearest-first within each): the first stations tried span the full
-    # compass, codifying quadrant-first manual selection. Pure
-    # nearest-first ordering produced one-sided geometries when the close
-    # stations clustered on one side of the epicentre.
-    sectors: dict[int, list] = {}
-    for r in rows:
-        sectors.setdefault(int(r["azimuth"] // 45) % 8, []).append(r)
-    ordered = []
-    while any(sectors.values()):
-        for k in sorted(sectors):
-            if sectors[k]:
-                ordered.append(sectors[k].pop(0))
-
-    import numpy as np
-
-    used, dropped = [], []
-    queue = list(ordered)
+    usable, dropped = [], []
+    queue = list(rows)
     extended = False
     i = 0
     while True:
         if i >= len(queue):
-            # single radius extension when the usable pool is starved
-            # (offshore events: 2026p047833 review)
+            # one-shot radius extension when the usable pool is thin
             base = config.station_max_dist_km(event.prelim_mag)
-            if extended or len(used) >= config.MIN_USABLE_BEFORE_EXTEND:
+            if extended or len(usable) >= config.MIN_USABLE_BEFORE_EXTEND:
                 break
             extended = True
             ext = base + config.RADIUS_EXTEND_KM
             try:
-                inv_ext, more = select_stations(
-                    client, event, origin, max_dist_km=ext)
+                inv_ext, more = select_stations(client, event, origin,
+                                                max_dist_km=ext)
             except AssertionError:
                 break
-            # the annulus stations' responses live in the EXTENDED
-            # inventory — merge it, or response removal fails for them
-            inv += inv_ext
-            annulus = [r for r in more
-                       if r["distance_km"] > base + 1e-6]
+            inv += inv_ext   # responses for the annulus live here
+            annulus = [r for r in more if r["distance_km"] > base + 1e-6]
             if not annulus:
                 break
-            print(f"only {len(used)} usable stations: radius extended to "
+            print(f"only {len(usable)} usable stations: radius extended to "
                   f"{ext:g} km ({len(annulus)} more candidates)")
-            queue.extend(sorted(annulus, key=lambda r: r["distance_km"]))
+            queue.extend(annulus)
             continue
         row = queue[i]
         i += 1
-        if len(used) >= config.MAX_POOL_STATIONS:
-            break
-        sid = f"{row['network']}.{row['station']}.{row['location']}"
+        sid = station_id(row)
 
-        def _drop(reason, stage="data"):
-            """Record an UNUSABLE station (the only kind removed here)."""
-            dropped.append({
-                **row, "station": sid, "reason": reason, "stage": stage,
-                "status": "rejected",
-                "distance_km": round(row["distance_km"], 1),
-            })
-        # NOTE (v4): the 3x-depth far-field rule used to drop stations here.
-        # It now only TAGS them (demotion_tags) — the audit found it
-        # removing the closest station in every event it touched, and 94%
-        # of those events ended grade C/D.
-        wf_cache = (_cache_dir(event.public_id)
-                    / f"{sid}.{row['band']}.mseed")
+        def _drop(reason: str) -> None:
+            dropped.append({**row, "station": sid, "reason": reason,
+                            "distance_km": round(row["distance_km"], 1)})
+
+        wf_cache = _cache_dir(event.public_id) / f"{sid}.{row['band']}.mseed"
         try:
-            if wf_cache.exists():
-                st = read(str(wf_cache))
-            else:
+            st = read(str(wf_cache)) if wf_cache.exists() else None
+            if st is None or st[0].stats.starttime > origin - pre_s + 5:
                 st = client.get_waveforms(
-                    network=row["network"],
-                    station=row["station"],
-                    location=row["location"],
-                    channel=f"{row['band']}?",
-                    starttime=origin - 5 * config.TIME_BEFORE_S,
-                    endtime=origin + config.TIME_AFTER_S
-                    + config.TIME_BEFORE_S,
-                    attach_response=False,
-                )
+                    network=row["network"], station=row["station"],
+                    location=row["location"], channel=f"{row['band']}?",
+                    starttime=origin - pre_s,
+                    endtime=origin + config.TIME_AFTER_S + config.TIME_BEFORE_S,
+                    attach_response=False)
                 st.write(str(wf_cache), format="MSEED")
         except Exception as e:  # noqa: BLE001 - record and move on, loudly
             _drop(f"no data: download failed: {e}")
@@ -263,28 +289,21 @@ def fetch_and_process(
         if any(hasattr(tr.data, "mask") for tr in st) or len(st) < 3:
             _drop("no data: gaps or <3 components")
             continue
-
         raw_copy = st.copy() if stages is not None else None
 
         try:
             st.detrend("linear")
-            st.remove_response(
-                inventory=inv,
-                pre_filt=config.RESPONSE_PRE_FILT,
-                output="DISP",
-                zero_mean=True,
-            )
+            st.remove_response(inventory=inv, pre_filt=config.RESPONSE_PRE_FILT,
+                               output="DISP", zero_mean=True)
             st.detrend("linear")
             st.detrend("demean")
             st._rotate_to_zne(inv, components=("ZNE", "Z12"))
         except Exception as e:  # noqa: BLE001
             _drop(f"no data: response/rotation failed: {e}")
             continue
-
         if len(st.select(component="Z")) != 1 or len(st) != 3:
             _drop("no data: not exactly 3 ZNE components")
             continue
-
         if stages is not None:
             for src, key in ((raw_copy, "raw"), (st.copy(), "displacement")):
                 for tr in src:
@@ -294,79 +313,49 @@ def fetch_and_process(
         for tr in st:
             tr.stats.back_azimuth = row["back_azimuth"]
         st.rotate(method="NE->RT")
-
-        st.filter(
-            "bandpass", freqmin=fmin, freqmax=fmax,
-            corners=config.FILTER_CORNERS, zerophase=True,
-        )
+        st.filter("bandpass", freqmin=fmin, freqmax=fmax,
+                  corners=config.FILTER_CORNERS, zerophase=True)
         st.taper(max_percentage=0.05)
+
+        # rule 3: per-component SNR on the filtered, un-decimated traces,
+        # over the window that will be inverted
+        kin_end = (row["distance_km"] / P.station.groupVelKms
+                   + config.window_tail_s(event.prelim_mag))
+        try:
+            snr = component_snr(st, origin, row["distance_km"], kin_end)
+        except AssertionError as e:
+            _drop(f"no data: {e}")
+            continue
+        row["snr"] = snr
+        # a station is usable when its BEST component carries signal: a
+        # station near a nodal plane of one component still constrains
+        # the mechanism through the others (2026p669681: WLRZ, the
+        # best-fitting station at own VR 72, scored Z 1.9 R 1.5 T 3.5 -
+        # the median rule threw it away). The fit decides the rest.
+        row["snr_med"] = round(float(np.median(list(snr.values()))), 2)
+        row["snr_best"] = round(float(max(snr.values())), 2)
+
         for tr in st:
             factor = int(round(tr.stats.sampling_rate * config.DT))
             assert factor >= 1, f"{sid}: sampling rate {tr.stats.sampling_rate}"
             tr.decimate(factor=factor, strict_length=False, no_filter=True)
             tr.resample(1.0 / config.DT, strict_length=False, no_filter=True)
-            tr.trim(
-                origin - config.TIME_BEFORE_S,
-                origin + config.TIME_AFTER_S,
-                nearest_sample=True,
-            )
+            tr.trim(origin - config.TIME_BEFORE_S, origin + config.TIME_AFTER_S,
+                    nearest_sample=True)
             tr.data = 100.0 * tr.data  # m -> cm (TDMT convention)
-
-        npts = {tr.stats.npts for tr in st}
         expected = config.TIME_BEFORE_S + config.TIME_AFTER_S + 1
-        if npts != {expected}:
-            _drop(f"no data: trim gave npts {npts}, want {expected}")
+        if {tr.stats.npts for tr in st} != {expected}:
+            _drop(f"no data: trim gave npts "
+                  f"{ {tr.stats.npts for tr in st} }, want {expected}")
             continue
 
-        # peak-to-noise, measured ONLY inside the distance-adaptive window
-        # actually inverted (see config PEAK_NOISE_* docs). Dead channels
-        # are still written under a rejected_ prefix so the per-band
-        # all-station waveform figure can show WHY they were excluded;
-        # mtinv.in never references prefixed files.
-        tail = config.window_tail_s(event.prelim_mag)
-        wlen = int(min(config.INV_NPTS, max(
-            config.WINDOW_MIN_S,
-            config.TIME_BEFORE_S
-            + row["distance_km"] / config.WINDOW_GROUP_VEL_KMS + tail)))
-        tend = wlen - config.TIME_BEFORE_S  # s after origin (kinematic MIN)
-
-        # signal-aware window end (REVIEW_LEARNINGS item 13): slow paths
-        # (Hikurangi accretionary prism, ~1.2-1.7 km/s effective group
-        # velocity) deliver trains the kinematic cut bisects. Extend the
-        # end to where the smoothed 3-component envelope decays back
-        # toward the pre-event level — deterministic, data-derived —
-        # never shorter than the kinematic value, capped by INV_NPTS.
-        ref = st[0]
-        b0 = -1.0 * (origin - ref.stats.starttime)
-        tt = b0 + np.arange(ref.stats.npts) * ref.stats.delta
-        env = np.max([np.abs(tr.data) for tr in st], axis=0)
-        win = int(round(15.0 / config.DT))  # 15 s smoothing
-        env = np.convolve(env, np.ones(win) / win, mode="same")
-        noise_lvl = float(np.median(env[(tt > b0 + 5) & (tt < -2)]))
-        thresh = max(2.0 * noise_lvl, 0.05 * float(env.max()))
-        t_cap = config.INV_NPTS - config.TIME_BEFORE_S  # 120 s after origin
-        live = (tt >= tend) & (tt <= t_cap) & (env > thresh)
-        if live.any():
-            tend = int(min(t_cap, tt[live].max() + 10.0))  # +10 s pad
-        ratios = []
-        for tr in st:
-            b = -1.0 * (origin - tr.stats.starttime)
-            t = b + np.arange(tr.stats.npts) * tr.stats.delta
-            noise = tr.data[(t > b + 5) & (t < -2)]
-            sig = tr.data[(t >= 0) & (t <= tend)]
-            assert len(noise) > 10 and len(sig) > 10, \
-                f"{sid}: peak/noise windows too short"
-            ratios.append(
-                float(np.abs(sig).max() / np.sqrt(np.mean(noise ** 2))))
-        pk_n = float(np.median(ratios))
-        row["pk_n"] = round(pk_n, 2)
-        row["window_end_s"] = tend
-        row["sector"] = config.sector(row["azimuth"])
-        row["tags"] = demotion_tags(row, event)
-        row["tier"] = "trusted" if not row["tags"] else "demoted"
-        row["status"] = "pool"
-        prefix = "rejected_" if pk_n < config.PEAK_NOISE_DEAD else ""
-
+        row["window_end_s"] = signal_window_end_s(
+            st, origin, row["distance_km"], event.prelim_mag)
+        row["filter_hz"] = [fmin, fmax]
+        row["peak_x_dist"] = float(
+            abs(st.select(component="Z")[0].data).max() * row["distance_km"])
+        ok = row["snr_best"] >= P.station.snrMin
+        prefix = "" if ok else "rejected_"
         for tr in st:
             sacd = AttribDict()
             sacd.stla, sacd.stlo = row["latitude"], row["longitude"]
@@ -379,86 +368,78 @@ def fetch_and_process(
             tr.stats.sac = sacd
             comp = tr.stats.channel[-1]
             assert comp in "ZRT", f"{sid}: unexpected component {comp}"
-            tr.write(str(workdir / f"{prefix}{sid}.{comp}.dat"),
-                     format="SAC")
-
-        if prefix:
-            _drop(f"dead channel: peak/noise {pk_n:.1f} < "
-                  f"{config.PEAK_NOISE_DEAD:g}")
+            tr.write(str(workdir / f"{prefix}{sid}.{comp}.dat"), format="SAC")
+        if not ok:
+            _drop(f"low SNR: best component SNR {row['snr_best']:g} < "
+                  f"{P.station.snrMin:g} (Z {snr['Z']:g} R {snr['R']:g} "
+                  f"T {snr['T']:g})")
             continue
-
         if stages is not None:
             final_copy = st.copy()
             for tr in final_copy:
                 tr.stats.distance = row["distance_km"] * 1000.0
             stages["final"] += final_copy
+        usable.append(row)
 
-        row["filter_hz"] = [fmin, fmax]
-        used.append(row)
+    def _reject_files(r: dict) -> None:
+        for comp in "ZRT":
+            p = workdir / f"{station_id(r)}.{comp}.dat"
+            if p.exists():
+                p.rename(workdir / f"rejected_{p.name}")
 
-    # amplitude-consistency screen: peak x distance should be comparable
-    # across the network; a station orders of magnitude off has broken
-    # response metadata (e.g. NZ.RDHZ 2026-09) and would single-handedly
-    # steer the least-squares moment. Screen BEFORE inversion.
-    import numpy as np
-
-    if len(used) >= config.AMP_SCREEN_MIN_STATIONS:
-        for r in used:
-            tr = read(str(workdir / f"{r['network']}.{r['station']}."
-                          f"{r['location']}.Z.dat"), format="SAC")[0]
-            r["peak_x_dist"] = float(
-                abs(tr.data).max() * r["distance_km"])
-        med = float(np.median([r["peak_x_dist"] for r in used]))
-        for r in used:
+    # rule 4: amplitude outliers (high side only)
+    if len(usable) >= 3:
+        med = float(np.median([r["peak_x_dist"] for r in usable]))
+        for r in usable:
             r["amp_ratio"] = round(r["peak_x_dist"] / med, 3)
-        # ONE-SIDED (2026-09-04, D. Lindsay): only a station far ABOVE the
-        # network median is evidence of a broken response. A station far
-        # BELOW it may simply sit near a nodal plane — "just because it
-        # doesn't see signal doesn't mean it's a bad fit" — and its small
-        # amplitude is real information about the mechanism. Dead channels
-        # are caught by the peak/noise floor instead.
-        flagged = [r for r in used
-                   if r["peak_x_dist"]
-                   > med * config.AMPLITUDE_OUTLIER_FACTOR]
+        flagged = [r for r in usable
+                   if r["amp_ratio"] > P.station.amplitudeMaxRatio]
         for r in flagged:
-            sid = f"{r['network']}.{r['station']}.{r['location']}"
-            for comp in "ZRT":
-                p = workdir / f"{sid}.{comp}.dat"
-                if p.exists():  # keep for the all-station waveform figure
-                    p.rename(workdir / f"rejected_{p.name}")
-            dropped.append({
-                **r, "station": sid,
-                "reason": f"amplitude outlier: peak x dist "
-                          f"{r['peak_x_dist']:.2e} vs network median "
-                          f"{med:.2e}",
-                "stage": "data", "status": "rejected",
-                "distance_km": round(r["distance_km"], 1),
-            })
-            print(f"  amplitude outlier screened: {sid} "
-                  f"({r['peak_x_dist']/med:.0f}x median)")
-        used = [r for r in used if r not in flagged]
+            _reject_files(r)
+            dropped.append({**r, "station": station_id(r),
+                            "reason": f"amplitude outlier: {r['amp_ratio']:.1f}x "
+                                      f"the network median (broken response?)",
+                            "distance_km": round(r["distance_km"], 1)})
+            print(f"  amplitude outlier: {station_id(r)} {r['amp_ratio']:.0f}x")
+        usable = [r for r in usable if r not in flagged]
 
-    # station-cluster TAGGING (v4: was thinning): dense sub-networks (the
-    # Ruapehu ring is 69% of all historic cluster drops) must not stack
-    # near-identical records into one azimuth sector — but the decision
-    # belongs to the fit, so beyond CLUSTER_MAX_STATIONS within
-    # CLUSTER_RADIUS_KM a station is only tagged "cluster_surplus" (and
-    # must show a joint-fit gain to earn its seat in the funnel).
-    anchors: list[dict] = []
-    for r in sorted(used, key=lambda x: -x.get("pk_n", 0.0)):
-        near = [k for k in anchors if gps2dist_azimuth(
-            r["latitude"], r["longitude"],
-            k["latitude"], k["longitude"])[0] / 1000.0
-            <= config.CLUSTER_RADIUS_KM]
-        if len(near) >= config.CLUSTER_MAX_STATIONS:
-            r.setdefault("tags", []).append("cluster_surplus")
-            r["cluster_with"] = [k["station"] for k in near]
-            r["tier"] = "demoted"
-        else:
-            anchors.append(r)
-
-    pool = sorted(used, key=lambda r: r["distance_km"])
-    # NOTE: no assert — an empty pool is a legitimate outcome (offshore
-    # events with no usable data). run02 turns it into a "no coherent
-    # solution" record rather than a hard failure.
+    # rule 5: azimuth-balanced selection
+    pool, left = select_by_sector(usable)
+    for r in left:
+        _reject_files(r)
+        dropped.append({**r, "station": station_id(r),
+                        "reason": f"not selected: {P.station.maxStations} "
+                                  f"seats filled by sector round-robin "
+                                  f"(best SNR {r['snr_best']:g})",
+                        "distance_km": round(r["distance_km"], 1)})
+    pool.sort(key=lambda r: r["distance_km"])
     return pool, dropped
+
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--event", required=True, help="GeoNet publicID")
+    ap.add_argument("--band", default=None,
+                    help="passband in Hz, e.g. 0.02-0.10 (default: first "
+                         "band of the magnitude menu)")
+    ap.add_argument("--out", default=None,
+                    help="working directory (default: <events>/<id>/task2)")
+    args = ap.parse_args()
+    from geonet import get_event
+    ev = get_event(args.event)
+    band = (tuple(float(x) for x in args.band.split("-")) if args.band
+            else config.band_candidates(ev.prelim_mag)[0])
+    out = Path(args.out) if args.out else config.EVENTS_DIR / ev.public_id / "task2"
+    print(f"{ev.public_id} M{ev.prelim_mag:.1f} {ev.locality}: band "
+          f"{config.band_tag(band)} -> {out}")
+    pool, dropped = fetch_and_process(ev, out, band)
+    print(f"\n{'station':14s} {'dist':>5s} {'az':>4s} sec {'SNR Z/R/T':>15s} "
+          f"{'med':>5s} {'win':>4s} {'amp':>5s}")
+    for r in pool:
+        print(f"{station_id(r):14s} {r['distance_km']:5.0f} {r['azimuth']:4.0f} "
+              f"{r['sector']:3d} {r['snr']['Z']:5.1f}/{r['snr']['R']:5.1f}/"
+              f"{r['snr']['T']:5.1f} {r['snr_med']:5.1f} {r['window_end_s']:4d} "
+              f"{r.get('amp_ratio', float('nan')):5.2f}")
+    print(f"\n{len(pool)} selected, {len(dropped)} not:")
+    for d in dropped:
+        print(f"  {d['station']:14s} {d['reason']}")

@@ -69,8 +69,8 @@ def make_share_figure(
     import invert as _invert
 
     def _cause(d):
-        return {"nodata": "snr", "dead": "snr", "amp": "amp",
-                "not_admitted": "elim", "antifit": "elim",
+        return {"nodata": "snr", "snr": "snr", "amp": "amp",
+                "not_selected": "elim", "fit": "elim", "shift": "elim",
                 "abort": "abort"}.get(
             _invert.reason_class(d.get("reason", "")), "snr")
 
@@ -460,7 +460,7 @@ def plot_depth_sensitivity(solution: dict, out_path: Path) -> Path:
     stations = "_".join(r["station"] for r in solution["stations_used"])
     vr_max = max(r["vr"] for r in rows)
     in_window = [r for r in rows
-                 if r["vr"] >= vr_max - config.PREFER_DC_VR_TOLERANCE]
+                 if r["vr"] >= vr_max * (1 - config.P.invert.depthUncPct / 100.0)]
     dc_win_depth = max(in_window, key=lambda r: r["pdc"])["depth_km"]
     geonet_depth = min(depths, key=lambda d: abs(d - ev["depth_km"]))
 
@@ -586,23 +586,19 @@ def plot_band_waveforms(band_dir: Path, solution: dict,
     def _annotate(sid, base):
         r = info.get(sid, {})
         bits = []
-        if r.get("pk_n") is not None:
-            bits.append(f"pk/n {r['pk_n']:g}")
-        p1 = (r.get("pass1") or {}).get("own_vr")
-        if p1 is not None:
-            bits.append(f"survey VR {p1:g}")
-        own = (r.get("final") or {}).get("own_vr")
-        if own is not None:
-            bits.append(f"own VR {own:g}")
+        if r.get("snr_med") is not None:
+            s = r.get("snr") or {}
+            bits.append(f"SNR {r['snr_med']:g}"
+                        + (f" (Z{s['Z']:g} R{s['R']:g} T{s['T']:g})"
+                           if s else ""))
+        if r.get("station_vr") is not None:
+            bits.append(f"own VR {r['station_vr']:g}")
         # the solved time shift: a large one means the fit came from
         # sliding the trace, not from the mechanism
-        zc = (r.get("final") or {}).get("zcor_s", r.get("zcor_s"))
-        if zc is None:
-            zc = (r.get("admission") or {}).get("zcor_s")
-        if zc is not None:
-            bits.append(f"zcor {zc:+g} s")
-        for tag in r.get("tags", []):
-            bits.append(tag)
+        if r.get("zcor_s") is not None:
+            bits.append(f"shift {r['zcor_s']:+g} s")
+        if r.get("distance_km") is not None:
+            bits.append(f"{r['distance_km']:.0f} km")
         head = " | ".join(bits)
         return f"{head}\n{base}" if head else base
 
@@ -728,14 +724,16 @@ def plot_station_ledger_map(solution: dict, out_path: Path) -> Path:
     styles = {
         "nodata": dict(marker="s", color="0.8", markeredgecolor="0.5",
                        label="no usable data"),
-        "dead": dict(marker="v", color="0.7", markeredgecolor="0.45",
-                     label="dead channel"),
+        "snr": dict(marker="v", color="0.7", markeredgecolor="0.45",
+                    label="low SNR"),
         "amp": dict(marker="x", color="0.35", label="amplitude outlier"),
-        "not_admitted": dict(marker="^", color="white",
-                             markeredgecolor="#D55E00",
-                             label="did not earn a seat"),
-        "antifit": dict(marker="^", color="#D55E00",
-                        markeredgecolor="black", label="anti-fitting"),
+        "not_selected": dict(marker="^", color="white",
+                             markeredgecolor="0.5",
+                             label="not selected (sector round-robin)"),
+        "fit": dict(marker="^", color="white", markeredgecolor="#D55E00",
+                    label="poor fit (dropped by the loop)"),
+        "shift": dict(marker="^", color="#D55E00", markeredgecolor="black",
+                      label="time shift over the cap"),
         "abort": dict(marker="^", color="0.75", markeredgecolor="0.4",
                       label="pool (no coherent solution)"),
         "other": dict(marker="^", color="0.85", markeredgecolor="0.5",
@@ -757,8 +755,7 @@ def plot_station_ledger_map(solution: dict, out_path: Path) -> Path:
                     textcoords="offset points", fontsize=6, color="0.45",
                     xycoords=ccrs.PlateCarree()._as_mpl_transform(ax))
     if used:
-        vals = [r.get("final", {}).get("own_vr", r.get("station_vr", 0.0))
-                for r in used]
+        vals = [r.get("station_vr", 0.0) for r in used]
         sc = ax.scatter([r["longitude"] for r in used],
                         [r["latitude"] for r in used], c=vals,
                         cmap="viridis", vmin=0, vmax=100, marker="^", s=110,
@@ -766,11 +763,6 @@ def plot_station_ledger_map(solution: dict, out_path: Path) -> Path:
                         transform=ccrs.PlateCarree(), zorder=8,
                         label="used")
         for r in used:
-            if r.get("tier") == "demoted":
-                ax.plot(r["longitude"], r["latitude"], "o", mfc="none",
-                        markeredgecolor="#0072B2", markersize=15,
-                        markeredgewidth=1.4,
-                        transform=ccrs.PlateCarree(), zorder=9)
             ax.annotate(r["station"], (r["longitude"], r["latitude"]),
                         xytext=(5, 5), textcoords="offset points",
                         fontsize=7, fontweight="bold",

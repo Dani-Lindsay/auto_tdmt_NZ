@@ -1,9 +1,18 @@
-"""Process one GeoNet event end-to-end: waveforms -> GFs -> mttime depth
-search -> solution.json + figures. Tries the candidate filter bands for the
-event magnitude (BSL-style band menu) and keeps the best-VR solution.
+"""Process one GeoNet event end to end — the four tasks in sequence.
 
     pixi run python run02_process.py --event 2026p660242 --debug
-    pixi run python run02_process.py --event 2026p660242 --band 0.02-0.05
+    pixi run python run02_process.py --event 2026p660242 --band 0.02-0.10
+
+  task 1  event metadata                 geonet.get_event
+  task 2  stations + waveforms           waveforms.fetch_and_process
+  task 3  inversion (mttime)             invert.clinton_loop -> summarize -> jackknife
+  task 4  forward model (Okada)          okada_forward.forward_both_planes
+  task 5  archive + publish decision     catalogue / trigger / publish / figure
+
+The filter-band menu (auto_tdmt.cfg §2) is an ORDERED preference: the
+first band whose solution passes its gate wins; later bands run only when
+an earlier one fails. Each task can also be run on its own (see the
+module docstrings) and is walked through in docs/task_*.ipynb.
 """
 
 from __future__ import annotations
@@ -30,21 +39,19 @@ from geonet import get_event
 
 def process_band(event, band: tuple[float, float], band_dir: Path,
                  debug: bool, model: str) -> dict:
-    """Run the full chain for one filter band inside band_dir."""
+    """Tasks 2 and 3 for one filter band inside band_dir."""
     band_dir.mkdir(parents=True, exist_ok=True)
     green_dir = band_dir / "greens"
     print(f"\n=== band {1/band[1]:.0f}-{1/band[0]:.0f} s "
           f"({band[0]:g}-{band[1]:g} Hz) ===")
 
+    # --- task 2 -------------------------------------------------------------
     stages: dict | None = {} if debug else None
-    pool, dropped = waveforms.fetch_and_process(
-        event, band_dir, band, stages=stages)
-    print(f"pool: {len(pool)} stations "
-          f"({sum(1 for r in pool if r['tier'] == 'demoted')} demoted), "
-          f"{len(dropped)} unusable")
+    pool, dropped = waveforms.fetch_and_process(event, band_dir, band,
+                                                stages=stages)
+    print(f"task 2: {len(pool)} stations selected, {len(dropped)} not")
     for d in dropped:
-        print(f"  unusable {d['station']}: {d['reason']}")
-
+        print(f"  {d['station']:14s} {d['reason']}")
     if debug and pool:
         diag_dir = band_dir / "diagnostics"
         figs = diagnostics.plot_stages(stages, event.to_dict(), band, diag_dir)
@@ -52,42 +59,38 @@ def process_band(event, band: tuple[float, float], band_dir: Path,
             event.to_dict(), pool, [d["station"] for d in dropped], diag_dir))
         for f in figs:
             print(f"  diagnostic: {f}")
-
-    depths = invert.search_depths(event, model)
-    selection: dict = {"pool_n": len(pool)}
-    if not pool:
+    if len(pool) < config.MIN_STATIONS_USED:
         solution = invert.no_solution_record(
-            event, pool, dropped, model, band, "pool",
-            "no station produced usable data", selection)
+            event, pool, dropped, model, band, "task 2",
+            f"only {len(pool)} usable stations (minimum "
+            f"{config.MIN_STATIONS_USED})")
         invert.save_solution(solution, band_dir)
-        print("NO COHERENT SOLUTION (pool): no usable data")
+        print("NO COHERENT SOLUTION: too few usable stations")
         return solution
 
-    print(f"depth search over {len(depths)} depths: "
-          f"{depths[0]:g}-{depths[-1]:g} km")
+    # --- task 3 -------------------------------------------------------------
+    depths = invert.search_depths(event, model)
+    print(f"task 3: depth grid {depths[0]:g}-{depths[-1]:g} km "
+          f"({len(depths)} depths)")
     greens.stage_event_greens(model, pool, depths, band, green_dir)
-
     cwd = os.getcwd()
     os.chdir(band_dir)
     try:
-        inv, used, rejected, selection = invert.invert_with_rejection(
+        inv, used, rejected, rounds = invert.clinton_loop(
             event, pool, depths, band_dir, green_dir)
         inv.plot(view="waveform", option="preferred", format="jpg", show=False)
     except invert.NoCoherentSolution as e:
         solution = invert.no_solution_record(
-            event, pool, dropped, model, band, e.stage, e.reason,
-            e.selection)
+            event, pool, dropped, model, band, e.stage, e.reason, e.best_vr)
+        solution["stations_dropped"] += e.rejected
         print(f"NO COHERENT SOLUTION ({e.stage}): {e.reason}")
-        used, rejected = [], e.rejected
     else:
-        solution = invert.summarize(
-            inv, event, used, dropped + rejected, model, selection)
+        solution = invert.summarize(inv, event, used, dropped + rejected,
+                                    model, rounds)
         solution["filter_band_hz"] = list(band)
-        # leave-one-out jackknife HERE (v4: was after the band choice) so
-        # the stability evidence reaches the grade
-        jk = invert.jackknife(
-            event, used, solution["preferred"]["depth_km"],
-            band_dir, green_dir, solution["preferred"]["plane1"])
+        jk = invert.jackknife(event, used, solution["preferred"]["depth_km"],
+                              band_dir, green_dir,
+                              solution["preferred"]["plane1"])
         solution["jackknife"] = jk
         solution["quality"] = invert.quality_gates(solution)
         if jk.get("n_subsets"):
@@ -107,154 +110,111 @@ def process_band(event, band: tuple[float, float], band_dir: Path,
     except Exception as e:  # noqa: BLE001 — diagnostic figure, not data
         print(f"  WARNING: all-station waveform figure failed: {e}")
     if config.is_solved(solution):
-        pref = solution["preferred"]
-        print(f"band result: depth {pref['depth_km']:g} km, "
-              f"Mw {pref['mw']:.2f}, VR {pref['vr']:.1f}%, "
-              f"DC {pref['pdc']:.0f}%, grade {solution['quality']['grade']}")
+        p, q = solution["preferred"], solution["quality"]
+        print(f"band result: depth {p['depth_km']:g} km "
+              f"[{q['depth_range_km'][0]:g}-{q['depth_range_km'][1]:g}], "
+              f"Mw {p['mw']:.2f}, VR {p['vr']:.1f}%, DC {p['pdc']:.0f}%, "
+              f"{q['n_stations_used']} stations, grade {q['grade']}")
     return solution
+
+
+def _cleanup(event_dir: Path) -> None:
+    """Staged Green's functions and SAC data are regenerable; mtinv.in,
+    per-band solution.json and figures stay as provenance."""
+    for band_dir_ in event_dir.glob("band_*"):
+        shutil.rmtree(band_dir_ / "greens", ignore_errors=True)
+        for dat in band_dir_.glob("*.dat"):
+            dat.unlink()
+
+
+def _rebuild_tables() -> None:
+    catalogue.build_catalogue()
+    import station_performance
+    station_performance.build_station_performance()
 
 
 def _archive_no_solution(event, event_dir: Path, solutions: dict,
                          best_tag: str, debug: bool) -> dict:
-    """Archive an event for which no band produced a coherent solution.
-
-    The honest alternative to publishing a junk mechanism: the record keeps
-    the full station ledger and every pass's evidence, and the catalogue
-    row carries no mechanism numbers at all."""
     rec = solutions[best_tag]
     rec["chosen_band"] = best_tag
     rec["band_search"] = {
         tag: {"status": config.STATUS_NO_SOLUTION,
               "stage": s["abort"]["stage"], "best_vr": s["abort"]["best_vr"]}
-        for tag, s in solutions.items()
-    }
+        for tag, s in solutions.items()}
     try:
         figure.plot_station_ledger_map(
             rec, event_dir / f"{event.public_id}_station_map.jpg")
-    except Exception as e:  # noqa: BLE001 - figure must not block the record
+    except Exception as e:  # noqa: BLE001
         print(f"  WARNING: station ledger map failed: {e}")
     out = invert.save_solution(rec, event_dir)
-    catalogue.build_catalogue()
-    import station_performance
-    station_performance.build_station_performance()
-
+    _rebuild_tables()
     if not debug:
-        for band_dir_ in event_dir.glob("band_*"):
-            shutil.rmtree(band_dir_ / "greens", ignore_errors=True)
-            for dat in band_dir_.glob("*.dat"):
-                dat.unlink()
-
+        _cleanup(event_dir)
     canonical = config.EVENTS_DIR / config.no_solution_dir_name(
-        event.public_id, event.locality)
+        event.public_id, event.locality, event.origin_time)
     if event_dir != canonical:
         if canonical.exists():
             shutil.rmtree(canonical)
         event_dir.rename(canonical)
         print(f"archived as {canonical.name}")
-    print(f"\nNO COHERENT SOLUTION ({best_tag}): "
-          f"{rec['abort']['stage']} — {rec['abort']['reason']}\n"
-          f"best VR across passes: {rec['abort']['best_vr']}\n"
-          f"solution: {out}")
+    print(f"\nNO COHERENT SOLUTION ({best_tag}): {rec['abort']['stage']} — "
+          f"{rec['abort']['reason']}\nsolution: {out}")
     return rec
 
 
 def process_event(public_id: str, debug: bool = False,
                   band: tuple[float, float] | None = None) -> dict:
+    # --- task 1 -------------------------------------------------------------
     event = get_event(public_id)
     print(f"{event.public_id}: M{event.prelim_mag:.1f} {event.locality}, "
           f"depth {event.depth_km:g} km, quality={event.quality}")
     assert event.quality != "deleted", f"{public_id} is marked deleted by GeoNet"
-
     event_dir = (config.find_event_dir(event.public_id)
                  or config.EVENTS_DIR / event.public_id)
     event_dir.mkdir(parents=True, exist_ok=True)
-
     model = config.model_for_event(event.latitude, event.longitude)
     print(f"velocity model: {model}")
+
+    # --- tasks 2-3, per band in order of preference -------------------------
     bands = [band] if band else config.band_candidates(event.prelim_mag)
     solutions = {}
     for b in bands:
         tag = config.band_tag(b)
         try:
-            solutions[tag] = process_band(event, b, event_dir / tag, debug, model)
+            solutions[tag] = process_band(event, b, event_dir / tag, debug,
+                                          model)
         except AssertionError as e:
             print(f"band {tag} failed: {e}")
             continue
-        # Below M5.5 the menu is an ordered preference: the first band
-        # that produces a solution wins outright (2026-09-03 call — VR
-        # must not arbitrate across bands, and a C-grade first band
-        # usually reflects the event, not the band). Fallback bands run
-        # when a band fails hard, finds no coherent solution, or when the
-        # inverted Mw overshoots the preliminary magnitude so far that the
-        # event is plainly bigger than this band assumed (2026p336046:
-        # prelim 4.2 -> Mw 5.01 from a 10-50 s-only run).
-        if event.prelim_mag < 5.5 and band is None:
-            sol = solutions[tag]
-            if not config.is_solved(sol):
-                print(f"band {tag}: no coherent solution, trying the next")
-                continue
-            overshoot = (sol["preferred"]["mw"] - event.prelim_mag
-                         >= config.BAND_ESCALATE_DMW)
-            if overshoot and b is not bands[-1]:
-                print(f"band escalation: Mw {sol['preferred']['mw']:.2f} "
-                      f"exceeds prelim M{event.prelim_mag:.1f} by "
-                      f">= {config.BAND_ESCALATE_DMW:g}; trying a longer "
-                      "band")
-                continue
-            break
+        s = solutions[tag]
+        if config.is_solved(s) and s["quality"]["passed"]:
+            break   # first band that passes its gate wins
+        print(f"band {tag}: {'grade ' + s['quality']['grade'] if config.is_solved(s) else 'no coherent solution'}"
+              + (", trying the next" if b is not bands[-1] else ""))
     assert solutions, "every filter band failed"
 
-    # Band choice. Below M5.5 VR must NOT arbitrate between bands: a
-    # longer-period band is smoother and posts higher VR even when it fits
-    # filtered noise (2026p033598 review: 20-50 s "looked terrible", VR 61,
-    # Mw +0.22 vs the visibly signal-fitting 10-50 s at VR 40). The menu
-    # is an ordered PREFERENCE: take the first band whose gates pass.
-    # At M5.5+ both menu bands are long-period and physical, so the
-    # VR+DC rule still arbitrates there.
-    menu_tags = [config.band_tag(b) for b in bands if config.band_tag(b)
-                 in solutions]
-    solved_tags = [t for t in menu_tags if config.is_solved(solutions[t])]
-    if not solved_tags:
-        # every band aborted: archive the most informative attempt
-        best_tag = max(menu_tags,
-                       key=lambda t: solutions[t]["abort"]["best_vr"])
-        return _archive_no_solution(event, event_dir, solutions, best_tag,
-                                    debug)
-    # The band menu is an ORDERED PREFERENCE at every magnitude: the first
-    # band that passes its gates wins. VR must not arbitrate across bands
-    # — a longer-period band is smoother and posts higher VR even when it
-    # fits filtered noise (2026p033598 at M4.6), and at M5.5+ the longest
-    # band is "overly smoothed" (2026p553250 review: fit 20-100 s first).
-    passing = [t for t in solved_tags if solutions[t]["quality"]["passed"]]
-    if passing:
-        best_tag = passing[0]
-    else:
-        tags = passing if passing else solved_tags
-        best_tag = tags[invert.pick_preferred(
-            [(solutions[t]["preferred"]["vr"],
-              solutions[t]["preferred"]["pdc"]) for t in tags],
-            contiguous=False,
-        )]
+    tags = [config.band_tag(b) for b in bands if config.band_tag(b) in solutions]
+    solved = [t for t in tags if config.is_solved(solutions[t])]
+    if not solved:
+        best_tag = max(tags, key=lambda t: solutions[t]["abort"]["best_vr"])
+        return _archive_no_solution(event, event_dir, solutions, best_tag, debug)
+    passing = [t for t in solved if solutions[t]["quality"]["passed"]]
+    # a passing band wins outright; otherwise the best VR among the solved
+    best_tag = passing[0] if passing else max(
+        solved, key=lambda t: solutions[t]["preferred"]["vr"])
     best = solutions[best_tag]
     best["chosen_band"] = best_tag
     best["band_search"] = {
-        tag: ({
-            "vr": s["preferred"]["vr"],
-            "mw": s["preferred"]["mw"],
-            "depth_km": s["preferred"]["depth_km"],
-            "pdc": s["preferred"]["pdc"],
-            "n_stations": s["quality"]["n_stations_used"],
-            "grade": s["quality"]["grade"],
-            "gates_passed": s["quality"]["passed"],
-        } if config.is_solved(s) else {
-            "status": config.STATUS_NO_SOLUTION,
-            "stage": s["abort"]["stage"],
-            "best_vr": s["abort"]["best_vr"],
-        })
-        for tag, s in solutions.items()
-    }
+        tag: ({"vr": s["preferred"]["vr"], "mw": s["preferred"]["mw"],
+               "depth_km": s["preferred"]["depth_km"], "pdc": s["preferred"]["pdc"],
+               "n_stations": s["quality"]["n_stations_used"],
+               "grade": s["quality"]["grade"]}
+              if config.is_solved(s) else
+              {"status": config.STATUS_NO_SOLUTION,
+               "stage": s["abort"]["stage"], "best_vr": s["abort"]["best_vr"]})
+        for tag, s in solutions.items()}
 
-    # forward model, NISAR timing, share figure, publish decision
+    # --- task 4 -------------------------------------------------------------
     forward = okada_forward.forward_both_planes(best)
     best["forward_model"] = {
         "peak_abs_cm": forward["peak_abs_m"] * 100.0,
@@ -269,72 +229,50 @@ def process_event(public_id: str, debug: bool = False,
         passes = []
     best["nisar_passes"] = passes
 
+    # --- task 5 -------------------------------------------------------------
     pid = event.public_id
     fig_path = figure.make_share_figure(
-        best, forward, passes,
-        event_dir / f"{pid}_stations_displacement_field.jpg")
+        best, forward, passes, event_dir / f"{pid}_stations_displacement_field.jpg")
     depth_fig = figure.plot_depth_sensitivity(
         best, event_dir / f"{pid}_depth_sensitivity.jpg")
-    # waveform-fit pages (mttime output, untouched) copied up with
-    # descriptive event-ID names for the email attachments
-    for i, bb in enumerate(
-            sorted((event_dir / best_tag).glob("bbwaves.*.jpg"))):
+    for i, bb in enumerate(sorted((event_dir / best_tag).glob("bbwaves.*.jpg"))):
         shutil.copy(bb, event_dir / f"{pid}_waveform_fits_{i:02d}.jpg")
     print(f"figures: {fig_path}, {depth_fig}")
 
     history = json.loads(config.STATE_FILE.read_text())["published"] \
         if config.STATE_FILE.exists() else []
     best["publish_decision"] = trigger.publish_decision(best, forward, history)
-
     subject, body = publish.draft_text(best, forward, passes)
     (event_dir / "draft_email.txt").write_text(f"{subject}\n\n{body}\n")
-
     out = invert.save_solution(best, event_dir)
-    catalogue.build_catalogue()
-    import station_performance
-    station_performance.build_station_performance()
+    _rebuild_tables()
     try:
-        figure.make_overview_map(
-            config.EVENTS_DIR, config.EVENTS_DIR / "solutions_map.jpg")
-    except Exception as e:  # noqa: BLE001 - map failure must not kill the MT
+        figure.make_overview_map(config.EVENTS_DIR,
+                                 config.EVENTS_DIR / "solutions_map.jpg")
+    except Exception as e:  # noqa: BLE001
         print(f"overview map failed: {e}")
-
-    # working files (staged Green's functions, SAC data) are regenerable
-    # from solution.json + the GF release — delete unless debugging.
-    # mtinv.in, per-band solution.json and figures stay as provenance.
     if not debug:
-        for band_dir_ in event_dir.glob("band_*"):
-            shutil.rmtree(band_dir_ / "greens", ignore_errors=True)
-            for dat in band_dir_.glob("*.dat"):
-                dat.unlink()
-
-    # canonical, human-readable directory name now that Mw/depth are known
+        _cleanup(event_dir)
     canonical = config.EVENTS_DIR / config.event_dir_name(
-        event.public_id, best["preferred"]["mw"],
-        best["preferred"]["depth_km"], event.locality)
+        pid, best["preferred"]["mw"], best["preferred"]["depth_km"],
+        event.locality, event.origin_time)
     if event_dir != canonical:
         if canonical.exists():
             shutil.rmtree(canonical)
         event_dir.rename(canonical)
-        event_dir = canonical
         print(f"archived as {canonical.name}")
 
-    pref = best["preferred"]
-    print(
-        f"predicted peak displacement: {forward['peak_abs_m']*100:.2f} cm "
-        f"(detectable: {forward['detectable']})\n"
-        f"publish decision: {best['publish_decision']['publish']} — "
-        f"{best['publish_decision']['reasons']}"
-    )
-    print(
-        f"\nCHOSEN ({best_tag}): depth {pref['depth_km']:g} km, "
-        f"Mw {pref['mw']:.2f}, VR {pref['vr']:.1f}%, DC {pref['pdc']:.0f}%\n"
-        f"plane1 {pref['plane1']}\nplane2 {pref['plane2']}\n"
-        f"band search: {json.dumps(best['band_search'], indent=2)}\n"
-        f"quality gates: {best['quality']}\n"
-        f"velocity model: {best['provenance']['velocity_model']}\n"
-        f"solution: {out}"
-    )
+    p, q = best["preferred"], best["quality"]
+    print(f"predicted peak displacement: {forward['peak_abs_m']*100:.2f} cm "
+          f"(detectable: {forward['detectable']})\n"
+          f"publish decision: {best['publish_decision']['publish']} — "
+          f"{best['publish_decision']['reasons']}")
+    print(f"\nCHOSEN ({best_tag}): depth {p['depth_km']:g} km "
+          f"[{q['depth_range_km'][0]:g}-{q['depth_range_km'][1]:g}], "
+          f"Mw {p['mw']:.2f}, VR {p['vr']:.1f}%, DC {p['pdc']:.0f}%, "
+          f"grade {q['grade']} ({q['n_stations_used']} stations)\n"
+          f"plane1 {p['plane1']}\nplane2 {p['plane2']}\n"
+          f"quality: {q}\nsolution: {out}")
     return best
 
 
@@ -350,6 +288,6 @@ if __name__ == "__main__":
     ap.add_argument("--debug", action="store_true",
                     help="save troubleshooting figures of every stage")
     ap.add_argument("--band", type=_parse_band, default=None,
-                    help="force one passband in Hz, e.g. 0.02-0.05")
+                    help="force one passband in Hz, e.g. 0.02-0.10")
     args = ap.parse_args()
     process_event(args.event, debug=args.debug, band=args.band)

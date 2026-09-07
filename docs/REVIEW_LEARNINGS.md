@@ -253,3 +253,24 @@ operational practice" section), adopt what is better, and cite properly.
 
 "I am not the first to do this and not the most qualified or
 experienced" — D. Lindsay, 2026-09-05.
+
+
+---
+
+## Closing note (2026-09-07): v4 retired, v5 is the published-rules version
+
+The four-pass funnel (v4, tag `selection-v4`) worked — on its first live
+events it tripled station counts and aborted honestly on noise — but it
+was our invention, calibrated on one reviewer's labels for 14 events,
+and at 973 lines it was not something a collaborator could pick up. The
+literature review (`docs/lit_review/`) then showed that Clinton,
+Hauksson & Solanki (2006) had published essentially the same loop in
+2006 in two lines, that every operational system bounds the depth
+search around the hypocentre, and that INGV's grade table solves the
+VR-versus-station-count problem the funnel was fighting. v5 keeps
+what the review supported, drops what it did not, and puts every
+number in `auto_tdmt.cfg` with its citation. The lessons above — the
+metrics must measure what the eye measures, every judgment is only as
+good as its reference solution, depth spikes at layer boundaries are
+not solutions, selection rules compound — still hold and are the reason
+the v5 rules are few.

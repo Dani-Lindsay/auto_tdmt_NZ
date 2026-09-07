@@ -24,6 +24,9 @@ get-gfs = """test -d gf_cache && echo 'gf_cache already present' || \
 (curl -L https://github.com/Dani-Lindsay/auto_tdmt_NZ/releases/download/gf-latest/gf_library.tar.zst \
  | tar --use-compress-program=unzstd -xf - -C . && ls gf_cache)"""
 review = "jupyter notebook human_review.ipynb"
+# rebuild the per-task walkthrough notebooks (docs/task_*.ipynb); --execute runs them
+notebooks = "python tools/build_task_notebooks.py"
+params = "python params.py"
 
 [dependencies]
 python = "3.12.*"

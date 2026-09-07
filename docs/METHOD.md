@@ -56,87 +56,53 @@ published, with full provenance in `solution.json`.
 
 ## 3. Data selection and pre-processing (`waveforms.py`)
 
-### 3.1 Station selection — the funnel
+### 3.1 Station selection (task 2, `waveforms.py`)
 
-The goal is the best data for the job. The previous scheme tried to
-reach it by filtering candidates out before the inversion; an audit of
-693 archived events showed that failing badly — 61% of all station
-exclusions were decided by the solution itself, and 69% of those vetoes
-were issued by reference solutions whose own variance reduction was
-below 20 (junk vetoing good data). The far-field 3x-depth rule alone
-removed the closest station from every event it touched, and 94% of
-those events ended grade C or D.
+Selection v5 (2026-09) replaced two earlier designs — a pre-filter
+cascade (v3) that starved itself, and a four-pass funnel (v4) that was
+correct but complex — with rules taken from published operational
+systems (the review is in `docs/lit_review/`). Nothing here is an
+invention; every rule is one line in `auto_tdmt.cfg` §2 with its source.
 
-Selection v4 (2026-09) therefore deletes nothing usable. The data
-decides, in a funnel:
+1. **Distance window** scaled by magnitude: 120 / 180 / 250 / 300 km at
+   M < 4 / < 4.5 / < 5 / ≥ 5, near limit 10 km below M4.5 and 20 km
+   above. Gisola uses 10–250 km for M4–5 and 40–300 km for M5–5.5
+   (Triantafyllis et al. 2022). One radius extension of 100 km when
+   fewer than four stations are usable (offshore events).
+2. **Unusable data** rejected: no waveform, no response, gaps, wrong
+   sample count.
+3. **Signal quality**: per-component SNR = RMS of the 200 s after the P
+   arrival over RMS of the 200 s before it, measured on the filtered
+   traces; a station is usable when the median of its three components
+   is ≥ 2 (BMKG: Halauwet et al. 2024, GJI 239; AutoBATS uses 2.0, INGV
+   5). Every published system that defines an SNR screens per
+   component, not per station.
+4. **Broken responses**: reject a station whose peak × distance exceeds
+   three times the network median. W-phase screens 0.1×–3× on both
+   sides (Duputel et al. 2012); the low side is deliberately not
+   screened because a station near a nodal plane genuinely has small
+   amplitude, and Duputel et al. name exactly that failure mode.
+5. **Azimuth balance**: rank the usable stations by SNR and take them
+   round-robin across eight 45° sectors until 16 (Gisola's sector
+   design, SCARDEC's best-SNR-per-bin; relaxed from Gisola's hard cap of
+   two per sector so a one-sided offshore geometry fills up from its
+   best stations rather than being starved).
+6. **Filter bands by magnitude**, an ordered preference: 10–50 s below
+   M4.5; 10–50 s then 20–50 s to M5.5; 20–100 s then 30–100 s above.
+   The first band whose solution passes its gate wins, because VR is
+   not comparable across bands (a longer period is smoother and scores
+   higher even when it fits noise). Near-identical to SCSN's menu
+   (Clinton, Hauksson & Solanki 2006) and INGV's practice of pushing
+   small events to higher frequencies.
+7. **Record window** per station: 30 s before origin to distance /
+   2.5 km/s + a magnitude-dependent tail after it, extended to where the
+   smoothed envelope decays back toward the pre-event level (slow
+   Hikurangi paths), capped at 200 s after origin. The earlier 120 s cap
+   cut 300 km stations mid-train.
 
-**Stage A — the pool** (`waveforms.py`). Hard rejection only for
-genuinely unusable records: no waveform, no response, gaps, the wrong
-sample count, a dead channel (peak-to-noise below 1.2), or a
-broken-response amplitude outlier. That last screen is ONE-SIDED, only
-catching stations far ABOVE the network median: a station far below it
-may simply lie near a nodal plane, where small amplitude is real
-information about the mechanism rather than evidence of a bad station.
-Everything else enters the pool carrying demotion TAGS — `near_field`
-(inside 3x the source depth; the CPS Green's functions are
-complete-wavefield, so the fit decides), `weak_signal` (peak/noise below
-5), `cluster_surplus` (beyond two stations within 25 km, e.g. the
-Ruapehu ring) — which shift the burden of proof without excluding
-anybody.
-
-**Stage B — the funnel** (`invert.py`, `invert_with_rejection`).
-
-1. **Survey, everyone in, no time shifts.** The whole pool is inverted
-   over a coarse depth grid with mttime's cross-correlation disabled.
-   This matters: mttime's shift search is unbounded (a 60 s window can
-   slide past 100 s), so a noise trace can always find a chance
-   alignment and earn undeserved variance reduction. With shifts off,
-   the ranking is honest by construction. Each station's evidence is the
-   MEDIAN of its own VR across the contiguous VR plateau — chance
-   alignment is depth-specific, real coherence is not.
-2. **Keep the majority.** The best ten stations that fit at all
-   (own VR >= 10), plus the best station in any azimuth sector not yet
-   represented, up to twelve.
-3. **Re-search, then build a clean core.** Shifts are on from here, and
-   bounded: a station whose solved shift exceeds 8 s is rejected, its
-   fit no longer being evidence. (Archive calibration: stations used in
-   grade A/B solutions sit at |zcor| <= 9 s at the 95th percentile,
-   while grade-D stations reach 0.88 of their whole travel time.) The
-   core is the best three to six by own VR, forced to contain two
-   stations at least 90 degrees apart — the minimum geometry that can
-   resolve a mechanism — and it gets its own full depth search. That
-   solution is the reference every other station is judged against, so
-   it must be clean.
-4. **Earn your seat back.** Every station outside the core — tagged and
-   pruned ones alike — is added at the core depth and kept if the core
-   solution predicts its waveform (own VR >= 30, relaxed to 20 for a
-   sparse core, or 10 if it fills an empty azimuth sector) without
-   costing more than 3 joint VR points. A `cluster_surplus` station must
-   additionally improve the joint fit. %DC never enters the decision: a
-   noise station can inflate it by dragging the tensor toward a generic
-   mechanism.
-5. **Final search and the anti-fitting cull.** A station whose own VR is
-   negative fits worse than silence and only steers the tensor; it is
-   removed unconditionally, with no joint-gain test and no protection
-   for being alone in its sector, and the search is repeated.
-6. **Jackknife.** Leave-one-station-out at the preferred depth
-   quantifies how much any single station moves the answer, and feeds
-   the grade.
-
-There is deliberately no greedy "drop whatever raises the joint VR"
-pass. It was evicting stations fitting at 54-65% to gain two points —
-variance-reduction vanity paid for in azimuth coverage.
-
-When nothing coheres — survey and majority VR both below 20, no viable
-core, or a final VR below 20 — the event is archived as
-**no coherent solution** rather than reporting a mechanism fitted to
-noise (§6).
-
-Every pool station's whole history is recorded in `solution.json`:
-peak/noise, tags, its own VR at each pass, the solved time shift, the
-admission verdict and reason. The per-band all-station waveform figure
-shows every candidate's record with those numbers printed beside it, so
-any exclusion can be judged against the data that produced it.
+Everything that enters and leaves is recorded with a reason string in a
+shared vocabulary (`invert.reason_class`), so the all-station waveform
+figure and `events/station_ledger.csv` show why.
 
 ### 3.2 Pre-processing
 
@@ -197,113 +163,77 @@ waveforms".
   data exactly. A manifest records the model file's SHA-256, grid, and
   build time. CI never runs CPS — it downloads the library tarball.
 
-## 5. Inversion (`invert.py`)
+## 5. Inversion (task 3, `invert.py`)
 
 - **Engine**: mttime deviatoric inversion (degree 5), ZRT components,
-  inverse-distance weighting, per-station cross-correlation time shifts
-  (zcor; the pandas<3 pin is required for this — mttime issue #15).
-- **Depth search**: the FULL library grid, always — the solution is kept
-  fully independent of GeoNet's hypocentral depth, which is recorded (with
-  its uncertainty) for comparison only. The catalogue reports the final
-  pick alongside the VR-max and DC-max depths and the plateau width.
-- **Filter-band menu** (BSL practice: a small menu of period bands, longer
-  periods for larger events; the pipeline tries each and picks by the rule
-  below):
-  | preliminary M | candidate bands |
-  |---|---|
-  | < 4.5 | 10–50 s only (no coherent energy above ~20 s period; longer-period trials only ever fit noise and inflate Mw — other bands remain testable via `run02 --band`) |
-  | 4.5–5.5 | 10–50 s, then 20–50 s (20–100 s pruned: won 1/19 events in this bin, elsewhere only fit noise) |
-  | ≥ 5.5 | 20–100 s, then 30–100 s |
+  distance weighting (F-net's published VR definition weights stations
+  proportional to distance), per-station cross-correlation time shifts.
+  mttime's own control file is written and read; nothing of the
+  inversion mathematics is reimplemented.
+- **Depth grid**: the GeoNet hypocentre ± 30 km, clipped to the library;
+  the full library when GeoNet's depth is a placeholder. The search is
+  bounded, the answer is never forced — the same design as F-net
+  (JMA ± 30 km), Gisola (± 31 km), W-phase and SCARDEC (± 50 km). An
+  unbounded grid let VR climb monotonically into the smoothest Green's
+  functions (2026p666955: 50 km against a 26 km hypocentre).
+- **Preferred depth**: the maximum VR, mttime's own pick and every
+  operational system's. Recomputing the pick over 343 archived events
+  with a Ristau reference depth showed a %DC tie-break adds nothing
+  (median |ΔZ| 8.0 km either way). **Depth uncertainty** is the range of
+  depths whose VR is within 10% of the maximum (SCARDEC: Vallée et al.
+  2011; Bernardi et al. 2004), reported as `Depth_lo`/`Depth_hi`.
+- **Station selection by fit — the Clinton loop** (Clinton, Hauksson &
+  Solanki 2006, BSSA 96): invert every selected station; drop any whose
+  own VR is below max(overall VR − 10, 25) **or whose solved time shift
+  exceeds 8 s**; re-invert; repeat until nothing drops or three stations
+  remain (at most five rounds). mttime's shift search is unbounded, so
+  the cap is what stops a noise trace sliding into a chance alignment
+  (NEIC SynDepth clips at 6/8/10 s by magnitude). No other selection
+  logic exists.
+- **Jackknife**: leave-one-station-out at the preferred depth; the
+  largest minimum-rotation angle (Townend et al. 2012) of any subset
+  from the full solution is the stability evidence. NIED state in print
+  that the jackknife is the only reliable detector of a station gone
+  bad, because the misfit does not localise on the offending station
+  (Fukuyama et al. 1998).
 
-  The menu is an **ordered preference at every magnitude**: the first
-  band that produces a solution passing its gates wins. VR must not
-  arbitrate across bands — a longer-period band is smoother and posts a
-  higher VR even when it is fitting filtered noise (2026p033598: 20–50 s
-  scored VR 61 and inflated Mw by 0.22 over the visibly signal-fitting
-  10–50 s at VR 40), and at the largest magnitudes the longest band is
-  visibly over-smoothed. A band is escalated when the inverted Mw
-  overshoots the preliminary magnitude by ≥ 0.6, which means the event is
-  bigger than the menu assumed.
-- **Station selection**: the funnel (§3.1). Stations whose data the
-  final solution cannot predict are removed rather than being allowed to
-  dilute the %DC (cf. dropping persistently low-VR stations, Ristau 2008;
-  Dreger & Helmberger 1993); every rejection is recorded with its reason
-  and the numbers behind it.
-- **Preferred solution rule** (VR first, then DC as a tie-break):
-  candidates are the depths on the contiguous VR plateau around the
-  reference (a bimodal VR curve must not let a disconnected lobe steal
-  the pick), and among them the highest %DC wins. The DC tie-break window
-  is deliberately narrow — **2 VR points** — because DC may break a
-  near-tie but must not buy a real loss of fit: at the old 5-point window
-  the pick landed on the plateau EDGE (2026p091845 took 24 km at VR 60.5
-  / DC 98 over 18–22 km at VR 65 / DC 88–93). Recomputing the pick from
-  all 343 archived depth searches that have a Ristau reference depth,
-  the median depth error improves from 9.0 km to 8.0 km when the window
-  tightens, and DC adds nothing beyond that (a pure VR maximum also
-  scores 8.0). The wider 5-point plateau is still reported as
-  `Plateau_km`: how well the depth is resolved.
-  Rationale for using DC at all: VR is a weak discriminator with depth
-  (it often climbs monotonically) while spurious CLVD grows where the
-  depth or model is wrong; pure VR-max picks produced solutions with
-  implausible ~70% CLVD. Both the VR-max and %DC-max depths are recorded
-  and a disagreement flag is set.
-- **Grid-edge guard**: a VR maximum sitting on the first or last depth of
-  the library with a single-point plateau is an artifact — the smoothest
-  Green's functions at the ends of the grid absorb noise — so the best
-  interior local maximum within 5 VR points is preferred instead
-  (2026p508890 rode a 58 km edge at VR 22.7 over the physical 8 km peak
-  at VR 18.3 with DC 88–96; 520779, 348732 and 300334 the same).
+## 6. Quality grades and publication (`invert.py`, `trigger.py`)
 
-## 6. Quality gates and publication (`invert.py`, `trigger.py`)
+The grade is INGV's table (terremoti.ingv.it/en/help#TDMT), in which
+the VR needed for a grade FALLS as the station count rises:
 
-Every solution carries a letter grade built from EVIDENCE, not from how
-much data went in. Station count and azimuthal gap are deliberately not
-thresholds: three well-fitting stations spanning 90 degrees make a good
-solution (standard BSL practice; Ristau's own catalogue has a median of
-7 stations with quartiles 4–11, and uses as few as 1–3), while ten
-stations carrying a passenger do not.
+| N stations | D | C | B | A |
+|---|---|---|---|---|
+| 3 | VR < 20 | 20–70 | ≥ 70 | — |
+| 4 | < 20 | 20–40 | 40–60 | ≥ 60 |
+| 5–8 | < 15 | 15–40 | 40–60 | ≥ 60 |
+| > 8 | < 15 | 15–30 | 30–50 | ≥ 50 |
 
-| Grade | VR | %DC | min own VR | jackknife rotation | depth |
-|---|---|---|---|---|---|
-| A | ≥ 70 | ≥ 60 | ≥ 40 | ≤ 15° (required) | interior, within 8 km of GeoNet |
-| B | ≥ 60 | ≥ 60 | ≥ 25 | ≤ 25° or not possible | interior, within 8 km of GeoNet |
-| C | ≥ 50 | — | ≥ 10 | — | — |
-| D | anything below C, or no two stations ≥ 90° apart | | | | |
+A and B additionally require %DC ≥ 60 (the BSL publishability rule;
+INGV's `a` suffix) and a jackknife rotation ≤ 25° when the jackknife is
+possible. The shape of the table is the point: because VR is
+anti-correlated with station count, a flat "VR > X" gate is gameable by
+the selection itself — Triantafyllis et al. (2016) show ten stations at
+VR 0.7 with a condition number of 5 becoming two stations at VR 0.9
+with a condition number above 10. Under this table grade A is
+unreachable with three stations by construction. F-net's flat rule
+(VR > 50%, M > 3.5) is the simpler alternative; the table agrees with
+it for typical station counts and is stricter for small ones.
 
-Grade B is exactly the BSL publishability rule (VR ≥ 60 and DC ≥ 60)
-plus the evidence checks. Thresholds come from the archive's own A/B
-statistics: minimum own-station VR sits at the 25th percentile of 41
-(A) and 35 (B), and jackknife rotation at the 90th percentile of 12°
-(A). **min own VR** is the worst-fitting station in the solution — one
-passenger the mechanism cannot explain is reason to distrust the whole
-answer. **Jackknife rotation** is the largest mechanism change when any
-one station is removed (§ Validation metric); a solution that depends on
-a single station is not a solution.
+**No coherent solution.** When fewer than three stations survive the
+loop the event is archived with `"status": "no_coherent_solution"` and
+grade `X`: the full station ledger and every round's numbers, but no
+mechanism, magnitude or depth. F-net simply does not publish below its
+floor; GeoNet fall back to USGS W-phase for events they cannot
+constrain. Warnings (recorded, never blocking): the preferred depth
+touching the ± 30 km window edge; the jackknife being impossible.
 
-**Depth plausibility.** The depth search is never bounded by GeoNet, but
-the result is judged: a centroid depth more than 8 km from a real
-(non-placeholder) GeoNet hypocentre is flagged and capped at grade C, so
-it cannot be published as though it were fine. Calibration: in the
-Ristau catalogue, centroid depths sit a median 4 km from the GeoNet
-hypocentre, 57% within 5 km and 82% within 10 km — so a large
-disagreement is claiming something a careful analyst catalogue rarely
-does. GeoNet's fixed placeholder depths (5/12/33 km) are not
-measurements and are never used to judge us.
-
-**No coherent solution.** When nothing coheres — the survey and majority
-inversions both below VR 20, no viable core, or a final VR below 20 —
-the event is archived with `"status": "no_coherent_solution"`, grade X:
-the full station ledger and every pass's evidence, but no mechanism,
-magnitude or depth. Such events never publish and are excluded from
-validation statistics. Publishing a mechanism fitted to noise would be
-worse than admitting the network could not constrain the event.
-
-Publication gate, applied to **our inverted Mw** (never GeoNet's mixed
-ML-type preliminary magnitudes): publish if Mw ≥ 5.0 OR the Okada-predicted
-peak surface displacement ≥ 1 cm (the InSAR-interesting case). Anti-spam:
-max 3 emails/day; within 75 km and 14 days of an already-published event,
-a smaller event must be within 0.5 Mw of it (or exceed the Mw gate) to
-publish. Everything processed is archived regardless.
+Publication gate, applied to **our inverted Mw**: grade A or B and
+(Mw ≥ 5.0 or the Okada-predicted peak displacement ≥ 1 cm). Anti-spam:
+at most three emails a day; within 75 km and 14 days of a published
+event, a smaller event must be within 0.5 Mw of it to publish.
+Everything processed is archived regardless, and every event that did
+not publish is listed with its reason in `events/not_published.csv`.
 
 ## 7. Deformation forward model (`okada_forward.py`)
 
