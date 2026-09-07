@@ -12,8 +12,14 @@ name: watch-geonet
 # lost by a daily sweep. Anything urgent: run this workflow by hand
 # (Run workflow, below) or process locally.
 #
-# 06:10 UTC is ~18:10 NZST — the day's events are complete and the
-# solutions are waiting by the following morning.
+# Two slots a day, at odd minutes: GitHub runs "schedule" triggers on a
+# shared lowest-priority queue and warns that the top of the hour is the
+# worst time; our 06:10 slot was firing ~4 h late. Each run dedupes via
+# the state file, so the second slot costs nothing when there is nothing
+# new and simply catches up when the first is delayed. 05:37 UTC is
+# ~17:37 NZST (the day's events, waiting by morning); 17:37 UTC is
+# ~05:37 NZST. workflow_dispatch skips the queue entirely for anything
+# urgent.
 #
 # Busy days: the watcher processes the LARGEST events first and stops
 # starting new ones after --budget-minutes, leaving the rest for the
@@ -24,7 +30,8 @@ name: watch-geonet
 
 on:
   schedule:
-    - cron: "10 6 * * *"
+    - cron: "37 5 * * *"
+    - cron: "37 17 * * *"
   workflow_dispatch: {}
 
 concurrency:
