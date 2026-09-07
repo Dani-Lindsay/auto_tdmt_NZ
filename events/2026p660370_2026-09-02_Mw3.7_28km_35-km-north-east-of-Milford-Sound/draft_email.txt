@@ -1,4 +1,4 @@
-[auto-MT NZ] Mw 3.9 35 km north-east of Milford Sound (2026p660370), depth 58 km
+[auto-MT NZ] Mw 3.7 35 km north-east of Milford Sound (2026p660370), depth 28 km
 
 Automated regional moment tensor solution — PRELIMINARY
 
@@ -7,13 +7,13 @@ Triggered from the GeoNet rapid earthquake solution; origin time, location, prel
 Location: 35 km north-east of Milford Sound (-44.438, 168.298)
 GeoNet preliminary magnitude: M 3.8
 
-Mw: 3.94
-Centroid depth: 58 km (GeoNet initial: 5 km)
-Variance reduction: 33%  |  DC 98% / CLVD 2%
+Mw: 3.67
+Centroid depth: 28 km (GeoNet initial: 5 km)
+Variance reduction: 16%  |  DC 88% / CLVD 12%
 Filter band: 10-50 s  |  Velocity model: nz_south_ristau2008
-Nodal plane 1 (strike/dip/rake): 276/70/161
-Nodal plane 2 (strike/dip/rake): 13/72/21
-Stations used: 3  |  Azimuthal gap: 194 deg  |  Quality grade: D
+Nodal plane 1 (strike/dip/rake): 202/64/36
+Nodal plane 2 (strike/dip/rake): 95/58/149
+Stations used: 3  |  Azimuthal gap: 185 deg  |  Quality grade: D
 
 Stability: jackknife skipped (fewer than 4 stations)
 
@@ -22,9 +22,8 @@ LIMITATIONS: deviatoric-only inversion (no isotropic component) - these mechanis
 Predicted peak surface displacement 0.00 cm — no detectable surface deformation expected.
 
 NISAR passes over the epicentre:
-  track 145 D: last 2026-07-06 06:47Z, next ~2026-09-04 06:47Z
-  track 152 A: last 2026-08-23 18:52Z, next ~2026-09-04 18:52Z
   track 044 D: last 2026-08-28 06:39Z, next ~2026-09-09 06:39Z
+  track 152 A: last 2026-09-04 18:52Z, next ~2026-09-16 18:52Z
 
 --
 Automated solution (mttime 1.1.dev0, model nz_south_ristau2008, GF v1). Not reviewed by a human.

@@ -7427,38 +7427,50 @@ Detailed response of server:
 2025p975688,2025-12-28,NZ.MSZ,90.2,45.7,,,,,,0.652,84,True,,,23.294158465229163,73.0,10-50s,58.0,3.59,15.3,D,
 2025p975688,2025-12-28,NZ.PYZ.10,,,,,,,,,,False,other,not predicted by core solution: station VR 6 at 58 km < 20 (peak/noise 3.7),,,10-50s,58.0,3.59,15.3,D,
 2025p975688,2025-12-28,NZ.WHZ,97.2,138.2,,,,,,1.175,90,True,,,8.719574805946595,1.0,10-50s,58.0,3.59,15.3,D,
-2026p033598,2026-01-13,NZ.BKZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 8 of 20; station VR 2,,,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.BSWZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 8 of 20; station VR -39,,,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.COVZ.11,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 8 of 20; station VR -9,,,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.ETVZ.10,162.9,,,,,,,,,False,other,peak/noise 1.5 < 2 (dead-channel floor),,,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.FWVZ.10,153.3,,,,,,,,,False,other,peak/noise 1.9 < 2 (dead-channel floor),,,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.HATZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 8 of 20; station VR 2,,,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.HNCZ.10,,,,,,,,,,False,other,not predicted by core solution: station VR -15 at 2 km < 30 (peak/noise 3.5),,,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.KHEZ.12,226.6,,,,,,,,,False,other,"station cluster: 3 better stations within 25 km (UPKZ, MWOZ, WLRZ)",,,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.KNZ,220.0,38.9,,,,,,1.053,120,True,,,12.529616697050283,33.0,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.MAVZ.11,151.7,,,,,,,,,False,other,"station cluster: 2 better stations within 25 km (COVZ, WTVZ)",,,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.MOVZ.10,,,,,,,,,,False,other,anti-fitting: station VR -89 at 3 km,,,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.MRZ.10,,,,,,,,,,False,other,anti-fitting: station VR -36 at 3 km,,,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.MTVZ.10,142.0,,,,,,,,,False,other,"station cluster: 2 better stations within 25 km (COVZ, MOVZ)",,,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.MWOZ,214.5,306.9,,,,,,1.798,120,True,,,44.83327974608533,14.0,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.NGZ.10,160.6,,,,,,,,,False,other,"station cluster: 2 better stations within 25 km (COVZ, WTVZ)",,,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.NNZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 8 of 20; station VR 4,,,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.OHWZ,76.7,302.1,,,,,,1.006,70,True,,,38.041119540700976,8.0,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.OTVZ.10,160.7,,,,,,,,,False,other,"station cluster: 2 better stations within 25 km (COVZ, WTVZ)",,,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.PXZ,89.9,48.0,,,,,,1.159,75,True,,,44.33788041005864,9.0,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.RTZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 8 of 20; station VR 1,,,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.TMVZ.10,165.2,,,,,,,,,False,other,"station cluster: 2 better stations within 25 km (COVZ, WTVZ)",,,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.TRVZ.10,148.8,,,,,,,,,False,other,"station cluster: 3 better stations within 25 km (COVZ, WTVZ, MOVZ)",,,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.TSZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 8 of 20; station VR -19,,,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.UPKZ,230.2,307.1,,,,,,1.444,120,True,,,48.360909410576944,13.0,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.WAZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 8 of 20; station VR 24,,,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.WEL.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 8 of 20; station VR -24,,,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.WHVZ.10,149.5,,,,,,,,,False,other,"station cluster: 3 better stations within 25 km (COVZ, WTVZ, MOVZ)",,,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.WLCZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 8 of 20; station VR -50,,,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.WLRZ,240.4,309.9,,,,,,1.912,120,True,,,51.603155791718855,13.0,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.WMVZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 8 of 20; station VR 13,,,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.WRRZ.10,,,,,,,,,,False,other,not predicted by core solution: station VR 12 at 2 km < 30 (peak/noise 2.1),,,10-50s,5.0,4.27,39.8,D,
-2026p033598,2026-01-13,NZ.WTVZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 8 of 20; station VR -14,,,10-50s,5.0,4.27,39.8,D,
+2026p033598,2026-01-13,NZ.BKZ.10,160.4,12.9,0,2.88,2.45,4.13,2.88,0.766,104,False,shift,time shift: +15 s exceeds 8 s (chance alignment),-20.2,15.0,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.BSWZ.10,224.1,234.9,5,1.87,2.97,1.95,1.95,1.778,129,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 2.97),,,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.COVZ,159.4,343.1,7,2.89,3.84,6.7,3.84,1.03,103,True,,,45.0,5.0,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.ETVZ.10,162.9,348.7,7,3.54,0.51,0.81,0.81,0.768,105,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 3.54),,,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.FEGZ.10,225.7,318.2,7,3.16,2.53,4.58,3.16,1.668,130,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 4.58),,,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.FWVZ.10,153.3,342.8,7,2.34,0.63,0.74,0.74,1.022,101,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 2.34),,,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.HATZ.10,187.0,0.4,0,2.31,3.09,11.43,3.09,0.462,174,False,fit,poor fit: own VR -18 < 25,-18.3,-5.0,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.HNCZ.10,243.7,4.3,0,1.74,0.99,1.28,1.28,,137,False,snr,low SNR: best component SNR 1.74 < 2 (Z 1.74 R 0.99 T 1.28),,,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.KHEZ.12,226.6,308.2,6,2.15,3.68,3.2,3.2,1.604,130,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 3.68),,,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.KNZ.10,220.0,38.9,0,1.57,3.44,4.68,3.44,1.059,139,False,shift,time shift: +32 s exceeds 8 s (chance alignment),10.0,32.0,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.KPRZ.10,198.4,352.8,7,2.94,1.51,3.88,2.94,0.838,119,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 3.88),,,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.KRVZ.10,168.6,347.0,7,4.79,2.68,2.66,2.68,1.123,119,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 4.79),,,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.MAVZ.11,151.7,342.9,7,2.72,1.79,3.51,2.72,0.926,100,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 3.51),,,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.MNMZ.10,173.7,353.0,7,1.96,1.97,5.89,1.97,0.489,109,False,fit,poor fit: own VR -11 < 25,-10.8,-6.0,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.MOVZ.10,132.6,347.8,7,2.87,1.92,3.05,2.87,0.545,149,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 3.05),,,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.MRZ,43.4,257.2,5,8.09,2.83,2.51,2.83,0.896,57,True,,,75.6,1.0,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.MTVZ.10,142.0,338.3,7,3.26,1.39,0.93,1.39,0.992,144,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 3.26),,,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.MWOZ.10,214.5,306.9,6,3.1,4.11,3.46,3.46,1.809,125,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 4.11),,,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.NGZ.10,160.6,345.1,7,3.61,1.16,0.69,1.16,0.986,104,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 3.61),,,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.NNZ.10,238.4,251.7,5,3.15,5.31,1.92,3.15,1.696,135,False,fit,poor fit: own VR -22 < 25,-21.8,-6.0,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.NTVZ.10,167.5,348.0,7,4.27,1.18,3.62,3.62,0.954,107,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 4.27),,,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.OAHZ.10,192.0,359.2,7,1.14,0.54,1.05,1.05,,116,False,snr,low SNR: best component SNR 1.14 < 2 (Z 1.14 R 0.54 T 1.05),,,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.OHWZ,76.7,302.1,6,6.46,4.19,3.53,4.19,1.013,70,True,,,65.9,4.0,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.OTVZ.10,160.7,347.1,7,4.08,3.5,1.86,3.5,0.886,104,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 4.08),,,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.PKTZ.10,212.5,353.6,7,2.19,2.59,4.91,2.59,0.863,125,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 4.91),,,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.PXZ,89.9,48.0,1,3.97,6.75,5.39,5.39,1.167,75,True,,,46.2,5.0,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.RATZ.10,191.5,352.0,7,2.2,0.99,3.84,2.2,0.883,116,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 3.84),,,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.RTZ.10,230.9,19.9,0,4.35,3.45,3.15,3.45,1.0,157,False,shift,time shift: +12 s exceeds 8 s (chance alignment),0.1,12.0,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.TMVZ.10,165.2,348.7,7,3.54,1.15,1.71,1.71,0.807,106,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 3.54),,,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.TRVZ.10,148.8,342.1,7,2.85,0.71,0.52,0.71,0.928,99,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 2.85),,,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.TSZ,58.2,350.1,7,3.18,4.05,7.38,4.05,0.345,63,True,,,46.9,1.0,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.TWVZ.10,175.8,341.6,7,2.72,1.13,1.26,1.26,1.284,170,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 2.72),,,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.UPKZ.10,230.2,307.1,6,2.09,4.18,4.15,4.15,1.453,132,False,shift,time shift: +17 s exceeds 8 s (chance alignment),-41.1,17.0,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.VRZ.10,196.7,324.5,7,3.29,4.81,2.8,3.29,1.084,118,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 4.81),,,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.WATZ.10,209.4,351.7,7,2.2,2.0,4.86,2.2,0.817,123,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 4.86),,,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.WAZ,130.3,314.0,6,3.21,5.88,1.6,3.21,1.09,92,True,,,59.2,6.0,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.WEL.10,135.6,234.1,5,2.4,1.54,1.31,1.54,1.074,94,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 2.4),,,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.WHTZ.13,212.2,357.1,7,1.83,1.46,1.75,1.75,,124,False,snr,low SNR: best component SNR 1.83 < 2 (Z 1.83 R 1.46 T 1.75),,,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.WHVZ.10,149.5,343.6,7,2.84,2.23,3.04,2.84,0.916,99,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 3.04),,,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.WLCZ,135.9,233.0,5,2.29,2.26,4.06,2.29,1.088,94,True,,,52.8,4.0,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.WLRZ.10,240.4,309.9,6,2.88,2.93,2.6,2.88,1.925,136,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 2.93),,,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.WMVZ.10,223.7,228.8,5,3.04,2.18,1.32,2.18,2.303,129,False,shift,time shift: +15 s exceeds 8 s (chance alignment),-24.3,15.0,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.WRRZ.10,110.9,208.0,4,2.66,0.63,1.19,1.19,0.715,84,False,shift,time shift: +9 s exceeds 8 s (chance alignment),7.3,9.0,10-50s,10.0,4.18,56.0,B,v5
+2026p033598,2026-01-13,NZ.WTVZ.10,167.4,345.4,7,4.65,3.18,3.55,3.55,1.248,106,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 4.65),,,10-50s,10.0,4.18,56.0,B,v5
 2026p040265,2026-01-15,NZ.ABAZ.12,372.2,,,,,,,,,False,other,"SNR 1.4 < 2.0 (low tier, coverage already sufficient)",,,10-50s,1.0,4.04,41.0,D,
 2026p040265,2026-01-15,NZ.GRZ.10,307.9,,,,,,,,,False,other,SNR 1.0 < 1.2 (low tier floor),,,10-50s,1.0,4.04,41.0,D,
 2026p040265,2026-01-15,NZ.HAZ.10,258.3,,,,,,,,,False,other,SNR 0.7 < 1.2 (low tier floor),,,10-50s,1.0,4.04,41.0,D,
@@ -8818,92 +8830,77 @@ Detailed response of server:
 2026p660272,2026-09-02,NZ.WHZ,162.3,189.5,4,1.59,1.58,4.65,1.59,0.668,104,True,,,77.3,4.0,10-50s,4.0,4.22,60.6,A,v5
 2026p660272,2026-09-02,NZ.WKZ.10,71.0,126.1,2,1.5,1.11,1.15,1.15,,68,False,snr,low SNR: best component SNR 1.5 < 2 (Z 1.5 R 1.11 T 1.15),,,10-50s,4.0,4.22,60.6,A,v5
 2026p660272,2026-09-02,NZ.WVZ.10,249.4,53.0,1,1.3,1.18,1.15,1.18,,139,False,snr,low SNR: best component SNR 1.3 < 2 (Z 1.3 R 1.18 T 1.15),,,10-50s,4.0,4.22,60.6,A,v5
-2026p660321,2026-09-02,NZ.CVZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 6 of 21; station VR 65,,,10-50s,6.0,4.12,79.4,A,
-2026p660321,2026-09-02,NZ.DCZ,145.9,218.4,,,,,,1.105,98,True,,,62.386466767733175,2.0,10-50s,6.0,4.12,79.4,A,
-2026p660321,2026-09-02,NZ.EAZ.10,,,,,,,,,,False,other,not predicted by core solution: station VR -31 at 4.5 km < 30 (peak/noise 4.2),,,10-50s,6.0,4.12,79.4,A,
-2026p660321,2026-09-02,NZ.ERWZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 6 of 21; station VR 45,,,10-50s,6.0,4.12,79.4,A,
-2026p660321,2026-09-02,NZ.FOZ.11,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 6 of 21; station VR 32,,,10-50s,6.0,4.12,79.4,A,
-2026p660321,2026-09-02,NZ.FRNZ.10,,,,,,,,,,False,other,not predicted by core solution: station VR 3 at 4.5 km < 30 (peak/noise 3.8),,,10-50s,6.0,4.12,79.4,A,
-2026p660321,2026-09-02,NZ.HORZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 6 of 21; station VR 33,,,10-50s,6.0,4.12,79.4,A,
-2026p660321,2026-09-02,NZ.HSPZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 6 of 21; station VR 69,,,10-50s,6.0,4.12,79.4,A,
-2026p660321,2026-09-02,NZ.JCZ,55.7,42.7,,,,,,1.114,62,True,,,81.23334891856868,1.0,10-50s,6.0,4.12,79.4,A,
-2026p660321,2026-09-02,NZ.LBZ,149.1,88.2,,,,,,0.879,99,True,,,80.48805106387354,3.0,10-50s,6.0,4.12,79.4,A,
-2026p660321,2026-09-02,NZ.MKTZ.10,94.0,,,,,,,,,False,other,"response/rotation failed: The given directions are not linearly independent, at least within numerical precision. Determinant of the base change matrix: 0",,,10-50s,6.0,4.12,79.4,A,
-2026p660321,2026-09-02,NZ.MLZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 6 of 21; station VR 51,,,10-50s,6.0,4.12,79.4,A,
-2026p660321,2026-09-02,NZ.MSZ,40.1,230.0,,,,,,0.951,56,True,,,88.26175998517824,1.0,10-50s,6.0,4.12,79.4,A,
-2026p660321,2026-09-02,NZ.ODZ,196.3,110.7,,,,,,0.891,118,True,,,82.52255081216255,2.0,10-50s,6.0,4.12,79.4,A,
-2026p660321,2026-09-02,NZ.OPZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 6 of 21; station VR 36,,,10-50s,6.0,4.12,79.4,A,
-2026p660321,2026-09-02,NZ.PYZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 6 of 21; station VR 44,,,10-50s,6.0,4.12,79.4,A,
-2026p660321,2026-09-02,NZ.RDHZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 6 of 21; station VR -101,,,10-50s,6.0,4.12,79.4,A,
-2026p660321,2026-09-02,NZ.RPZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 6 of 21; station VR 61,,,10-50s,6.0,4.12,79.4,A,
-2026p660321,2026-09-02,NZ.SLTZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 6 of 21; station VR 15,,,10-50s,6.0,4.12,79.4,A,
-2026p660321,2026-09-02,NZ.SMRZ.10,238.1,,,,,,,0.105,,False,amp,amplitude outlier: peak x dist 1.70e-03 vs network median 1.62e-02,,,10-50s,6.0,4.12,79.4,A,
-2026p660321,2026-09-02,NZ.SYZ,241.6,164.8,,,,,,0.662,120,True,,,69.61978708566774,3.0,10-50s,6.0,4.12,79.4,A,
-2026p660321,2026-09-02,NZ.TUZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 6 of 21; station VR 35,,,10-50s,6.0,4.12,79.4,A,
-2026p660321,2026-09-02,NZ.WHSZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 6 of 21; station VR 1,,,10-50s,6.0,4.12,79.4,A,
-2026p660321,2026-09-02,NZ.WHZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 6 of 21; station VR 40,,,10-50s,6.0,4.12,79.4,A,
-2026p660321,2026-09-02,NZ.WKZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 6 of 21; station VR 66,,,10-50s,6.0,4.12,79.4,A,
-2026p660321,2026-09-02,NZ.WVZ.10,,,,,,,,,,False,other,not predicted by core solution: station VR -46 at 4.5 km < 30 (peak/noise 4.3),,,10-50s,6.0,4.12,79.4,A,
-2026p660370,2026-09-02,NZ.EAZ.10,,,,,,,,,,False,other,not predicted by core solution: station VR 7 at 50 km < 20 (peak/noise 2.4),,,10-50s,58.0,3.94,33.0,D,
-2026p660370,2026-09-02,NZ.HSPZ,91.1,62.1,,,,,,1.004,66,True,,,38.508155794703534,4.0,10-50s,58.0,3.94,33.0,D,
-2026p660370,2026-09-02,NZ.JCZ.10,,,,,,,,,,False,other,not predicted by core solution: station VR 6 at 50 km < 20 (peak/noise 2.7),,,10-50s,58.0,3.94,33.0,D,
-2026p660370,2026-09-02,NZ.MKTZ.10,94.6,,,,,,,,,False,other,"response/rotation failed: The given directions are not linearly independent, at least within numerical precision. Determinant of the base change matrix: 0",,,10-50s,58.0,3.94,33.0,D,
-2026p660370,2026-09-02,NZ.MLZ,104.2,187.8,,,,,,1.0,71,True,,,23.805258873485645,2.0,10-50s,58.0,3.94,33.0,D,
-2026p660370,2026-09-02,NZ.MSZ,39.5,228.3,,,,,,0.435,45,True,,,33.146408522971726,-7.0,10-50s,58.0,3.94,33.0,D,
-2026p660370,2026-09-02,NZ.RDHZ.10,,,,,,,,,,False,other,anti-fitting: station VR -29 at 50 km,,,10-50s,58.0,3.94,33.0,D,
-2026p660370,2026-09-02,NZ.SLTZ.10,,,,,,,,,,False,other,not predicted by core solution: station VR 0 at 50 km < 20 (peak/noise 2.6),,,10-50s,58.0,3.94,33.0,D,
-2026p660370,2026-09-02,NZ.WKZ.10,71.6,,,,,,,,,False,other,peak/noise 1.9 < 2 (dead-channel floor),,,10-50s,58.0,3.94,33.0,D,
-2026p665433,2026-09-04,NZ.CVZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 8 of 20; station VR 70,,,10-50s,2.0,4.15,77.3,A,
-2026p665433,2026-09-04,NZ.CVZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 6 of 18; station VR 66,,,10-50s,2.0,4.18,81.6,B,
-2026p665433,2026-09-04,NZ.DCZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 8 of 20; station VR 54,,,10-50s,2.0,4.15,77.3,A,
-2026p665433,2026-09-04,NZ.DCZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 6 of 18; station VR 40,,,10-50s,2.0,4.18,81.6,B,
-2026p665433,2026-09-04,NZ.EAZ.10,,,,,,,,,,False,other,not predicted by core solution: station VR 4 at 1.5 km < 30 (peak/noise 2.1),,,10-50s,2.0,4.15,77.3,A,
-2026p665433,2026-09-04,NZ.EAZ.10,,,,,,,,,,False,other,not predicted by core solution: station VR 8 at 2 km < 30 (peak/noise 2.5),,,10-50s,2.0,4.18,81.6,B,
-2026p665433,2026-09-04,NZ.ERWZ,231.6,66.4,,,,,,1.699,120,True,,,80.79910161748938,6.0,10-50s,2.0,4.18,81.6,B,
-2026p665433,2026-09-04,NZ.ERWZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 8 of 20; station VR 68,,,10-50s,2.0,4.15,77.3,A,
-2026p665433,2026-09-04,NZ.FOZ.11,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 8 of 20; station VR 37,,,10-50s,2.0,4.15,77.3,A,
-2026p665433,2026-09-04,NZ.FOZ.11,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 6 of 18; station VR 50,,,10-50s,2.0,4.18,81.6,B,
-2026p665433,2026-09-04,NZ.FRNZ.10,,,,,,,,,,False,other,not predicted by core solution: station VR 1 at 1.5 km < 30 (peak/noise 2.6),,,10-50s,2.0,4.15,77.3,A,
-2026p665433,2026-09-04,NZ.FRNZ.10,,,,,,,,,,False,other,not predicted by core solution: station VR 2 at 2 km < 30 (peak/noise 2.5),,,10-50s,2.0,4.18,81.6,B,
-2026p665433,2026-09-04,NZ.HORZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 8 of 20; station VR 14,,,10-50s,2.0,4.15,77.3,A,
-2026p665433,2026-09-04,NZ.HORZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 6 of 18; station VR 16,,,10-50s,2.0,4.18,81.6,B,
-2026p665433,2026-09-04,NZ.HSPZ,92.2,61.7,,,,,,0.898,76,True,,,87.23124796111912,2.0,10-50s,2.0,4.15,77.3,A,
-2026p665433,2026-09-04,NZ.HSPZ,93.2,66.6,,,,,,0.878,77,True,,,85.73486162923378,4.0,10-50s,2.0,4.18,81.6,B,
-2026p665433,2026-09-04,NZ.JCZ,57.3,43.7,,,,,,0.996,120,True,,,76.94092921548233,2.0,10-50s,2.0,4.15,77.3,A,
-2026p665433,2026-09-04,NZ.JCZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 6 of 18; station VR 75,,,10-50s,2.0,4.18,81.6,B,
-2026p665433,2026-09-04,NZ.LBZ,151.0,88.1,,,,,,0.801,100,True,,,83.32705851196357,3.0,10-50s,2.0,4.15,77.3,A,
-2026p665433,2026-09-04,NZ.LBZ,155.2,90.6,,,,,,0.812,102,True,,,76.69378387161692,5.0,10-50s,2.0,4.18,81.6,B,
-2026p665433,2026-09-04,NZ.MKTZ.10,95.7,,,,,,,,,False,other,"response/rotation failed: The given directions are not linearly independent, at least within numerical precision. Determinant of the base change matrix: 0",,,10-50s,2.0,4.15,77.3,A,
-2026p665433,2026-09-04,NZ.MKTZ.10,94.9,,,,,,,,,False,other,"response/rotation failed: The given directions are not linearly independent, at least within numerical precision. Determinant of the base change matrix: 0",,,10-50s,2.0,4.18,81.6,B,
-2026p665433,2026-09-04,NZ.MLZ,103.1,187.5,,,,,,1.037,81,True,,,89.11538024417388,1.0,10-50s,2.0,4.15,77.3,A,
-2026p665433,2026-09-04,NZ.MLZ,109.2,184.9,,,,,,1.05,83,True,,,81.12006986957805,2.0,10-50s,2.0,4.18,81.6,B,
-2026p665433,2026-09-04,NZ.MSZ,38.3,228.9,,,,,,0.815,55,True,,,56.85672222670699,1.0,10-50s,2.0,4.15,77.3,A,
-2026p665433,2026-09-04,NZ.MSZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 6 of 18; station VR 54,,,10-50s,2.0,4.18,81.6,B,
-2026p665433,2026-09-04,NZ.ODZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 8 of 20; station VR -30,,,10-50s,2.0,4.15,77.3,A,
-2026p665433,2026-09-04,NZ.ODZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 6 of 18; station VR -4,,,10-50s,2.0,4.18,81.6,B,
-2026p665433,2026-09-04,NZ.OPZ.10,,,,,,,,,,False,other,not predicted by core solution: station VR -20 at 1.5 km < 30 (peak/noise 3.1),,,10-50s,2.0,4.15,77.3,A,
-2026p665433,2026-09-04,NZ.OPZ.10,,,,,,,,,,False,other,not predicted by core solution: station VR 24 at 2 km < 30 (peak/noise 2.8),,,10-50s,2.0,4.18,81.6,B,
-2026p665433,2026-09-04,NZ.PYZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 8 of 20; station VR 33,,,10-50s,2.0,4.15,77.3,A,
-2026p665433,2026-09-04,NZ.PYZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 6 of 18; station VR 35,,,10-50s,2.0,4.18,81.6,B,
-2026p665433,2026-09-04,NZ.RDHZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 8 of 20; station VR -34,,,10-50s,2.0,4.15,77.3,A,
-2026p665433,2026-09-04,NZ.RPZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 8 of 20; station VR 69,,,10-50s,2.0,4.15,77.3,A,
-2026p665433,2026-09-04,NZ.RPZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 6 of 18; station VR 70,,,10-50s,2.0,4.18,81.6,B,
-2026p665433,2026-09-04,NZ.SLTZ,120.0,60.6,,,,,,1.189,88,True,,,90.71253876184315,2.0,10-50s,2.0,4.15,77.3,A,
-2026p665433,2026-09-04,NZ.SLTZ,120.8,64.4,,,,,,1.164,88,True,,,87.92403571866177,5.0,10-50s,2.0,4.18,81.6,B,
-2026p665433,2026-09-04,NZ.SMRZ.10,239.9,,,,,,,0.012,,False,amp,amplitude outlier: peak x dist 3.41e-04 vs network median 2.78e-02,,,10-50s,2.0,4.15,77.3,A,
-2026p665433,2026-09-04,NZ.SMRZ.10,239.9,,,,,,,0.012,,False,amp,amplitude outlier: peak x dist 3.41e-04 vs network median 2.86e-02,,,10-50s,2.0,4.18,81.6,B,
-2026p665433,2026-09-04,NZ.SYZ,241.5,164.4,,,,,,1.004,120,True,,,77.465885685048,2.0,10-50s,2.0,4.15,77.3,A,
-2026p665433,2026-09-04,NZ.SYZ,249.1,163.9,,,,,,1.006,120,True,,,78.12580341225429,2.0,10-50s,2.0,4.18,81.6,B,
-2026p665433,2026-09-04,NZ.TUZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 8 of 20; station VR 32,,,10-50s,2.0,4.15,77.3,A,
-2026p665433,2026-09-04,NZ.TUZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 6 of 18; station VR 69,,,10-50s,2.0,4.18,81.6,B,
-2026p665433,2026-09-04,NZ.WHSZ.10,213.1,,,,,,,,,False,other,peak/noise 1.9 < 2 (dead-channel floor),,,10-50s,2.0,4.15,77.3,A,
-2026p665433,2026-09-04,NZ.WHSZ.10,212.9,,,,,,,,,False,other,peak/noise 1.9 < 2 (dead-channel floor),,,10-50s,2.0,4.18,81.6,B,
-2026p665433,2026-09-04,NZ.WHZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 8 of 20; station VR 33,,,10-50s,2.0,4.15,77.3,A,
-2026p665433,2026-09-04,NZ.WHZ.10,,,,,,,,,,False,other,not predicted by core solution: station VR 28 at 2 km < 30 (peak/noise 4.8),,,10-50s,2.0,4.18,81.6,B,
-2026p665433,2026-09-04,NZ.WKZ,71.5,126.5,,,,,,0.252,68,True,,,66.23854185815992,1.0,10-50s,2.0,4.15,77.3,A,
-2026p665433,2026-09-04,NZ.WKZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 6 of 18; station VR 60,,,10-50s,2.0,4.18,81.6,B,
-2026p665433,2026-09-04,NZ.WVZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 8 of 20; station VR -71,,,10-50s,2.0,4.15,77.3,A,
-2026p665433,2026-09-04,NZ.WVZ.10,,,,,,,,,,False,other,azimuth-coverage cap: sector-best + top-4 VR kept 6 of 18; station VR -98,,,10-50s,2.0,4.18,81.6,B,
+2026p660321,2026-09-02,NZ.CVZ,214.5,89.2,1,1.19,1.65,4.85,1.65,1.115,125,True,,,72.3,3.0,10-50s,4.5,4.1,64.9,A,v5
+2026p660321,2026-09-02,NZ.DCZ,145.9,218.4,4,2.31,2.66,2.06,2.31,1.105,98,True,,,61.9,2.0,10-50s,4.5,4.1,64.9,A,v5
+2026p660321,2026-09-02,NZ.EAZ.10,117.8,138.5,3,2.07,0.96,0.66,0.96,0.824,87,False,fit,poor fit: own VR -32 < 25,-32.4,-8.0,10-50s,4.5,4.1,64.9,A,v5
+2026p660321,2026-09-02,NZ.ERWZ,228.5,64.3,1,3.22,1.98,1.86,1.98,1.909,131,True,,,50.2,3.0,10-50s,4.5,4.1,64.9,A,v5
+2026p660321,2026-09-02,NZ.FOZ.11,157.3,50.5,1,1.32,2.46,1.46,1.46,0.989,102,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 2.46),,,10-50s,4.5,4.1,64.9,A,v5
+2026p660321,2026-09-02,NZ.FRNZ.10,180.6,53.1,1,2.43,1.51,1.46,1.51,1.099,169,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 2.43),,,10-50s,4.5,4.1,64.9,A,v5
+2026p660321,2026-09-02,NZ.HORZ.10,161.4,63.4,1,2.32,0.82,1.84,1.84,1.32,104,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 2.32),,,10-50s,4.5,4.1,64.9,A,v5
+2026p660321,2026-09-02,NZ.HSPZ,90.3,61.5,1,4.71,1.42,4.01,4.01,1.212,76,True,,,81.0,1.0,10-50s,4.5,4.1,64.9,A,v5
+2026p660321,2026-09-02,NZ.JCZ,55.7,42.7,0,2.96,1.6,4.25,2.96,1.114,62,True,,,86.0,1.0,10-50s,4.5,4.1,64.9,A,v5
+2026p660321,2026-09-02,NZ.LBZ,149.1,88.2,1,2.4,1.88,6.78,2.4,0.879,99,True,,,79.6,3.0,10-50s,4.5,4.1,64.9,A,v5
+2026p660321,2026-09-02,NZ.MKTZ.10,94.0,47.8,1,,,,,,,False,nodata,"no data: response/rotation failed: The given directions are not linearly independent, at least within numerical precision. Determinant of the base change matrix: 0",,,10-50s,4.5,4.1,64.9,A,v5
+2026p660321,2026-09-02,NZ.MLZ,103.9,188.5,4,1.58,2.65,7.41,2.65,0.889,81,True,,,52.3,0.0,10-50s,4.5,4.1,64.9,A,v5
+2026p660321,2026-09-02,NZ.MSZ,40.1,230.0,5,2.3,1.38,2.01,2.01,0.951,56,True,,,87.1,1.0,10-50s,4.5,4.1,64.9,A,v5
+2026p660321,2026-09-02,NZ.ODZ,196.3,110.7,2,0.77,1.68,5.25,1.68,0.891,118,True,,,79.4,2.0,10-50s,4.5,4.1,64.9,A,v5
+2026p660321,2026-09-02,NZ.OPZ.10,240.7,132.6,2,1.69,1.3,1.84,1.69,,136,False,snr,low SNR: best component SNR 1.84 < 2 (Z 1.69 R 1.3 T 1.84),,,10-50s,4.5,4.1,64.9,A,v5
+2026p660321,2026-09-02,NZ.PYZ,230.5,213.2,4,1.7,1.85,3.17,1.85,1.136,132,True,,,45.7,2.0,10-50s,4.5,4.1,64.9,A,v5
+2026p660321,2026-09-02,NZ.RDHZ.10,21.9,9.1,0,5.49,1.25,1.96,1.96,0.567,48,False,fit,poor fit: own VR -89 < 25,-89.1,2.0,10-50s,4.5,4.1,64.9,A,v5
+2026p660321,2026-09-02,NZ.RPZ.10,233.9,70.7,1,2.59,2.8,3.12,2.8,2.39,133,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 3.12),,,10-50s,4.5,4.1,64.9,A,v5
+2026p660321,2026-09-02,NZ.SLTZ.10,118.2,60.4,1,3.12,2.23,1.52,2.23,0.962,87,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 3.12),,,10-50s,4.5,4.1,64.9,A,v5
+2026p660321,2026-09-02,NZ.SMRZ.10,238.1,55.3,1,0.48,1.96,0.46,0.48,,135,False,snr,low SNR: best component SNR 1.96 < 2 (Z 0.48 R 1.96 T 0.46),,,10-50s,4.5,4.1,64.9,A,v5
+2026p660321,2026-09-02,NZ.SYZ,241.6,164.8,3,0.44,1.08,3.28,1.08,0.663,136,True,,,63.1,3.0,10-50s,4.5,4.1,64.9,A,v5
+2026p660321,2026-09-02,NZ.TUZ,197.3,148.8,3,1.34,1.69,4.51,1.69,0.994,118,True,,,37.1,1.0,10-50s,4.5,4.1,64.9,A,v5
+2026p660321,2026-09-02,NZ.WHSZ.10,211.3,53.5,1,1.47,1.98,2.67,1.98,1.0,184,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 2.67),,,10-50s,4.5,4.1,64.9,A,v5
+2026p660321,2026-09-02,NZ.WHZ,163.7,190.0,4,1.92,1.85,7.19,1.92,1.234,105,True,,,40.5,1.0,10-50s,4.5,4.1,64.9,A,v5
+2026p660321,2026-09-02,NZ.WKZ,70.3,127.7,2,1.72,1.69,2.82,1.72,0.663,68,True,,,80.8,1.0,10-50s,4.5,4.1,64.9,A,v5
+2026p660321,2026-09-02,NZ.WVZ.10,247.3,52.9,1,1.1,1.16,2.41,1.16,1.201,138,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 2.41),,,10-50s,4.5,4.1,64.9,A,v5
+2026p660370,2026-09-02,NZ.CVZ.10,215.8,89.3,1,0.81,1.05,2.05,1.05,1.887,174,False,fit,poor fit: own VR 1 < 25,0.7,-3.0,10-50s,28.0,3.67,16.1,D,v5
+2026p660370,2026-09-02,NZ.DCZ.10,145.6,218.0,4,1.57,1.79,1.37,1.57,,88,False,snr,low SNR: best component SNR 1.79 < 2 (Z 1.57 R 1.79 T 1.37),,,10-50s,28.0,3.67,16.1,D,v5
+2026p660370,2026-09-02,NZ.EAZ.10,119.0,138.2,3,1.05,0.69,0.45,0.69,,77,False,snr,low SNR: best component SNR 1.05 < 2 (Z 1.05 R 0.69 T 0.45),,,10-50s,28.0,3.67,16.1,D,v5
+2026p660370,2026-09-02,NZ.FOZ.11,157.9,51.0,1,1.28,0.9,0.61,0.9,,93,False,snr,low SNR: best component SNR 1.28 < 2 (Z 1.28 R 0.9 T 0.61),,,10-50s,28.0,3.67,16.1,D,v5
+2026p660370,2026-09-02,NZ.FRNZ.10,181.3,53.5,1,1.14,1.6,1.34,1.34,,102,False,snr,low SNR: best component SNR 1.6 < 2 (Z 1.14 R 1.6 T 1.34),,,10-50s,28.0,3.67,16.1,D,v5
+2026p660370,2026-09-02,NZ.HORZ.10,162.2,63.7,1,1.14,0.75,0.67,0.75,,94,False,snr,low SNR: best component SNR 1.14 < 2 (Z 1.14 R 0.75 T 0.67),,,10-50s,28.0,3.67,16.1,D,v5
+2026p660370,2026-09-02,NZ.HSPZ.10,91.1,62.1,1,1.06,1.03,1.17,1.06,,66,False,snr,low SNR: best component SNR 1.17 < 2 (Z 1.06 R 1.03 T 1.17),,,10-50s,28.0,3.67,16.1,D,v5
+2026p660370,2026-09-02,NZ.JCZ.10,56.2,44.0,0,0.98,1.44,1.03,1.03,,52,False,snr,low SNR: best component SNR 1.44 < 2 (Z 0.98 R 1.44 T 1.03),,,10-50s,28.0,3.67,16.1,D,v5
+2026p660370,2026-09-02,NZ.LBZ,150.3,88.5,1,0.92,0.76,2.24,0.92,1.221,90,True,,,24.2,3.0,10-50s,28.0,3.67,16.1,D,v5
+2026p660370,2026-09-02,NZ.MKTZ.10,94.6,48.5,1,,,,,,,False,nodata,"no data: response/rotation failed: The given directions are not linearly independent, at least within numerical precision. Determinant of the base change matrix: 0",,,10-50s,28.0,3.67,16.1,D,v5
+2026p660370,2026-09-02,NZ.MLZ,104.2,187.8,4,1.04,0.7,2.38,1.04,0.779,71,True,,,23.4,2.0,10-50s,28.0,3.67,16.1,D,v5
+2026p660370,2026-09-02,NZ.MSZ.10,39.5,228.3,5,1.5,1.5,1.2,1.5,,45,False,snr,low SNR: best component SNR 1.5 < 2 (Z 1.5 R 1.5 T 1.2),,,10-50s,28.0,3.67,16.1,D,v5
+2026p660370,2026-09-02,NZ.ODZ.10,197.7,110.8,2,1.08,0.64,1.68,1.08,,109,False,snr,low SNR: best component SNR 1.68 < 2 (Z 1.08 R 0.64 T 1.68),,,10-50s,28.0,3.67,16.1,D,v5
+2026p660370,2026-09-02,NZ.RDHZ,21.6,12.5,0,1.08,2.37,1.03,1.08,0.191,38,True,,,-4.9,-4.0,10-50s,28.0,3.67,16.1,D,v5
+2026p660370,2026-09-02,NZ.SLTZ.10,119.0,60.9,1,1.51,0.98,1.01,1.01,,77,False,snr,low SNR: best component SNR 1.51 < 2 (Z 1.51 R 0.98 T 1.01),,,10-50s,28.0,3.67,16.1,D,v5
+2026p660370,2026-09-02,NZ.TUZ.10,198.4,148.6,3,0.89,0.89,0.98,0.89,,109,False,snr,low SNR: best component SNR 0.98 < 2 (Z 0.89 R 0.89 T 0.98),,,10-50s,28.0,3.67,16.1,D,v5
+2026p660370,2026-09-02,NZ.WHSZ.10,212.0,53.8,1,0.64,1.18,1.25,1.18,,174,False,snr,low SNR: best component SNR 1.25 < 2 (Z 0.64 R 1.18 T 1.25),,,10-50s,28.0,3.67,16.1,D,v5
+2026p660370,2026-09-02,NZ.WHZ.10,164.0,189.6,4,0.63,1.0,1.6,1.0,,95,False,snr,low SNR: best component SNR 1.6 < 2 (Z 0.63 R 1 T 1.6),,,10-50s,28.0,3.67,16.1,D,v5
+2026p660370,2026-09-02,NZ.WKZ.10,71.6,127.4,2,0.73,1.14,0.98,0.98,,58,False,snr,low SNR: best component SNR 1.14 < 2 (Z 0.73 R 1.14 T 0.98),,,10-50s,28.0,3.67,16.1,D,v5
+2026p665433,2026-09-04,NZ.CVZ.10,216.4,89.1,1,5.88,2.11,3.9,3.9,0.813,126,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 5.88),,,10-50s,3.0,4.2,66.1,A,v5
+2026p665433,2026-09-04,NZ.DCZ,144.4,218.0,4,4.58,2.94,2.91,2.94,1.0,97,True,,,52.9,2.0,10-50s,3.0,4.2,66.1,A,v5
+2026p665433,2026-09-04,NZ.EAZ.10,118.6,137.6,3,2.99,0.89,1.28,1.28,0.332,87,False,fit,poor fit: own VR 6 < 25,5.5,1.0,10-50s,3.0,4.2,66.1,A,v5
+2026p665433,2026-09-04,NZ.ERWZ.10,230.4,64.4,1,8.15,5.47,7.35,7.35,1.695,132,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 8.15),,,10-50s,3.0,4.2,66.1,A,v5
+2026p665433,2026-09-04,NZ.FOZ.11,159.0,50.8,1,5.03,3.44,4.75,4.75,1.239,151,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 5.03),,,10-50s,3.0,4.2,66.1,A,v5
+2026p665433,2026-09-04,NZ.FRNZ.10,182.4,53.4,1,2.9,0.92,1.1,1.1,1.012,112,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 2.9),,,10-50s,3.0,4.2,66.1,A,v5
+2026p665433,2026-09-04,NZ.HORZ.10,163.2,63.5,1,5.19,2.51,3.4,3.4,1.32,130,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 5.19),,,10-50s,3.0,4.2,66.1,A,v5
+2026p665433,2026-09-04,NZ.HSPZ,92.2,61.7,1,5.11,2.54,9.96,5.11,0.872,76,True,,,90.3,2.0,10-50s,3.0,4.2,66.1,A,v5
+2026p665433,2026-09-04,NZ.JCZ,57.3,43.7,0,4.11,1.8,3.36,3.36,0.966,122,True,,,74.8,2.0,10-50s,3.0,4.2,66.1,A,v5
+2026p665433,2026-09-04,NZ.LBZ,151.0,88.1,1,5.3,4.06,15.63,5.3,0.777,100,True,,,84.8,3.0,10-50s,3.0,4.2,66.1,A,v5
+2026p665433,2026-09-04,NZ.MKTZ.10,95.7,48.3,1,,,,,,,False,nodata,"no data: response/rotation failed: The given directions are not linearly independent, at least within numerical precision. Determinant of the base change matrix: 0",,,10-50s,3.0,4.2,66.1,A,v5
+2026p665433,2026-09-04,NZ.MLZ,103.1,187.5,4,4.03,3.34,9.68,4.03,1.006,81,True,,,90.8,1.0,10-50s,3.0,4.2,66.1,A,v5
+2026p665433,2026-09-04,NZ.MSZ,38.3,228.9,5,2.74,1.99,1.37,1.99,0.791,55,True,,,59.1,1.0,10-50s,3.0,4.2,66.1,A,v5
+2026p665433,2026-09-04,NZ.ODZ.10,197.9,110.4,2,3.01,2.84,3.46,3.01,0.374,119,False,fit,poor fit: own VR -7 < 25,-7.5,4.0,10-50s,3.0,4.2,66.1,A,v5
+2026p665433,2026-09-04,NZ.OPZ.10,241.7,132.2,2,1.5,1.16,1.16,1.16,,136,False,snr,low SNR: best component SNR 1.5 < 2 (Z 1.5 R 1.16 T 1.16),,,10-50s,3.0,4.2,66.1,A,v5
+2026p665433,2026-09-04,NZ.PYZ,229.0,212.9,4,3.76,1.78,1.94,1.94,1.336,131,True,,,35.4,1.0,10-50s,3.0,4.2,66.1,A,v5
+2026p665433,2026-09-04,NZ.RDHZ.10,22.8,13.4,0,2.97,1.4,1.51,1.51,0.612,49,False,fit,poor fit: own VR -35 < 25,-35.1,0.0,10-50s,3.0,4.2,66.1,A,v5
+2026p665433,2026-09-04,NZ.RPZ,235.8,70.8,1,7.5,7.64,9.59,7.64,1.822,134,True,,,74.7,4.0,10-50s,3.0,4.2,66.1,A,v5
+2026p665433,2026-09-04,NZ.SLTZ,120.0,60.6,1,5.41,3.37,11.0,5.41,1.153,88,True,,,91.8,2.0,10-50s,3.0,4.2,66.1,A,v5
+2026p665433,2026-09-04,NZ.SMRZ.10,239.9,55.4,1,1.32,1.24,1.15,1.24,,195,False,snr,low SNR: best component SNR 1.32 < 2 (Z 1.32 R 1.24 T 1.15),,,10-50s,3.0,4.2,66.1,A,v5
+2026p665433,2026-09-04,NZ.SYZ,241.5,164.4,3,2.58,1.92,4.03,2.58,0.974,136,True,,,76.5,2.0,10-50s,3.0,4.2,66.1,A,v5
+2026p665433,2026-09-04,NZ.TUZ,197.8,148.3,3,2.97,3.35,3.59,3.35,0.657,119,True,,,67.3,1.0,10-50s,3.0,4.2,66.1,A,v5
+2026p665433,2026-09-04,NZ.WHSZ.10,213.1,53.7,1,3.73,0.95,0.68,0.95,1.012,125,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 3.73),,,10-50s,3.0,4.2,66.1,A,v5
+2026p665433,2026-09-04,NZ.WHZ,162.9,189.4,4,4.24,0.66,1.94,1.94,1.023,105,True,,,35.2,1.0,10-50s,3.0,4.2,66.1,A,v5
+2026p665433,2026-09-04,NZ.WKZ,71.5,126.5,2,4.33,3.91,2.72,3.91,0.244,68,True,,,69.9,1.0,10-50s,3.0,4.2,66.1,A,v5
+2026p665433,2026-09-04,NZ.WVZ.10,249.1,53.1,1,2.47,2.11,3.51,2.47,1.089,191,False,not_selected,not selected: 16 seats filled by sector round-robin (best SNR 3.51),,,10-50s,3.0,4.2,66.1,A,v5
 2026p666955,2026-09-04,NZ.BFZ,132.2,87.4,1,,,,,0.786,92,True,,,53.25949608242884,1.0,10-50s,50.0,4.7,67.1,C,v4
 2026p666955,2026-09-04,NZ.BSWZ,127.4,211.9,4,,,,,0.684,90,False,other,not admitted: station cap 12 reached (own VR 65),,,10-50s,50.0,4.7,67.1,C,v4
 2026p666955,2026-09-04,NZ.COVZ,186.5,23.4,0,,,,,1.115,120,True,,,68.13042816215398,2.0,10-50s,50.0,4.7,67.1,C,v4
