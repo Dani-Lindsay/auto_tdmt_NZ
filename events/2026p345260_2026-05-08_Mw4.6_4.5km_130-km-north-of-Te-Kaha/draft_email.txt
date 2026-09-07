@@ -9,20 +9,20 @@ GeoNet preliminary magnitude: M 4.4
 
 Mw: 4.59
 Centroid depth: 4.5 km (GeoNet initial: 5 km)
-Variance reduction: 53%  |  DC 100% / CLVD 0%
+Variance reduction: 52%  |  DC 100% / CLVD 0%
 Filter band: 10-50 s  |  Velocity model: nz_north_ristau2008
 Nodal plane 1 (strike/dip/rake): 30/58/-90
 Nodal plane 2 (strike/dip/rake): 210/32/-90
-Stations used: 7  |  Azimuthal gap: 232 deg  |  Quality grade: C
+Stations used: 7  |  Azimuthal gap: 232 deg  |  Quality grade: B
 
-Stability (leave-one-out jackknife, n=7): Mw +/-0.01  |  DC 100 +/-4.7%  |  mechanism rotation <= 5.9 deg
+Stability (leave-one-out jackknife, n=7): Mw +/-0.01  |  DC 100 +/-4.7%  |  mechanism rotation <= 5.6 deg
 
 LIMITATIONS: deviatoric-only inversion (no isotropic component) - these mechanisms must not be interpreted in volcanic or geothermal settings, where real isotropic components are forced into DC/CLVD. Large misfit (low VR or grade C-D) indicates the automated result is unreliable and additional processing is required.
 
 Predicted peak surface displacement 0.34 cm — no detectable surface deformation expected.
 
 NISAR passes over the epicentre:
-  track 166 A: last 2026-08-24 18:12Z, next ~2026-09-05 18:12Z
+  track 166 A: last 2026-08-24 18:12Z, next ~2026-09-17 18:12Z
 
 --
 Automated solution (mttime 1.1.dev0, model nz_north_ristau2008, GF v1). Not reviewed by a human.
