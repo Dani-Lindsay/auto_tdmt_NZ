@@ -253,35 +253,80 @@ def main() -> None:
     colors = {"NZ_CMT_Ristau": "#0072B2", "GlobalCMT": "#E69F00",
               "USGS_NEIC": "#CC79A7"}
 
+    # The Ristau set is large enough to draw as a density (hexagonal
+    # bins, one hue light -> dark) so the bulk of the distribution reads
+    # rather than its outliers; the two small independent references are
+    # overlaid as marks with a white ring. Every panel is split A/B vs
+    # C/D because the grade is what decides publication.
+    from cmcrameri import cm as _cmc
+    dens_cmap = _cmc.oslo_r
+    rist = df[df.reference == "NZ_CMT_Ristau"]
+    tiers = [("grade A/B (published tier)", rist[rist.grade.isin(["A", "B"])],
+              df[df.grade.isin(["A", "B"])]),
+             ("grade C/D (archive only)", rist[rist.grade.isin(["C", "D"])],
+              df[df.grade.isin(["C", "D"])])]
+
+    def _overlay(ax, sub, xcol, ycol):
+        for ref in ("USGS_NEIC", "GlobalCMT"):
+            s = sub[sub.reference == ref]
+            if len(s):
+                ax.scatter(s[xcol], s[ycol], s=34, c=colors[ref],
+                           edgecolors="white", linewidths=1.2,
+                           label=ref, zorder=5)
+
     # ---- figure 1: magnitude -------------------------------------------
-    fig, axes = plt.subplots(1, 2, figsize=(10, 4.4))
-    for ref, sub in df.groupby("reference"):
-        c = colors.get(ref, "black")
-        axes[0].scatter(sub.ref_Mw, sub.our_Mw, c=c, s=25, label=ref)
-        axes[1].scatter(sub.ref_Mw, sub.dMw, c=c, s=25)
-    axes[0].plot([3.5, 6.5], [3.5, 6.5], "-", color="0.7", zorder=0)
-    axes[0].set_xlabel("published Mw")
-    axes[0].set_ylabel("auto Mw")
-    axes[0].legend(fontsize=8)
-    axes[1].axhline(0, color="0.7")
-    axes[1].set_xlabel("published Mw")
-    axes[1].set_ylabel("auto - published Mw")
-    fig.suptitle("moment magnitude vs published catalogues")
+    fig, axes = plt.subplots(2, 2, figsize=(10, 8.4))
+    ext_mw = (3.4, 6.6)
+    for row, (title, r, sub) in enumerate(tiers):
+        ax = axes[row, 0]
+        hb = ax.hexbin(r.ref_Mw, r.our_Mw, gridsize=22, extent=ext_mw * 2,
+                       cmap=dens_cmap, mincnt=1, linewidths=0.2)
+        ax.plot(ext_mw, ext_mw, "-", color="0.55", linewidth=1, zorder=4)
+        _overlay(ax, sub, "ref_Mw", "our_Mw")
+        ax.set_xlim(ext_mw); ax.set_ylim(ext_mw)
+        ax.set_xlabel("published Mw")
+        ax.set_ylabel("auto Mw")
+        ax.set_title(f"{title}, n = {len(r)} vs Ristau", fontsize=10)
+        fig.colorbar(hb, ax=ax, label="events per cell", shrink=0.85)
+        ax = axes[row, 1]
+        hb = ax.hexbin(r.ref_Mw, r.dMw, gridsize=22,
+                       extent=(*ext_mw, -1.0, 1.0),
+                       cmap=dens_cmap, mincnt=1, linewidths=0.2)
+        ax.axhline(0, color="0.55", linewidth=1, zorder=4)
+        _overlay(ax, sub, "ref_Mw", "dMw")
+        ax.set_xlim(ext_mw); ax.set_ylim(-1.0, 1.0)
+        ax.set_xlabel("published Mw")
+        ax.set_ylabel("auto - published Mw")
+        ax.set_title(f"residual: median |dMw| {r.dMw.abs().median():.2f}",
+                     fontsize=10)
+        fig.colorbar(hb, ax=ax, label="events per cell", shrink=0.85)
+    axes[0, 0].legend(fontsize=8, loc="upper left")
+    fig.suptitle("moment magnitude vs published catalogues "
+                 "(density: Ristau NZ CMT; marks: USGS, GCMT)")
     fig.tight_layout()
     fig.savefig(out_dir / "comparison_mw.jpg", dpi=150)
     plt.close(fig)
 
     # ---- figure 2: depth ------------------------------------------------
-    fig, ax = plt.subplots(figsize=(5.4, 5))
-    for ref, sub in df.groupby("reference"):
-        ax.scatter(sub.ref_depth, sub.our_depth,
-                   c=colors.get(ref, "black"), s=25, label=ref)
-    lim = max(df.ref_depth.max(), df.our_depth.max()) + 5
-    ax.plot([0, lim], [0, lim], "-", color="0.7", zorder=0)
-    ax.set_xlabel("published depth (km)")
-    ax.set_ylabel("auto depth (km)")
-    ax.legend(fontsize=8)
-    fig.suptitle("centroid depth vs published catalogues")
+    fig, axes = plt.subplots(1, 2, figsize=(10.4, 5))
+    lim = float(max(df.ref_depth.max(), df.our_depth.max()) + 5)
+    for ax, (title, r, sub) in zip(axes, tiers):
+        hb = ax.hexbin(r.ref_depth, r.our_depth, gridsize=20,
+                       extent=(0, lim, 0, lim), cmap=dens_cmap, mincnt=1,
+                       linewidths=0.2)
+        ax.plot([0, lim], [0, lim], "-", color="0.55", linewidth=1, zorder=4)
+        _overlay(ax, sub, "ref_depth", "our_depth")
+        ax.set_xlim(0, lim); ax.set_ylim(0, lim)
+        ax.set_aspect("equal")
+        ax.set_xlabel("published depth (km)")
+        ax.set_ylabel("auto depth (km)")
+        ax.set_title(f"{title}, n = {len(r)} vs Ristau: "
+                     f"median |dZ| {r.dDepth.abs().median():.0f} km",
+                     fontsize=10)
+        fig.colorbar(hb, ax=ax, label="events per cell", shrink=0.8)
+    axes[0].legend(fontsize=8, loc="upper left")
+    fig.suptitle("centroid depth vs published catalogues "
+                 "(density: Ristau NZ CMT; marks: USGS, GCMT)")
     fig.tight_layout()
     fig.savefig(out_dir / "comparison_depth.jpg", dpi=150)
     plt.close(fig)
