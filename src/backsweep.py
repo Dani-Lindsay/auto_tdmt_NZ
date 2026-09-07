@@ -79,7 +79,8 @@ def main(start: str, end: str = "2100-01-01") -> None:
     done = failed = skipped = nosol = 0
     for i, (pid, when, mag) in enumerate(events, 1):
         existing = config.find_event_dir(pid)
-        if existing is not None and (existing / "solution.json").exists():
+        if ((existing is not None and (existing / "solution.json").exists())
+                or config.no_solution_path(pid).exists()):
             skipped += 1
             continue
         t0 = time.time()

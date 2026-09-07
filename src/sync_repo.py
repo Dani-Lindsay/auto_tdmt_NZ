@@ -28,16 +28,26 @@ def sync_events() -> int:
     assert config.EVENTS_DIR.resolve() != repo_events.resolve(), \
         "EVENTS_DIR already is the repo events/ (CI layout) — nothing to sync"
     n = 0
-    for p in sorted(config.EVENTS_DIR.glob("*/solution.json")):
+    repo_nosol = repo_events / config.NOSOL_DIR_NAME
+    for p in config.solution_paths():
         pid = json.loads(p.read_text())["event"]["public_id"]
+        # whichever form the event had in the repo before, remove it
         for old in repo_events.glob(f"{pid}*"):
             if old.is_dir():
                 shutil.rmtree(old)
-        dst = repo_events / p.parent.name
-        dst.mkdir()
-        for f in [p, p.parent / "draft_email.txt", *p.parent.glob("*_*.jpg")]:
-            if f.exists():
-                shutil.copy(f, dst / f.name)
+        for old in repo_nosol.glob(f"{pid}*") if repo_nosol.exists() else []:
+            old.unlink()
+        if p.parent.name == config.NOSOL_DIR_NAME:
+            repo_nosol.mkdir(exist_ok=True)
+            for f in [p, *p.parent.glob(f"{pid}_*.jpg")]:
+                shutil.copy(f, repo_nosol / f.name)
+        else:
+            dst = repo_events / p.parent.name
+            dst.mkdir()
+            for f in [p, p.parent / "draft_email.txt",
+                      *p.parent.glob("*_*.jpg")]:
+                if f.exists():
+                    shutil.copy(f, dst / f.name)
         n += 1
     return n
 

@@ -233,7 +233,7 @@ def build_catalogue(events_dir: Path | None = None) -> Path | None:
     """Scan <events_dir>/*/solution.json -> the three tables."""
     events_dir = events_dir or config.EVENTS_DIR
     out_dir = tables_dir(events_dir)
-    solutions = sorted(events_dir.glob("*/solution.json"))
+    solutions = config.solution_paths(events_dir)
     if not solutions:
         return None
     published_ids: set[str] = set()
@@ -242,16 +242,17 @@ def build_catalogue(events_dir: Path | None = None) -> Path | None:
         state = json.loads(config.STATE_FILE.read_text())
         published_ids = {p["public_id"] for p in state.get("published", [])}
 
-    rows, no_solution, ledger = [], [], []
+    rows, no_solution, ledger, attempted = [], [], [], set()
     for path in solutions:
         s = json.loads(path.read_text())
-        rows.append(row_from(s, published_ids))
-        ledger.append(ledger_line(s))
-        if not config.is_solved(s):
+        attempted.add(s["event"]["public_id"])
+        ledger.append(ledger_line(s))       # station numbers for every attempt
+        if config.is_solved(s):
+            rows.append(row_from(s, published_ids))   # catalogue: solved only
+        else:
             no_solution.append(no_solution_row(s))
     # events seen but never attempted (below the floor); an event that was
-    # attempted later is listed once, from its solution.json
-    attempted = {r["PublicID"] for r in rows}
+    # attempted later is listed once, from its own record
     no_solution += [skipped_row(pid, rec)
                     for pid, rec in state.get("skipped", {}).items()
                     if pid not in attempted]

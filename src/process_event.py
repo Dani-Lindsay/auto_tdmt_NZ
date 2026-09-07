@@ -157,22 +157,27 @@ def _archive_no_solution(event, event_dir: Path, solutions: dict,
         tag: {"status": config.STATUS_NO_SOLUTION,
               "stage": s["abort"]["stage"], "best_vr": s["abort"]["best_vr"]}
         for tag, s in solutions.items()}
+    # events with no solution share one directory: NOSOL/<pid>.json plus
+    # the pid-prefixed station map and all-station waveform figures
+    pid = event.public_id
+    out = config.no_solution_path(pid)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    for old in out.parent.glob(f"{pid}_*.jpg"):
+        old.unlink()
     try:
         figure.plot_station_ledger_map(
-            rec, event_dir / f"{event.public_id}_station_map.jpg")
+            rec, out.parent / f"{pid}_station_map.jpg")
     except Exception as e:  # noqa: BLE001
         print(f"  WARNING: station ledger map failed: {e}")
-    out = invert.save_solution(rec, event_dir)
+    for wf in event_dir.glob(f"{pid}_station_waveforms_*.jpg"):
+        shutil.move(str(wf), out.parent / wf.name)
+    out.write_text(json.dumps(rec, indent=2))
+    if debug:
+        _cleanup(event_dir)      # keep the working directory for inspection
+    else:
+        shutil.rmtree(event_dir, ignore_errors=True)
     _rebuild_tables()
-    if not debug:
-        _cleanup(event_dir)
-    canonical = config.EVENTS_DIR / config.no_solution_dir_name(
-        event.public_id, event.locality, event.origin_time)
-    if event_dir != canonical:
-        if canonical.exists():
-            shutil.rmtree(canonical)
-        event_dir.rename(canonical)
-        print(f"archived as {canonical.name}")
+    print(f"archived as {out.relative_to(config.EVENTS_DIR)}")
     print(f"\nNO COHERENT SOLUTION ({best_tag}): {rec['abort']['stage']} — "
           f"{rec['abort']['reason']}\nsolution: {out}")
     return rec
@@ -276,6 +281,11 @@ def process_event(public_id: str, debug: bool = False,
             shutil.rmtree(canonical)
         event_dir.rename(canonical)
         print(f"archived as {canonical.name}")
+    # a solved event supersedes any earlier no-solution record
+    nosol = config.no_solution_path(pid)
+    for old in [nosol, *nosol.parent.glob(f"{pid}_*.jpg")]:
+        if old.exists():
+            old.unlink()
 
     p, q = best["preferred"], best["quality"]
     print(f"predicted peak displacement: {forward['peak_abs_m']*100:.2f} cm "

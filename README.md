@@ -99,14 +99,18 @@ better grade (Triantafyllis et al. 2016 show two stations reaching
 VR 0.9 with a condition number above 10). Only A/B are emailed.
 
 **No coherent solution.** When fewer than three stations survive the
-loop, the event is archived with `"status": "no_coherent_solution"`
-and grade `X` — the full station ledger, no mechanism — rather than a
-number fitted to noise; F-net likewise does not publish below its
-station floor (Fukuyama et al. 1998). The stage and reason are listed in
+loop, the event is recorded in `events/NOSOL/` with
+`"status": "no_coherent_solution"` — the full station ledger, no
+mechanism — rather than a number fitted to noise; F-net likewise does
+not publish below its station floor (Fukuyama et al. 1998). Such events
+are not rows of `catalogue.csv`; their stage and reason are listed in
 `not_published.csv` and printed by the human-review notebook.
 
 ## Outputs
 
+- `events/NOSOL/<publicID>.json` — every event attempted without a
+  coherent solution, in one directory, with its station map and
+  all-station waveform figure beside it.
 - `events/<publicID>_<date>_Mw…/solution.json` — everything: origin,
   depth search, preferred solution, both tensors, every station used or
   not with its SNR, own VR, time shift and reason, the jackknife, the

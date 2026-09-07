@@ -140,7 +140,7 @@ def main() -> None:
 
     rows = []
     origins = {}
-    for path in sorted(config.EVENTS_DIR.glob("*/solution.json")):
+    for path in config.solution_paths():
         sol = json.loads(path.read_text())
         if not config.is_solved(sol):
             continue  # no mechanism to compare

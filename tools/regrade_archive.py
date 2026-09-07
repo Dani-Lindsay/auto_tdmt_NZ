@@ -25,7 +25,7 @@ import invert  # noqa: E402
 
 
 def main(apply: bool, events_dir: Path) -> None:
-    paths = sorted(events_dir.glob("*/solution.json"))
+    paths = config.solution_paths(events_dir)
     if not paths:
         print(f"no solutions under {events_dir}")
         return

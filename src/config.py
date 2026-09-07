@@ -90,16 +90,32 @@ def event_dir_name(public_id: str, mw: float, depth_km: float,
             f"{slugify(locality)[:40]}")
 
 
-def no_solution_dir_name(public_id: str, locality: str,
-                         origin_time: str = "") -> str:
-    date = f"_{origin_time[:10]}" if origin_time else ""
-    return f"{public_id}{date}_NOSOL_{slugify(locality)[:40]}"
+NOSOL_DIR_NAME = "NOSOL"
+
+
+def no_solution_path(public_id: str, events_dir: Path | None = None) -> Path:
+    """<events>/NOSOL/<publicID>.json — every event attempted without a
+    coherent solution is recorded in this one directory (its station map
+    and all-station waveform figure sit beside it, publicID-prefixed)
+    rather than in a directory of its own."""
+    return (events_dir or EVENTS_DIR) / NOSOL_DIR_NAME / f"{public_id}.json"
+
+
+def solution_paths(events_dir: Path | None = None) -> list[Path]:
+    """Every archived record: <events>/<event_dir>/solution.json for the
+    solved events, then <events>/NOSOL/<publicID>.json."""
+    events_dir = events_dir or EVENTS_DIR
+    solved = sorted(p for p in events_dir.glob("*/solution.json")
+                    if p.parent.name != NOSOL_DIR_NAME)
+    return solved + sorted((events_dir / NOSOL_DIR_NAME).glob("*.json"))
 
 
 def find_event_dir(public_id: str, events_dir: Path | None = None):
-    """Locate an event's directory whether plain or canonically named."""
+    """Locate a solved event's directory whether plain or canonically
+    named (events with no solution have no directory: see
+    no_solution_path)."""
     events_dir = events_dir or EVENTS_DIR
-    matches = sorted(events_dir.glob(f"{public_id}*"))
+    matches = sorted(p for p in events_dir.glob(f"{public_id}*") if p.is_dir())
     return matches[0] if matches else None
 
 # ---------------------------------------------------------------------------

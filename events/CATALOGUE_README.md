@@ -37,7 +37,7 @@ README.md for citations.
 | `Mo` | Scalar moment, dyne-cm |
 | `NS` | Number of stations used in the final solution (sets the row of the grade table) |
 | `AzGap` | Largest azimuthal gap between used stations, degrees (informational — NOT a grade threshold; the geometry requirement is simply that two stations are >= 90 deg apart) |
-| `Grade` | INGV table on (VR, N stations): the VR bar falls as N rises (3 stations: B ≥ 70; 4: B ≥ 40, A ≥ 60; 5-8: B ≥ 40, A ≥ 60; >8: B ≥ 30, A ≥ 50); A/B also need DC ≥ 60 and jackknife rotation ≤ 25°. X = no coherent solution. Only A/B are emailed |
+| `Grade` | INGV table on (VR, N stations): the VR bar falls as N rises (3 stations: B ≥ 70; 4: B ≥ 40, A ≥ 60; 5-8: B ≥ 40, A ≥ 60; >8: B ≥ 30, A ≥ 50); A/B also need DC ≥ 60 and jackknife rotation ≤ 25°. Events with no coherent solution are not in this table (see `not_published.csv` and `events/NOSOL/`). Only A/B are emailed |
 | `DC`, `CLVD` | Percent double-couple / compensated linear vector dipole of the deviatoric solution |
 | `MinStaVR` | Own VR of the worst-fitting used station |
 | `VR` | Total variance reduction, percent (distance-weighted) |

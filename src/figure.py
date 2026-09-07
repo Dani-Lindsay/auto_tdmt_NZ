@@ -335,7 +335,7 @@ def make_overview_map(events_dir: Path, out_path: Path) -> Path:
     import config as _config
 
     rows, n_nosol = [], 0
-    for p in sorted(events_dir.glob("*/solution.json")):
+    for p in _config.solution_paths(events_dir):
         try:
             sol = json.loads(p.read_text())
         except Exception:  # noqa: BLE001
