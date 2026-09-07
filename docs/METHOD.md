@@ -33,10 +33,10 @@ not reimplement any inversion mathematics.
 ## 2. Processing flow
 
 ```
-GeoNet quake API poll (cron, 10 min) ........................ run01_watch.py
+GeoNet quake API poll (cron, twice daily) ................... watch.py
   processing floor: prelim M >= 3.7, NZ bbox, not "deleted"     trigger.py
      |
-event processing ............................................ run02_process.py
+event processing ............................................ process_event.py
   1. event metadata (quake API)                                 geonet.py
   2. station inventory + waveforms (FDSN NRT/archive)           waveforms.py
   3. pre-processing -> SAC displacement (cm), ZRT, 1 sps        waveforms.py
@@ -102,7 +102,7 @@ invention; every rule is one line in `auto_tdmt.cfg` §2 with its source.
 
 Everything that enters and leaves is recorded with a reason string in a
 shared vocabulary (`invert.reason_class`), so the all-station waveform
-figure and `station_ledger.csv` show why.
+figure and `station_ledger.jsonl` show why.
 
 ### 3.2 Pre-processing
 
@@ -223,17 +223,19 @@ it for typical station counts and is stricter for small ones.
 **No coherent solution.** When fewer than three stations survive the
 loop the event is archived with `"status": "no_coherent_solution"` and
 grade `X`: the full station ledger and every round's numbers, but no
-mechanism, magnitude or depth. F-net simply does not publish below its
-floor; GeoNet fall back to USGS W-phase for events they cannot
-constrain. Warnings (recorded, never blocking): the preferred depth
+mechanism, magnitude or depth. F-net likewise does not publish below
+its station floor (Fukuyama et al. 1998). Warnings (recorded, never
+blocking): the preferred depth
 touching the ± 30 km window edge; the jackknife being impossible.
 
 Publication gate, applied to **our inverted Mw**: grade A or B and
 (Mw ≥ 5.0 or the Okada-predicted peak displacement ≥ 1 cm). Anti-spam:
 at most three emails a day; within 75 km and 14 days of a published
 event, a smaller event must be within 0.5 Mw of it to publish.
-Everything processed is archived regardless, and every event that did
-not publish is listed with its reason in `not_published.csv`.
+Everything processed is archived regardless; the publish decision and
+its reasons are stored in `solution.json` and summarised in the
+`publish_flag` column of `catalogue.csv`. Events with no solution at all
+are listed with their stage and reason in `not_published.csv`.
 
 ## 7. Deformation forward model (`okada_forward.py`)
 
@@ -287,9 +289,10 @@ Key observations:
    model, 81% DC at the same VR — the spurious CLVD was model error.
 2. **Depth recovery from placeholders.** Both M5.5+ events prefer ~8 km
    over the 5 km fixed depth, with clean single-peaked VR(depth) curves.
-3. **ML–Mw offset.** GeoNet preliminary magnitudes exceed our Mw by
-   0.4–0.6 units across the sequence — the recurring NZ ML–Mw discrepancy
-   discussed by Ristau (2008) — which is why all gating uses our Mw.
+3. **ML–Mw offset.** Preliminary magnitudes for the sequence are
+   0.4–0.6 units above the inverted Mw — consistent with the NZ ML–Mw
+   relationship discussed by Ristau (2008) — so all gating uses the
+   inverted Mw.
 4. **Gates catch the marginal cases.** The M4.8 aftershock lost all but
    2 stations to the SNR gate in its first-choice band and was blocked by
    the 3-station minimum rather than emailing a poorly-constrained
@@ -321,7 +324,7 @@ interactive Focal Mechanism Explorer at https://eq.comoglu.com/bb/.
 
 ## Validation metric
 
-Mechanism agreement with reference catalogues (`run05_validate.py`) and
+Mechanism agreement with reference catalogues (`validate.py`) and
 jackknife stability are measured as the **minimum rotation angle**
 between two double couples (J. Townend, pers. comm. 2026-08-20):
 each mechanism is expressed as a rotation matrix of its principal axes

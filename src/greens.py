@@ -1,4 +1,5 @@
-"""Green's functions — attribution and provenance.
+"""Task 3 — Green's functions (staged for the inversion): attribution
+and provenance.
 
 This module was compiled with Claude (Anthropic) assistance. The CPS
 computation chain (hprep96 | hspec96 | hpulse96 -D -i | f96tosac -B) is

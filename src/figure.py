@@ -1,5 +1,5 @@
-"""Outward figures (matplotlib/cartopy — one plotting stack, matching the
-mttime waveform-fit figures):
+"""Task 5 — outward figures (matplotlib/cartopy — one plotting stack,
+matching the mttime waveform-fit figures):
 
 make_share_figure: two same-region map panels — (a) stations + the full
 deviatoric moment tensor beachball, (b) Okada-predicted vertical surface
@@ -112,13 +112,15 @@ def make_share_figure(
         sc = ax.scatter(
             [r["longitude"] for r in used], [r["latitude"] for r in used],
             c=[v if v is not None else 0.0 for v in dv],
-            cmap="coolwarm", vmin=-dvmax, vmax=dvmax, marker="^", s=90,
+            cmap=map_style.roma_fast_red(), vmin=-dvmax, vmax=dvmax,
+            marker="^", s=90,
             edgecolors="black", linewidths=0.5,
             transform=ccrs.PlateCarree(), zorder=7,
         )
         caxa = fig.add_axes([0.045, 0.517, 0.15, 0.010])
         cba = fig.colorbar(sc, cax=caxa, orientation="horizontal")
-        cba.set_label("dV% from zcor (red = model fast)", fontsize=7)
+        cba.set_label("dV% from time shift (red = model fast, blue = slow)",
+                      fontsize=7)
         cba.ax.tick_params(labelsize=6)
     else:
         ax.plot([r["longitude"] for r in used], [r["latitude"] for r in used],
@@ -338,7 +340,8 @@ def make_overview_map(events_dir: Path, out_path: Path) -> Path:
         sols.append(sol)
     region = [163.5, 183.0, -50.7, -33.3]
     fig = plt.figure(figsize=(7.5, 8.7))
-    ax = map_style.geo_axes(fig, [0.07, 0.05, 0.9, 0.88], region,
+    # bottom margin leaves room for the longitude labels below the frame
+    ax = map_style.geo_axes(fig, [0.07, 0.08, 0.9, 0.85], region,
                             grid=False, label_size=11)
     map_style.draw_context(ax, region, ccrs, gnss=False)
     dates = []

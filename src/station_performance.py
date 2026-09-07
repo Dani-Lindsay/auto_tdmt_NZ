@@ -1,4 +1,4 @@
-"""Per-station aggregate of station_ledger.csv — "which stations
+"""Per-station aggregate of station_ledger.jsonl — "which stations
 consistently get picked or dropped", the year-one learning table.
 
 Regenerated with the catalogue after each event. Per station:
@@ -15,6 +15,7 @@ Regenerated with the catalogue after each event. Per station:
 from __future__ import annotations
 
 import csv
+import json
 from collections import defaultdict
 from pathlib import Path
 
@@ -33,7 +34,7 @@ COLUMNS = (["station", "n_seen", "n_used", "use_rate", "med_snr",
 def build_station_performance(events_dir: Path | None = None) -> Path | None:
     events_dir = events_dir or config.EVENTS_DIR
     out_dir = catalogue.tables_dir(events_dir)
-    ledger_path = out_dir / "station_ledger.csv"
+    ledger_path = out_dir / "station_ledger.jsonl"
     if not ledger_path.exists():
         catalogue.build_catalogue(events_dir)
     if not ledger_path.exists():
@@ -42,31 +43,24 @@ def build_station_performance(events_dir: Path | None = None) -> Path | None:
         lambda: {"seen": 0, "used": 0, "snr": [], "vr": [], "shift": [],
                  "amp": [], "last": "", **{f"n_{c}": 0 for c in CLASSES}})
 
-    def _f(x):
-        try:
-            return float(x)
-        except (TypeError, ValueError):
-            return None
-
     with open(ledger_path) as f:
-        for r in csv.DictReader(f):
-            k = ".".join(r["Station"].split(".")[:2])
-            e = acc[k]
-            e["seen"] += 1
-            e["last"] = max(e["last"], r["Date"])
-            for key, col in (("snr", "SNR_med"), ("amp", "Amp_ratio")):
-                v = _f(r[col])
-                if v is not None:
-                    e[key].append(v)
-            if r["Used"] == "True":
-                e["used"] += 1
-                for key, col in (("vr", "Station_VR"), ("shift", "Shift_s")):
-                    v = _f(r[col])
-                    if v is not None:
-                        e[key].append(v)
-            else:
-                cls = r["Reason_class"] if r["Reason_class"] in CLASSES else "other"
-                e[f"n_{cls}"] += 1
+        for line in f:
+            rec = json.loads(line)
+            for sid, st in rec["stations"].items():
+                e = acc[".".join(sid.split(".")[:2])]
+                e["seen"] += 1
+                e["last"] = max(e["last"], rec["Date"])
+                for key, col in (("snr", "snr_med"), ("amp", "amp_ratio")):
+                    if st.get(col) is not None:
+                        e[key].append(st[col])
+                if st.get("used"):
+                    e["used"] += 1
+                    for key, col in (("vr", "own_vr"), ("shift", "shift_s")):
+                        if st.get(col) is not None:
+                            e[key].append(st[col])
+                else:
+                    cls = st.get("drop") if st.get("drop") in CLASSES else "other"
+                    e[f"n_{cls}"] += 1
 
     def _med(xs, nd=1):
         return round(float(np.median(xs)), nd) if xs else ""

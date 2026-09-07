@@ -3,7 +3,11 @@ regional CMT solutions (Ristau catalogue, GeoNet/data repository) and
 (2) the Global CMT catalogue (Ekstrom et al., globalcmt.org; monthly +
 quick NDK feeds), with GeoNet as the source of every original hypocentre.
 
-    pixi run python run05_validate.py
+    pixi run python src/validate.py
+
+Catalogue-level, not per event: it reads every archived solution.json.
+Run by hand after a sweep, and automatically by sync_repo.py so the
+validation report is refreshed every time the archive is published.
 
 Writes validation/comparison.csv and per-metric figures plus a
 terminal summary. Metrics per common event: dMw, dDepth, and the angle
@@ -222,9 +226,9 @@ def main() -> None:
         print(f"  mechanism: median min rotation "
               f"{sub.rotation_angle_deg.median():.0f} deg")
 
-    # inter-reference baseline: how far apart the REFERENCES are from
-    # each other on co-matched events (Ristau vs USGS) — the floor any
-    # catalogue could reach; drawn on the rotation figure
+    # inter-reference baseline: how far apart the two reference catalogues
+    # are from each other on co-matched events (Ristau vs USGS), for
+    # context; drawn on the rotation figure
     from invert import min_rotation_angle_deg as _rot
     gsdr = {str(x["PublicID"]): (float(x["strike1"]), float(x["dip1"]),
                                  float(x["rake1"]))
@@ -243,8 +247,8 @@ def main() -> None:
     baseline = float(np.median(ref_ref)) if ref_ref else None
     if baseline is not None:
         print(f"\ninter-reference baseline (Ristau vs USGS, n={len(ref_ref)}):"
-              f" median min rotation {baseline:.0f} deg — the floor any"
-              " catalogue could reach")
+              f" median min rotation {baseline:.0f} deg between the two"
+              " reference catalogues")
 
     colors = {"NZ_CMT_Ristau": "#0072B2", "GlobalCMT": "#E69F00",
               "USGS_NEIC": "#CC79A7"}
@@ -283,8 +287,8 @@ def main() -> None:
     plt.close(fig)
 
     # ---- figure 3: mechanism rotation, split by grade -------------------
-    # the all-grades histogram alone is misleading (C/D dominates the
-    # count); the grade split + the inter-agency floor is the story
+    # split by grade because C/D dominates the count; the inter-reference
+    # baseline gives the context for the A/B tier
     fig, ax = plt.subplots(figsize=(7.5, 4.6))
     rist = df[df.reference == "NZ_CMT_Ristau"]
     bins = np.arange(0, 121, 10)
@@ -294,8 +298,8 @@ def main() -> None:
             color="0.65", alpha=0.7, label="grade C/D (archive only)")
     if baseline is not None:
         ax.axvline(baseline, color="#D55E00", linestyle="--", linewidth=1.6,
-                   label=f"Ristau-vs-USGS floor ({baseline:.0f}\N{DEGREE SIGN}: "
-                         "how far apart the references themselves are)")
+                   label=f"Ristau vs USGS ({baseline:.0f}\N{DEGREE SIGN}: "
+                         "difference between the two reference catalogues)")
     ax.set_xlabel("minimum rotation angle vs Ristau NZ CMT (deg)")
     ax.set_ylabel("events")
     ax.legend(fontsize=8)

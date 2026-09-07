@@ -398,7 +398,7 @@ def fetch_and_process(
             _reject_files(r)
             dropped.append({**r, "station": station_id(r),
                             "reason": f"amplitude outlier: {r['amp_ratio']:.1f}x "
-                                      f"the network median (broken response?)",
+                                      f"the network median",
                             "distance_km": round(r["distance_km"], 1)})
             print(f"  amplitude outlier: {station_id(r)} {r['amp_ratio']:.0f}x")
         usable = [r for r in usable if r not in flagged]

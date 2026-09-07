@@ -1,4 +1,5 @@
-"""Publishing: email the solution (figure attached) to the distribution list.
+"""Task 5 — publishing: email the solution (figures attached) to the
+distribution list. The SMTP library; publish_event.py is the CLI.
 
 SMTP credentials come from the environment (GitHub Actions secrets in CI):
     SMTP_HOST, SMTP_PORT (587), SMTP_USER, SMTP_PASS, MAIL_FROM, MAIL_TO

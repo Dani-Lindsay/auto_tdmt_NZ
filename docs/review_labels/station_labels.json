@@ -1,5 +1,5 @@
 {
-  "_about": "Per-station reviewer labels extracted from notes_2026-09-04.md (D. Lindsay). keep = must be used by the selection; toss = must NOT be used; maybe = free. Event-level expectations under 'event'. Replayed by run07_replay_labels.py: these labels are the acceptance test for any change to station selection.",
+  "_about": "Per-station reviewer labels extracted from notes_2026-09-04.md (D. Lindsay). keep = must be used by the selection; toss = must NOT be used; maybe = free. Event-level expectations under 'event'. Replayed by replay_labels.py: these labels are the acceptance test for any change to station selection.",
   "_labels": {
     "keep": "clear signal — I would invert this",
     "maybe": "marginal — let the fit decide",

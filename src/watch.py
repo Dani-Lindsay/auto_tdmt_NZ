@@ -1,14 +1,18 @@
 """Poll GeoNet for new events above the processing floor and process them.
 
-    pixi run python run01_watch.py            # poll + list what would run
-    pixi run python run01_watch.py --process  # poll + process + (maybe) email
-    pixi run python run01_watch.py --process --budget-minutes 300
+    pixi run python src/watch.py            # poll + list what would run
+    pixi run python src/watch.py --process  # poll + process + (maybe) email
+    pixi run python src/watch.py --process --budget-minutes 300
+
+The cron entry point: task 1 (poll + processing floor) lives here; every
+new event is handed to process_event.py (tasks 1-5) and, if it passes
+the publication gate, to publish_event.py (the email).
 
 Runs DAILY in CI (see .github/workflows/watch.yml). A 10-minute cron was
-throttled by GitHub to a median 3.5-hour gap — an unreliable schedule is
-worse than an honest one, and NISAR/Sentinel passes are days apart, so a
-daily sweep loses nothing that matters. Urgent events can always be run
-by hand (workflow_dispatch, or run02_process.py locally).
+throttled by GitHub to a median 3.5-hour gap, and NISAR/Sentinel passes
+are days apart, so a daily sweep loses nothing that matters. Urgent
+events can always be run
+by hand (workflow_dispatch, or process_event.py locally).
 
 Because the poll returns everything recent and the state file records
 what has been done, a run that cannot finish its list is not a problem:
@@ -21,7 +25,7 @@ State lives in events/index.json:
 In CI this file is committed back to the repo after each run, which both
 dedupes across cron runs and archives every solution publicly.
 
-One polite API call per invocation.
+One request to the quake API per invocation.
 """
 
 from __future__ import annotations
@@ -61,14 +65,19 @@ def new_events(state: dict) -> list:
         ok, reason = trigger.passes_processing_floor(ev)
         if ok:
             events.append(ev)
-        # below-floor events are not recorded: a magnitude revision upward
-        # on a later poll should still trigger processing
+        else:
+            # recorded for not_published.csv only, never used to skip: a
+            # magnitude revision upward on a later poll should still trigger
+            state.setdefault("skipped", {})[ev.public_id] = {
+                **ev.to_dict(), "reason": reason,
+                "seen_utc": datetime.now(timezone.utc).isoformat()}
     return events
 
 
 def main(process: bool, budget_minutes: float | None = None) -> None:
     state = load_state()
     events = new_events(state)
+    save_state(state)   # below-floor events recorded for not_published.csv
     if not events:
         print("no new events above the processing floor")
         return
@@ -95,7 +104,7 @@ def main(process: bool, budget_minutes: float | None = None) -> None:
         if not process:
             continue
 
-        from run02_process import process_event
+        from process_event import process_event
         try:
             solution = process_event(ev.public_id)
         except Exception as e:  # noqa: BLE001 - one bad event must not stop the rest
@@ -135,7 +144,7 @@ def main(process: bool, budget_minutes: float | None = None) -> None:
         }
 
         if decision["publish"]:
-            from run03_publish import publish_event
+            from publish_event import publish_event
             try:
                 publish_event(ev.public_id, state=state)
                 summary["published"] = True

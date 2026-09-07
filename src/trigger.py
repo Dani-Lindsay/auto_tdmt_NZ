@@ -1,10 +1,12 @@
-"""Processing floor and publication gate.
+"""Tasks 1 and 5 — processing floor and publication gate.
 
-Processing floor (cheap, on GeoNet's preliminary magnitude — a mixed bag of
-M/MLv/mB types, so deliberately loose): decides what gets computed.
+Processing floor (cheap, on the preliminary magnitude from the quake API,
+which is reported as M, MLv or mB, so the floor is set low): decides what
+gets computed.
 
-Publication gate (on OUR inverted Mw + the Okada forward model): decides
-what gets emailed. Everything processed is archived either way.
+Publication gate (on the Mw from this inversion + the Okada forward
+model): decides what gets emailed. Everything processed is archived
+either way.
 """
 
 from __future__ import annotations

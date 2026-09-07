@@ -56,7 +56,7 @@ NOTEBOOKS = {
 What the pipeline does first: ask GeoNet for recent events, apply the
 processing floor from `auto_tdmt.cfg` §1, and fetch one event's origin.
 Every function here is the one the pipeline itself runs
-(`geonet.py`, `trigger.py`, `run01_watch.py`).
+(`geonet.py`, `trigger.py`, `watch.py`).
 """),
         code(PREAMBLE),
         code("""
@@ -66,7 +66,7 @@ print(json.dumps(P.as_dict()["geonet"], indent=2))
         code("""
 import trigger
 from geonet import recent_quakes
-events = recent_quakes(mmi=3)                 # one polite API call
+events = recent_quakes(mmi=3)                 # one request to the quake API
 print(f"{len(events)} recent events from the quake API")
 for ev in events[:15]:
     ok, why = trigger.passes_processing_floor(ev)
@@ -83,8 +83,9 @@ print(json.dumps(ev.to_dict(), indent=2))
         md("""
 ## What to check
 - Is the floor doing what you expect (`geonet.minPrelimMag`, `maxDepthKm`)?
-- GeoNet placeholder depths (5 / 12 / 33 km) are not measurements — they are
-  always attempted and the depth search decides (task 3).
+- Depths reported as 5 / 12 / 33 km are fixed default values rather than
+  fitted depths — those events are always attempted and the depth search
+  decides (task 3).
 """),
     ],
     "task_2_stations": [
@@ -293,16 +294,20 @@ import pandas as pd
 cat = pd.read_csv(config.REPO_DIR / "catalogue.csv")
 print(cat["Grade"].value_counts().sort_index().to_dict(), "of", len(cat), "events")
 display(cat[cat.PublicID == EVENT].T)
+print("publish flags:", cat["publish_flag"].value_counts().head(8).to_dict())
 npub = pd.read_csv(config.REPO_DIR / "not_published.csv")
-print(f"{len(npub)} not published; reasons:")
-print(npub["Tags"].value_counts().head(10))
-ledger = pd.read_csv(config.REPO_DIR / "station_ledger.csv")
-display(ledger[ledger.PublicID == EVENT][["Station", "Distance_km", "Azimuth", "SNR_med", "Used", "Reason_class", "Station_VR", "Shift_s"]])
+print(f"{len(npub)} events with no solution; by outcome and stage:")
+print(npub.groupby(["Outcome", "Stage"]).size())
+ledger = pd.read_json(config.REPO_DIR / "station_ledger.jsonl", lines=True)
+rec = ledger[ledger.PublicID == EVENT].iloc[0]
+display(pd.DataFrame(rec["stations"]).T)   # one row per station, numbers only
 """),
         md("""
 ## What to check
-- `not_published.csv` (repo root) says why each event did not email.
-- `station_ledger.csv` is the year-one learning table: after a year,
+- `publish_flag` in `catalogue.csv` says why a solved event did not email.
+- `not_published.csv` (repo root) lists the events with no solution at all.
+- `station_ledger.jsonl` is the year-one learning table (one line per
+  event, a per-station dictionary of numbers): after a year,
   `station_performance.csv` (its aggregate) shows which stations are
   consistently picked or dropped, and by which rule.
 """),

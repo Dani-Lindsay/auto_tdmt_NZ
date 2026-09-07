@@ -6,9 +6,9 @@ figures (verbatim notes alongside them in notes_*.md). They are the
 ACCEPTANCE TEST for station selection: any change to the funnel must be
 judged by whether it reproduces these calls, not by whether VR went up.
 
-    pixi run python run07_replay_labels.py                 # all events
-    pixi run python run07_replay_labels.py --event 2026p348732
-    pixi run python run07_replay_labels.py --events-dir /tmp/scratch
+    pixi run python src/replay_labels.py                 # all events
+    pixi run python src/replay_labels.py --event 2026p348732
+    pixi run python src/replay_labels.py --events-dir /tmp/scratch
 
 Scoring, per station:
   keep  -> must be USED          (a miss is a false rejection)
@@ -40,7 +40,7 @@ def _station_name(sid: str) -> str:
 
 def replay(labels: dict, only: str | None = None) -> dict:
     import config
-    from run02_process import process_event
+    from process_event import process_event
 
     results = []
     for spec in labels["events"]:

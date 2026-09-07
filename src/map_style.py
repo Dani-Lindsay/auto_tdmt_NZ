@@ -89,6 +89,15 @@ def vik():
     return cm.vik
 
 
+def roma_fast_red():
+    """cmcrameri roma, reversed so red = model fast (positive dV%) and
+    blue = model slow; a second diverging palette so the time-shift panel
+    is never confused with the vik displacement panel."""
+    from cmcrameri import cm
+
+    return cm.roma_r
+
+
 def add_jackknife_planes(ax, lon, lat, subsets, width_frac: float = 0.16,
                          color: str = "0.15", alpha: float = 0.30) -> None:
     """Thin nodal-plane arcs from jackknife subset solutions drawn over the

@@ -28,10 +28,10 @@ README.md for citations.
 |---|---|
 | `strike1,dip1,rake1` / `strike2,dip2,rake2` | Nodal planes of the DC part, degrees, Aki & Richards convention; the data cannot distinguish which plane is the fault |
 | `Mw` | Moment magnitude from the inversion |
-| `Depth` | Our centroid depth, km — the FINAL pick (VR-first, %DC tie-break on the contiguous plateau). The full depth grid is always searched; nothing is constrained toward GeoNet |
+| `Depth` | Our centroid depth, km — the FINAL pick (VR-first, %DC tie-break on the contiguous plateau). The search range is bounded around `GeoNet_depth` (see `GeoNet_depth_unc`) but the pick is not constrained toward it |
 | `Depth_lo`, `Depth_hi` | Range of depths whose VR is within 10% of the maximum — the depth uncertainty (Vallée et al. 2011) |
 | `Depth_VRmax` | Depth of the maximum variance reduction, km |
-| `dZ_GeoNet` | Our centroid depth minus the GeoNet hypocentre depth, km (the search is bounded to ± 30 km around it, never forced) |
+| `dZ_GeoNet` | Our centroid depth minus the GeoNet hypocentre depth, km (the search is bounded to ± 30 km around it) |
 | `Depth_DCmax` | Depth of the maximum %DC, km |
 | `Plateau_km` | Width of the near-VR-max plateau, km; large values mean depth is weakly constrained by the waveforms |
 | `Mo` | Scalar moment, dyne-cm |
@@ -79,10 +79,16 @@ solutions CSV so the catalogues are directly comparable).
 
 ## Companion tables
 
-- `not_published.csv` — every processed event that did NOT email, with
-  `Why_not` (the publish decision's reasons) and `Tags`.
-- `station_ledger.csv` — one row per station per event: distance,
-  azimuth, sector, SNR per component, amplitude ratio, window, whether it
-  was used, the reason class and reason if not, its own VR and time
-  shift, and the event's band/depth/Mw/VR/grade. The year-one learning
-  table; `station_performance.csv` is its per-station aggregate.
+- `not_published.csv` — every event with NO solution. `Outcome` is
+  `no_coherent_solution` (attempted; `Stage`, `Reason` and `Best_VR` say
+  where it stopped) or `not_attempted` (seen by the watcher or backsweep
+  but below the processing floor: too deep, too small, outside the box).
+  Events that solved but were not emailed are not listed here; their
+  `publish_flag` in `catalogue.csv` says why.
+- `station_ledger.jsonl` — one JSON line per event: `PublicID`, `Date`,
+  `Band`, `Depth`, `Mw`, `VR`, `Grade`, `Selection` and `stations`, a
+  dictionary keyed by `NET.STA` with numeric values only: `dist_km`,
+  `az`, `sector`, `snr_Z/R/T`, `snr_med`, `amp_ratio`, `window_s`,
+  `used` (1/0), `drop` (reason class when not used), `own_vr`,
+  `shift_s`. Absent values are omitted. The year-one learning table;
+  `station_performance.csv` is its per-station aggregate.

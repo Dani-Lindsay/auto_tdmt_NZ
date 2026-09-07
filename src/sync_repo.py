@@ -1,12 +1,13 @@
 """Sync the local event archive into the repo and rebuild the public
 products (catalogue, station ledger, overview map, validation), then
 commit and push. This is the DELIBERATE publish step: test sweeps
-(run02/run04) write only to the local archive, and nothing reaches
-GitHub until this is run — so experimental rule iterations do not churn
-the public archive or bloat git history with throwaway figures.
+(process_event.py / backsweep.py) write only to the local archive, and
+nothing reaches GitHub until this is run — so experimental rule
+iterations do not churn the public archive or bloat git history with
+throwaway figures.
 
-    pixi run python run06_sync_repo.py --message "why this state is worth publishing"
-    pixi run python run06_sync_repo.py --no-push   # local commit only
+    pixi run python src/sync_repo.py --message "why this state is worth publishing"
+    pixi run python src/sync_repo.py --no-push   # local commit only
 """
 from __future__ import annotations
 
@@ -57,7 +58,7 @@ def main(message: str, push: bool) -> None:
     report = config.REPO_DIR / "validation" / "validation_report.txt"
     with open(report, "w") as f:
         subprocess.run(
-            ["pixi", "run", "python", "run05_validate.py"],
+            ["pixi", "run", "python", "src/validate.py"],
             cwd=config.REPO_DIR, stdout=f, stderr=subprocess.STDOUT,
             check=False)
     print(f"validation report: {report}")

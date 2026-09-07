@@ -190,8 +190,8 @@ GF_DEPTHS_KM = (
     + list(range(34, 61, 4))             # 34-58 km @ 4
 )
 # Velocity models (models/<name>.d, citation inside each file):
-# Ristau (2008) SRL 79(3) Table 1 — the models GeoNet's own regional CMT
-# analysis was built on, so our solutions are directly comparable.
+# Ristau (2008) SRL 79(3) Table 1 — the velocity models published for NZ
+# regional CMT analysis, so solutions can be compared with that catalogue.
 GF_MODELS = ("nz_south_ristau2008", "nz_north_ristau2008")
 GF_VERSION = "v1"
 

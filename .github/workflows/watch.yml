@@ -7,8 +7,8 @@ name: watch-geonet
 # workflows, and a */10 cron on this repo was actually firing at a
 # MEDIAN GAP OF 214 MINUTES (measured 2026-09-05 over 15 intervals) with
 # individual gaps past 5 hours. A schedule that claims 10 minutes and
-# delivers 3.5 hours is worse than an honest daily one; NISAR and
-# Sentinel-1 passes are days apart, so nothing this pipeline is FOR is
+# delivers 3.5 hours is no better than a daily one; NISAR and
+# Sentinel-1 passes are days apart, so nothing this pipeline is for is
 # lost by a daily sweep. Anything urgent: run this workflow by hand
 # (Run workflow, below) or process locally.
 #
@@ -80,7 +80,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
 
       - name: Poll and process
-        run: pixi run python src/run01_watch.py --process --budget-minutes 300
+        run: pixi run python src/watch.py --process --budget-minutes 300
 
       - name: Commit results
         run: |

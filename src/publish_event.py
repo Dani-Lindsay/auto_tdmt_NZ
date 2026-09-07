@@ -1,7 +1,8 @@
-"""Email one processed event's solution to the distribution list.
+"""Email one processed event's solution to the distribution list (the
+last step of task 5, run on its own; publish.py is the SMTP library).
 
-    pixi run python run03_publish.py --event 2026p660242
-    pixi run python run03_publish.py --event 2026p660242 --force  # skip gates
+    pixi run python src/publish_event.py --event 2026p660242
+    pixi run python src/publish_event.py --event 2026p660242 --force  # skip gates
 """
 
 from __future__ import annotations
@@ -18,9 +19,11 @@ import publish
 def publish_event(public_id: str, state: dict | None = None,
                   force: bool = False) -> None:
     event_dir = config.find_event_dir(public_id)
-    assert event_dir is not None, f"no archive for {public_id} — run run02 first"
+    assert event_dir is not None, \
+        f"no archive for {public_id} — run process_event.py first"
     sol_path = event_dir / "solution.json"
-    assert sol_path.exists(), f"no solution for {public_id} — run run02 first"
+    assert sol_path.exists(), \
+        f"no solution for {public_id} — run process_event.py first"
     solution = json.loads(sol_path.read_text())
 
     decision = solution["publish_decision"]
@@ -43,7 +46,7 @@ def publish_event(public_id: str, state: dict | None = None,
 
     own_state = state is None
     if own_state:
-        from run01_watch import load_state
+        from watch import load_state
         state = load_state()
     assert config.is_solved(solution), \
         f"{public_id} has no coherent solution — nothing to publish"
@@ -55,7 +58,7 @@ def publish_event(public_id: str, state: dict | None = None,
         "published_utc": datetime.now(timezone.utc).isoformat(),
     })
     if own_state:
-        from run01_watch import save_state
+        from watch import save_state
         save_state(state)
 
 

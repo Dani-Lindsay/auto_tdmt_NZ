@@ -1,9 +1,15 @@
 """Task 5 — the archive tables, regenerated from every solution.json.
 
     catalogue.csv          one row per event (solved or not)
-    not_published.csv      every processed event that did NOT email, and why
-    station_ledger.csv     one row per station per event: the year-one
-                           learning table ("which stations get picked")
+    not_published.csv      events with NO solution: attempted but no
+                           coherent solution (stage, reason, best VR), and
+                           events seen but not attempted (below the floor:
+                           too deep, too small, outside the box)
+    station_ledger.jsonl   one JSON line per event: a per-station dictionary
+                           of numeric values (distance, azimuth, SNR per
+                           component, amplitude ratio, own VR, time shift,
+                           used / drop class) — the raw material for a
+                           station quality index
 
 The tables sit at the REPOSITORY ROOT when the archive is the repo's
 events/ (so they are the first thing on the GitHub page); for a scratch
@@ -65,11 +71,9 @@ COLUMNS = [
     "quality_flag", "publish_flag", "published",
 ]
 
-LEDGER_COLUMNS = [
-    "PublicID", "Date", "Station", "Distance_km", "Azimuth", "Sector",
-    "SNR_Z", "SNR_R", "SNR_T", "SNR_med", "Amp_ratio", "Window_s",
-    "Used", "Reason_class", "Reason", "Station_VR", "Shift_s",
-    "Band", "Depth", "Mw", "VR", "Grade", "Selection",
+NO_SOLUTION_COLUMNS = [
+    "PublicID", "Date", "Latitude", "Longitude", "GeoNet_M", "GeoNet_depth",
+    "Outcome", "Stage", "Reason", "Best_VR", "Selection",
 ]
 
 
@@ -131,45 +135,91 @@ def row_from(s: dict, published_ids: set[str] | None = None) -> dict:
     }
 
 
-def ledger_rows(s: dict) -> list[dict]:
-    """One row per station that entered this event, used or not."""
+def _num(x, nd: int = 1):
+    try:
+        return round(float(x), nd)
+    except (TypeError, ValueError):
+        return None
+
+
+def _station_key(r: dict) -> str:
+    st = str(r.get("station", ""))
+    return st if "." in st else f"{r.get('network', '')}.{st}"
+
+
+def ledger_line(s: dict) -> dict:
+    """One JSON line per event: the event's headline numbers and a
+    per-station dictionary of numeric values, used or not. Keys per station:
+    dist_km, az, sector, snr_Z/R/T, snr_med, amp_ratio, window_s, used (1/0),
+    drop (reason class when not used), own_vr, shift_s. Absent values are
+    omitted rather than written as blanks."""
     import invert
     ev = s["event"]
     solved = config.is_solved(s)
     p = s.get("preferred", {})
-    common = {
-        "PublicID": ev["public_id"], "Date": ev["origin_time"][:10],
-        "Band": s.get("chosen_band", "").replace("band_", ""),
-        "Depth": p.get("depth_km", ""), "Mw": round(p["mw"], 2) if solved else "",
-        "VR": round(p["vr"], 1) if solved else "",
-        "Grade": s.get("quality", {}).get("grade", ""),
-        "Selection": s.get("provenance", {}).get("selection_version", ""),
-    }
 
-    def _row(r: dict, used: bool) -> dict:
+    def _entry(r: dict, used: bool) -> dict:
         snr = r.get("snr")
         if not isinstance(snr, dict):   # v3/v4 rows stored a single number
             snr = {}
-        return {
-            **common,
-            "Station": r.get("station") if "." in str(r.get("station", ""))
-            else f"{r.get('network', '')}.{r.get('station', '')}",
-            "Distance_km": round(r["distance_km"], 1) if r.get("distance_km") else "",
-            "Azimuth": round(r["azimuth"], 1) if r.get("azimuth") is not None else "",
-            "Sector": r.get("sector", ""),
-            "SNR_Z": snr.get("Z", ""), "SNR_R": snr.get("R", ""),
-            "SNR_T": snr.get("T", ""), "SNR_med": r.get("snr_med", ""),
-            "Amp_ratio": r.get("amp_ratio", ""),
-            "Window_s": r.get("window_end_s", ""),
-            "Used": used,
-            "Reason_class": "" if used else invert.reason_class(r.get("reason", "")),
-            "Reason": "" if used else r.get("reason", ""),
-            "Station_VR": r.get("station_vr", ""),
-            "Shift_s": r.get("zcor_s", ""),
+        vals = {
+            "dist_km": _num(r.get("distance_km")),
+            "az": _num(r.get("azimuth")),
+            "sector": r.get("sector"),
+            "snr_Z": _num(snr.get("Z")), "snr_R": _num(snr.get("R")),
+            "snr_T": _num(snr.get("T")), "snr_med": _num(r.get("snr_med")),
+            "amp_ratio": _num(r.get("amp_ratio"), 2),
+            "window_s": _num(r.get("window_end_s"), 0),
+            "used": int(used),
+            "drop": None if used else invert.reason_class(r.get("reason", "")),
+            "own_vr": _num(r.get("station_vr")),
+            "shift_s": _num(r.get("zcor_s")),
         }
-    return ([_row(r, True) for r in s.get("stations_used", [])]
-            + [_row(r, False) for r in s.get("stations_dropped", [])
-               if "network" in r or "." in str(r.get("station", ""))])
+        return {k: v for k, v in vals.items() if v is not None}
+
+    stations: dict[str, dict] = {}
+    for r in s.get("stations_used", []):
+        stations[_station_key(r)] = _entry(r, True)
+    for r in s.get("stations_dropped", []):
+        if "network" in r or "." in str(r.get("station", "")):
+            stations.setdefault(_station_key(r), _entry(r, False))
+    return {
+        "PublicID": ev["public_id"], "Date": ev["origin_time"][:10],
+        "Band": s.get("chosen_band", "").replace("band_", ""),
+        "Depth": p.get("depth_km"),
+        "Mw": round(p["mw"], 2) if solved else None,
+        "VR": round(p["vr"], 1) if solved else None,
+        "Grade": s.get("quality", {}).get("grade", "X"),
+        "Selection": s.get("provenance", {}).get("selection_version", ""),
+        "stations": stations,
+    }
+
+
+def no_solution_row(s: dict) -> dict:
+    """not_published.csv row for an attempted event with no coherent solution."""
+    ev, ab = s["event"], s["abort"]
+    return {
+        "PublicID": ev["public_id"], "Date": ev["origin_time"],
+        "Latitude": round(ev["latitude"], 4),
+        "Longitude": round(ev["longitude"], 4),
+        "GeoNet_M": round(ev["prelim_mag"], 2),
+        "GeoNet_depth": round(ev["depth_km"], 1),
+        "Outcome": "no_coherent_solution", "Stage": ab.get("stage", ""),
+        "Reason": ab.get("reason", ""), "Best_VR": ab.get("best_vr", ""),
+        "Selection": s.get("provenance", {}).get("selection_version", ""),
+    }
+
+
+def skipped_row(pid: str, rec: dict) -> dict:
+    """not_published.csv row for an event seen but not attempted (below the
+    processing floor), from the state file's "skipped" record."""
+    return {
+        "PublicID": pid, "Date": rec.get("origin_time", ""),
+        "Latitude": rec.get("latitude", ""), "Longitude": rec.get("longitude", ""),
+        "GeoNet_M": rec.get("prelim_mag", ""), "GeoNet_depth": rec.get("depth_km", ""),
+        "Outcome": "not_attempted", "Stage": "processing floor",
+        "Reason": rec.get("reason", ""), "Best_VR": "", "Selection": "",
+    }
 
 
 def tables_dir(events_dir: Path | None = None) -> Path:
@@ -187,42 +237,35 @@ def build_catalogue(events_dir: Path | None = None) -> Path | None:
     if not solutions:
         return None
     published_ids: set[str] = set()
+    state: dict = {}
     if config.STATE_FILE.exists():
         state = json.loads(config.STATE_FILE.read_text())
         published_ids = {p["public_id"] for p in state.get("published", [])}
 
-    rows, unpublished, ledger = [], [], []
+    rows, no_solution, ledger = [], [], []
     for path in solutions:
         s = json.loads(path.read_text())
-        row = row_from(s, published_ids)
-        rows.append(row)
-        ledger.extend(ledger_rows(s))
-        if not row["published"]:
-            decision = s.get("publish_decision", {})
-            unpublished.append({
-                "PublicID": row["PublicID"], "Date": row["Date"],
-                "GeoNet_M": row["GeoNet_M"], "Mw": row.get("Mw", ""),
-                "Depth": row.get("Depth", ""), "Grade": row["Grade"],
-                "VR": row.get("VR", ""), "DC": row.get("DC", ""),
-                "NS": row["NS"], "PredDisp_cm": row.get("PredDisp_cm", ""),
-                "Why_not": " | ".join(decision.get("reasons", [])) or
-                           row["quality_flag"],
-                "Tags": ";".join(decision.get("reason_tags", [])),
-                "Selection": row["Selection"],
-            })
+        rows.append(row_from(s, published_ids))
+        ledger.append(ledger_line(s))
+        if not config.is_solved(s):
+            no_solution.append(no_solution_row(s))
+    # events seen but never attempted (below the floor); an event that was
+    # attempted later is listed once, from its solution.json
+    attempted = {r["PublicID"] for r in rows}
+    no_solution += [skipped_row(pid, rec)
+                    for pid, rec in state.get("skipped", {}).items()
+                    if pid not in attempted]
 
     rows.sort(key=lambda r: r["Date"])
     out = out_dir / "catalogue.csv"
     _write(out, COLUMNS, rows)
-    unpublished.sort(key=lambda r: r["Date"])
-    _write(out_dir / "not_published.csv",
-           ["PublicID", "Date", "GeoNet_M", "Mw", "Depth", "Grade", "VR",
-            "DC", "NS", "PredDisp_cm", "Why_not", "Tags", "Selection"],
-           unpublished)
-    ledger.sort(key=lambda r: (r["Date"], r["PublicID"], r["Station"]))
-    _write(out_dir / "station_ledger.csv", LEDGER_COLUMNS, ledger)
-    print(f"catalogue: {len(rows)} events ({len(unpublished)} not published, "
-          f"{len(ledger)} station rows) -> {out_dir}")
+    no_solution.sort(key=lambda r: str(r["Date"]))
+    _write(out_dir / "not_published.csv", NO_SOLUTION_COLUMNS, no_solution)
+    ledger.sort(key=lambda r: (r["Date"], r["PublicID"]))
+    _write_jsonl(out_dir / "station_ledger.jsonl", ledger)
+    n_st = sum(len(r["stations"]) for r in ledger)
+    print(f"catalogue: {len(rows)} events ({len(no_solution)} with no "
+          f"solution, {n_st} station entries) -> {out_dir}")
     return out
 
 
@@ -232,6 +275,12 @@ def _write(path: Path, columns: list[str], rows: list[dict]) -> None:
         w.writeheader()
         for row in rows:
             w.writerow({k: row.get(k, "") for k in columns})
+
+
+def _write_jsonl(path: Path, rows: list[dict]) -> None:
+    with open(path, "w") as f:
+        for row in rows:
+            f.write(json.dumps(row, separators=(",", ":")) + "\n")
 
 
 if __name__ == "__main__":

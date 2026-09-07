@@ -1,5 +1,6 @@
-"""GeoNet access: quake API (detection), FDSN clients (waveforms/metadata),
-and the manually-produced GeoNet CMT catalogue (validation).
+"""Task 1 — GeoNet access: quake API (detection), FDSN clients
+(waveforms/metadata), and the published GeoNet CMT catalogue (the
+validation reference).
 
 All requests carry a descriptive User-Agent and fail loudly — no silent
 retries into stale data.
@@ -136,9 +137,9 @@ def fdsn_client(origin_time: UTCDateTime) -> Client:
     lags ~7 days behind real time, so for a young event NRT is the ONLY
     source — never fall back silently.
 
-    GeoNet's NRT server transiently serves an incomplete service document
-    ("client does not have a dataselect service"), so retry construction a
-    few times before failing loudly."""
+    The NRT service document is occasionally incomplete on first request
+    ("client does not have a dataselect service"), so client construction
+    is retried a few times before failing loudly."""
     import time
 
     base = config.FDSN_NRT if is_nrt(origin_time) else config.FDSN_ARCHIVE
@@ -153,7 +154,7 @@ def fdsn_client(origin_time: UTCDateTime) -> Client:
 
 
 def load_geonet_cmt() -> pd.DataFrame:
-    """GeoNet's manual CMT catalogue (validation ground truth).
+    """The published GeoNet CMT catalogue (the validation reference).
 
     NOTE: MT elements in the CSV are in units of 1e20 dyne-cm.
     """

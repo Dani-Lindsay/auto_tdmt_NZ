@@ -14,11 +14,9 @@ the result to a small list.
 
 Event detection and every original hypocentre (time, location, preliminary
 magnitude, initial depth) come from GeoNet; this project adds the moment
-tensor, the revised centroid depth, and the displacement forecast on top
-of that origin, and records both the GeoNet values and the revisions in
-[`catalogue.csv`](catalogue.csv). GeoNet's own moment
-tensors are computed by an analyst; this is an automated, unreviewed
-alternative built by Danielle Lindsay.
+tensor, the revised centroid depth, and the displacement model on top, and 
+records both the GeoNet values and the revisions in
+[`catalogue.csv`](catalogue.csv). 
 
 **All solutions are PRELIMINARY, deviatoric-only, and produced without
 human review** — do not interpret mechanisms in volcanic/geothermal
@@ -26,29 +24,13 @@ settings from these solutions.
 
 <p align="center"><img src="events/solutions_map.jpg" width="480" alt="All automated moment tensor solutions to date: beachballs sized by Mw (solid = grade A/B, washed = C/D) over the NZ Active Faults Database"></p>
 
-## The design in one paragraph
-
-This is a thin wrapper around three programs that already do the work —
-**mttime** (the inversion), **ObsPy** (the waveforms) and **Computer
-Programs in Seismology** (the Green's functions) — plus a station
-selection whose every rule is taken from a published operational system
-(the review is in [docs/lit_review/](docs/lit_review/); the systems and
-what each contributed are tabulated under *References* below). It runs
-as **five tasks**, each one module that can be run on its own, and
-**every tunable lives in one parameter file, [`auto_tdmt.cfg`](auto_tdmt.cfg)**,
-MintPy style, with the citation for its default on the same line. The
-rules are deliberately simple: an automated system is best when its
-thresholds are few, clear and defensible. The plan is to run it
-unattended for a year and let [`station_ledger.csv`](station_ledger.csv)
-show which stations are consistently picked or dropped before adding
-anything cleverer.
-
 ## The five tasks
 
-All code is in [`src/`](src/):
+All code is in [`src/`](src/). The pipeline is five tasks, each a
+module (or two) whose docstring opens with its task number:
 
 ```
- 1  geonet    poll the quake API, apply the processing floor      geonet.py  trigger.py  run01_watch.py
+ 1  geonet    poll the quake API, apply the processing floor      geonet.py  trigger.py
  2  stations  select stations, download, process to SAC           waveforms.py
  3  invert    bound the depth grid, run mttime, the selection      invert.py  (greens.py stages the GFs)
               loop, jackknife, grade
@@ -56,12 +38,29 @@ All code is in [`src/`](src/):
  5  publish   figures, catalogue tables, publish decision, email  figure.py catalogue.py trigger.py publish.py
 ```
 
-`src/run02_process.py --event <publicID>` runs 2 → 5 for one event; the
-watcher (`src/run01_watch.py`) runs task 1 and calls it for every new event.
 Each task has a walkthrough notebook — [`docs/task_1_geonet.ipynb`](docs/task_1_geonet.ipynb)
 … [`docs/task_5_publish.ipynb`](docs/task_5_publish.ipynb) — that
 imports the module and calls its functions on a real event, so you can
 run and inspect any single step (`pixi run notebooks` rebuilds them).
+
+## Entry points
+
+The launchers carry no task number: they are how the tasks get run, not
+tasks themselves. Each has a `pixi run` alias and a `--help`.
+
+```
+ watch.py           cron    task 1, then process_event and publish_event for every new event
+ process_event.py   by hand one event, tasks 1 → 5:  --event <publicID> [--debug] [--band]
+ publish_event.py   by hand email one processed event (task 5's last step; --force skips the gates)
+ backsweep.py       by hand process_event over a date range; never emails
+ validate.py        by hand the whole archive against the Ristau NZ CMT and GCMT catalogues
+ sync_repo.py       by hand local archive → repo, rebuild the tables and validation, commit, push
+ replay_labels.py   by hand acceptance test: replay the reviewer's station labels
+```
+
+`validate.py` is catalogue-level, not per event: `sync_repo.py` runs it
+after every sync so the validation report is refreshed whenever the
+archive is published.
 
 ## The rules and where they come from
 
@@ -102,9 +101,9 @@ VR 0.9 with a condition number above 10). Only A/B are emailed.
 **No coherent solution.** When fewer than three stations survive the
 loop, the event is archived with `"status": "no_coherent_solution"`
 and grade `X` — the full station ledger, no mechanism — rather than a
-number fitted to noise. F-net simply does not publish below its floor;
-GeoNet fall back to USGS for such events. The reason is printed in
-`not_published.csv` and by the human-review notebook.
+number fitted to noise; F-net likewise does not publish below its
+station floor (Fukuyama et al. 1998). The stage and reason are listed in
+`not_published.csv` and printed by the human-review notebook.
 
 ## Outputs
 
@@ -115,11 +114,16 @@ GeoNet fall back to USGS for such events. The reason is printed in
   resolved parameter file the solution was made with).
 - [`catalogue.csv`](catalogue.csv) — one row per event
   (column reference: [`events/CATALOGUE_README.md`](events/CATALOGUE_README.md)).
-- [`not_published.csv`](not_published.csv) — every
-  event that did not email, and why.
-- [`station_ledger.csv`](station_ledger.csv) — one row
-  per station per event; [`station_performance.csv`](station_performance.csv)
-  is its per-station aggregate.
+- [`not_published.csv`](not_published.csv) — every event with no
+  solution: attempted but no coherent solution (stage, reason, best VR),
+  or seen but not attempted (below the processing floor: too deep, too
+  small, outside the box).
+- [`station_ledger.jsonl`](station_ledger.jsonl) — one JSON line per
+  event holding a per-station dictionary of numbers (distance, azimuth,
+  SNR per component, amplitude ratio, own VR, time shift, used or drop
+  class): the raw material for a station quality index.
+  [`station_performance.csv`](station_performance.csv) is its
+  per-station aggregate.
 - Figures per event: stations + displacement field, depth sensitivity,
   mttime waveform fits, and the all-station waveform figure showing
   every candidate's record with its SNR, own VR and time shift.
@@ -144,7 +148,7 @@ pixi install
 pixi run test                 # anchor tests, including one that checks
                               # auto_tdmt.cfg and params.py agree
 pixi run get-gfs              # one-time Green's function download (~1 GB)
-pixi run python src/run02_process.py --event 2026p669681 --debug
+pixi run process --event 2026p669681 --debug    # = python src/process_event.py
 pixi run params               # print every resolved parameter
 ```
 
@@ -160,10 +164,10 @@ data and writes stage-by-stage figures under `<event>/<band>/diagnostics/`.
   (the rest wait for the next slot), email passing solutions, commit
   results. GitHub runs scheduled workflows on a low-priority queue that
   delayed a 10-minute cron to a median gap of 3.5 hours, so two daily
-  slots that dedupe through the state file are the honest schedule;
-  nothing this pipeline is for is lost by it (NISAR and Sentinel-1
-  passes are days apart). Run it by hand (`workflow_dispatch`) for
-  anything urgent — that path skips the queue.
+  slots that dedupe through the state file are used instead; nothing
+  this pipeline is for is lost by it (NISAR and Sentinel-1 passes are
+  days apart). Run it by hand (`workflow_dispatch`) for anything
+  urgent — that path skips the queue.
 - `process.yml` — manual reprocess of one publicID.
 - `publish.yml` — manual email of one processed event.
 - `human_catalogue.yml` — rebuilds the human catalogue on PR merge.
@@ -185,12 +189,10 @@ Secrets required for email: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`,
 ## Velocity models
 
 `models/nz_{north,south}_ristau2008.d` — Ristau (2008), SRL 79(3) Table 1,
-doi:10.1785/gssrl.79.3.400 — the models GeoNet's own regional CMT analysis
-was built on, so solutions are directly comparable to the published NZ
+doi:10.1785/gssrl.79.3.400 — the velocity models published for NZ
+regional CMT analysis, so solutions can be compared with the published NZ
 solutions ([GeoNet/data moment-tensor](https://github.com/GeoNet/data/tree/main/moment-tensor);
-their MT elements and ours are in 1e20 dyne-cm). GeoNet's current
-production code (since 2020-06-18) is Herrmann's CPS, the same family as
-our Green's functions.
+MT elements in both catalogues are in 1e20 dyne-cm).
 
 ## Validation
 
@@ -201,7 +203,8 @@ numbers describe. `Selection` and `Code` columns in the catalogue make a
 mixed-vintage catalogue self-describing; `tools/regrade_archive.py`
 re-grades the archive under the current table without reprocessing.
 The four CSV tables live at the repository root so they are the first
-thing on the page.
+thing on the page. `pixi run validate` regenerates the comparison by
+hand; `pixi run sync` regenerates it as part of publishing the archive.
 
 ## For the next maintainer
 
@@ -220,8 +223,8 @@ thing on the page.
 
 - GeoNet (Earth Sciences New Zealand) quake API + FDSN (NRT + archive):
   event detection, all original hypocentres, waveforms and station
-  metadata. CC BY 3.0 NZ. Polling is polite: one request per run, gzip,
-  descriptive User-Agent.
+  metadata. CC BY 3.0 NZ. Polling uses one request per run, gzip
+  encoding and a descriptive User-Agent.
 - NASA CMR for NISAR GSLC granule timing.
 - NZ Active Faults Database (GNS Science) and GeoNet delta GNSS marks for
   map context.
@@ -249,8 +252,8 @@ what could not be verified, is
 | System | Reference | What we took from it |
 |---|---|---|
 | **Berkeley / SCSN** (the TDMT lineage this code descends from) | Dreger & Helmberger (1993) *JGR* 98, 8107-8125, doi:10.1029/93JB00023; Dreger (2003) *IASPEI Handbook* 81B; **Clinton, Hauksson & Solanki (2006)** *BSSA* 96(5), 1689-1705, doi:10.1785/0120050241 | the selection loop (invert, drop the worst-fitting stations, re-invert), the magnitude-scaled filter-band menu, the quality-B own-VR floor of 25 |
-| **GeoNet / Ristau** (our reference catalogue) | Ristau (2008) *SRL* 79(3), 400-415, doi:10.1785/gssrl.79.3.400; Ristau (2013) *BSSA* 103(4), 2520-2533, doi:10.1785/0120120339 | the velocity models; the validation baseline (NS, DC, VR) |
-| **Herrmann / CPS** (GeoNet's current production code, and our Green's functions) | Herrmann (2013) *SRL* 84, 1081-1088; Herrmann, Benz & Ammon (2011) *BSSA* 101(6), 2609-2625, doi:10.1785/0120110095 | the 0.02-0.10 Hz band and the Mw 3.7 floor; per-station time shifts and VR as published diagnostics; the group-velocity record window |
+| **GeoNet / Ristau** (the reference catalogue) | Ristau (2008) *SRL* 79(3), 400-415, doi:10.1785/gssrl.79.3.400; Ristau (2013) *BSSA* 103(4), 2520-2533, doi:10.1785/0120120339 | the velocity models; the validation baseline (NS, DC, VR) |
+| **Herrmann / CPS** (our Green's functions) | Herrmann (2013) *SRL* 84, 1081-1088; Herrmann, Benz & Ammon (2011) *BSSA* 101(6), 2609-2625, doi:10.1785/0120110095 | the 0.02-0.10 Hz band and the Mw 3.7 floor; per-station time shifts and VR as published diagnostics; the group-velocity record window |
 | **USGS NEIC** | regional MT: Herrmann, Benz & Ammon (2011), above. Teleseismic W-phase and SynDepth — Duputel, Rivera, Kanamori & Hayes (2012) *GJI* 189(2), 1125-1147, doi:10.1111/j.1365-246X.2012.05419.x; Yeck et al. (2025) *SRL* 96(6), doi:10.1785/0220240372 — cited for design only, not as a method | the two-stage architecture (reject what needs no forward model, then prune by fit); the amplitude-ratio screen (used one-sided here); the 8 s time-shift cap |
 | **INGV Italy** | Scognamiglio, Tinti & Michelini (2009) *BSSA* 99(4), 2223-2242, doi:10.1785/0120080104; INGV TDMT quality legend | the **grade table** (the VR bar falls as station count rises); 8 azimuth sectors; higher frequencies for small events |
 | **ISOLA family** (Gisola, scisola, Bayesian ISOLA, BMKG) | Triantafyllis et al. (2022) *SRL* 93(2A), 957-966; Triantafyllis, Sokos, Ilias & Zahradník (2016) *SRL* 87(1), 157-163; Vackář et al. (2017) *GJI* 210(2), 693-705, doi:10.1093/gji/ggx158; Halauwet et al. (2024) *GJI* 239(2), 1000-1020, doi:10.1093/gji/ggae309; Zahradník & Sokos (2018) doi:10.1007/978-3-319-77359-9_1 | the magnitude-scaled distance window; the sector-balanced station cap of 16; the per-component RMS SNR with threshold 2; the ±30 km depth window; the warning that VR alone is gameable by dropping stations |

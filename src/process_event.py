@@ -1,7 +1,7 @@
-"""Process one GeoNet event end to end — the four tasks in sequence.
+"""Process one GeoNet event end to end — the five tasks in sequence.
 
-    pixi run python run02_process.py --event 2026p660242 --debug
-    pixi run python run02_process.py --event 2026p660242 --band 0.02-0.10
+    pixi run python src/process_event.py --event 2026p660242 --debug
+    pixi run python src/process_event.py --event 2026p660242 --band 0.02-0.10
 
   task 1  event metadata                 geonet.get_event
   task 2  stations + waveforms           waveforms.fetch_and_process

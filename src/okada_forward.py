@@ -1,5 +1,5 @@
-"""Forward-model predicted surface displacement from a moment tensor
-solution using a rectangular Okada (1992) dislocation via okada4py.
+"""Task 4 — forward-model predicted surface displacement from a moment
+tensor solution using a rectangular Okada (1992) dislocation via okada4py.
 
 For each nodal plane (the MT cannot distinguish them):
   - fault dimensions from Wells & Coppersmith (1994) "all" regressions

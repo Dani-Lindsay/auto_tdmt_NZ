@@ -465,9 +465,9 @@ def summarize(inv, event: Event, stations: list[dict], dropped: list[dict],
 def no_solution_record(event: Event, pool: list[dict], dropped: list[dict],
                        model: str, band: tuple[float, float], stage: str,
                        reason: str, best_vr: float = 0.0) -> dict:
-    """The honest record for an event the network could not constrain:
-    the full station ledger, no mechanism (F-net simply does not publish
-    below its floor; GeoNet fall back to USGS for such events)."""
+    """The record for an event the data could not constrain: the full
+    station ledger, no mechanism (F-net likewise publishes nothing below
+    its station floor, Fukuyama et al. 1998)."""
     return {
         "status": config.STATUS_NO_SOLUTION,
         "event": event.to_dict(),

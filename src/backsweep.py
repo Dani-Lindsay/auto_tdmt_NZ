@@ -1,6 +1,6 @@
 """Backsweep: process every NZ M>=4.0 earthquake in a date range.
 
-    pixi run python run04_backsweep.py --start 2026-01-01
+    pixi run python src/backsweep.py --start 2026-01-01
 
 Resumable: events with an existing solution.json are skipped, so the sweep
 can be interrupted and relaunched freely. Never emails (processing only).
@@ -17,7 +17,7 @@ from datetime import datetime, timezone
 import requests
 
 import config
-from run02_process import process_event
+from process_event import process_event
 
 EVENT_URL = (
     "{base}/fdsnws/event/1/query?starttime={start}&endtime={end}"
@@ -32,7 +32,8 @@ def list_events(start: str, end: str = "2100-01-01") -> list[tuple[str, str, flo
     shallower than the processing depth ceiling."""
     b = config.NZ_BBOX
     windows = [(b["lon_min"], 180.0), (-180.0, b["lon_max"] - 360.0)]
-    rows = []
+    rows: list[tuple[str, str, float]] = []
+    skipped: dict[str, dict] = {}
     for lon0, lon1 in windows:
         url = EVENT_URL.format(
             base=config.FDSN_ARCHIVE, start=start, end=end,
@@ -51,8 +52,23 @@ def list_events(start: str, end: str = "2100-01-01") -> list[tuple[str, str, flo
             depth = float(f[4])
             if (depth > config.MAX_PROCESS_DEPTH_KM
                     and depth not in config.PLACEHOLDER_DEPTHS_KM):
+                # seen but not attempted: recorded for not_published.csv
+                skipped[f[0]] = {
+                    "public_id": f[0], "origin_time": f[1],
+                    "latitude": float(f[2]), "longitude": float(f[3]),
+                    "depth_km": depth, "prelim_mag": float(f[10]),
+                    "locality": f[12],
+                    "reason": f"depth {depth:g} km > "
+                              f"{config.MAX_PROCESS_DEPTH_KM:g} km (below GF "
+                              f"library; no surface displacement possible)",
+                    "seen_utc": datetime.now(timezone.utc).isoformat()}
                 continue
             rows.append((f[0], f[1], float(f[10])))
+    if skipped:
+        from watch import load_state, save_state
+        state = load_state()
+        state.setdefault("skipped", {}).update(skipped)
+        save_state(state)
     rows.sort(key=lambda x: x[1])
     return rows
 
