@@ -260,12 +260,19 @@ PublicID,Date,Latitude,Longitude,GeoNet_M,GeoNet_depth,Outcome,Stage,Reason,Best
 2021p879659,2021-11-22T11:22:42,-40.908,172.885,3.9,187.9,not_attempted,processing floor,depth 187.9 km > 50 km (below GF library; no surface displacement possible),,
 2021p887076,2021-11-25T05:14:21,-40.358,174.027,3.9,103.1,not_attempted,processing floor,depth 103.1 km > 50 km (below GF library; no surface displacement possible),,
 2021p892357,2021-11-27T04:07:15,-33.106,-178.748,4.6,100.0,not_attempted,processing floor,depth 100 km > 50 km (below GF library; no surface displacement possible),,
+2021p902610,2021-11-30T23:10:12.581Z,-33.0763,-179.5191,4.69,100.0,no_coherent_solution,task 2,only 0 usable stations (minimum 3),0.0,v5
 2021p905493,2021-12-02T00:46:43,-36.868,177.072,3.9,207.5,not_attempted,processing floor,depth 207.5 km > 50 km (below GF library; no surface displacement possible),,
+2021p912024,2021-12-04T10:45:27.048Z,-33.3967,-179.9398,4.95,33.0,no_coherent_solution,task 2,only 0 usable stations (minimum 3),0.0,v5
 2021p913076,2021-12-04T20:06:30,-33.19,-179.678,4.0,355.8,not_attempted,processing floor,depth 355.8 km > 50 km (below GF library; no surface displacement possible),,
+2021p914054,2021-12-05T04:45:18.949Z,-33.5381,-177.9575,4.6,33.0,no_coherent_solution,task 2,only 0 usable stations (minimum 3),0.0,v5
 2021p914579,2021-12-05T09:27:35,-35.178,-179.675,4.3,100.0,not_attempted,processing floor,depth 100 km > 50 km (below GF library; no surface displacement possible),,
+2021p918844,2021-12-06T23:19:52.548Z,-33.6728,179.3018,4.26,33.0,no_coherent_solution,task 2,only 0 usable stations (minimum 3),0.0,v5
+2021p918999,2021-12-07T00:43:02.792Z,-40.3177,178.6569,3.75,12.0,no_coherent_solution,task 2,only 2 usable stations (minimum 3),0.0,v5
 2021p919941,2021-12-07T09:04:48,-38.212,176.027,4.5,158.7,not_attempted,processing floor,depth 158.7 km > 50 km (below GF library; no surface displacement possible),,
+2021p922565,2021-12-08T08:22:51.046Z,-37.9169,178.5164,3.81,39.4,no_coherent_solution,task 2,only 1 usable stations (minimum 3),0.0,v5
 2021p928727,2021-12-10T15:05:00,-34.415,179.176,4.0,215.2,not_attempted,processing floor,depth 215.2 km > 50 km (below GF library; no surface displacement possible),,
 2021p928725,2021-12-10T15:05:00,-34.526,179.324,4.1,234.2,not_attempted,processing floor,depth 234.2 km > 50 km (below GF library; no surface displacement possible),,
+2021p931340,2021-12-11T14:17:21.749Z,-33.8488,-178.771,4.55,33.0,no_coherent_solution,task 2,only 0 usable stations (minimum 3),0.0,v5
 2021p937345,2021-12-13T19:37:25,-36.536,177.736,4.1,181.7,not_attempted,processing floor,depth 181.7 km > 50 km (below GF library; no surface displacement possible),,
 2021p937559,2021-12-13T21:31:53,-41.791,173.271,4.1,58.2,not_attempted,processing floor,depth 58.2 km > 50 km (below GF library; no surface displacement possible),,
 2021p939741,2021-12-14T16:53:42,-35.057,179.187,4.5,190.5,not_attempted,processing floor,depth 190.5 km > 50 km (below GF library; no surface displacement possible),,
@@ -278,7 +285,9 @@ PublicID,Date,Latitude,Longitude,GeoNet_M,GeoNet_depth,Outcome,Stage,Reason,Best
 2021p965055,2021-12-24T01:41:15,-34.472,179.01,4.8,295.2,not_attempted,processing floor,depth 295.2 km > 50 km (below GF library; no surface displacement possible),,
 2021p969700,2021-12-25T18:55:01,-33.144,-179.02,4.5,100.0,not_attempted,processing floor,depth 100 km > 50 km (below GF library; no surface displacement possible),,
 2021p970713,2021-12-26T03:56:03,-37.082,177.593,3.9,124.0,not_attempted,processing floor,depth 124 km > 50 km (below GF library; no surface displacement possible),,
+2021p970877,2021-12-26T05:23:43.661Z,-41.6957,174.233,3.7,5.5,no_coherent_solution,task 2,only 2 usable stations (minimum 3),0.0,v5
 2021p972867,2021-12-26T23:03:53,-37.264,177.252,3.8,131.9,not_attempted,processing floor,depth 131.9 km > 50 km (below GF library; no surface displacement possible),,
+2021p979448,2021-12-29T09:28:54.667Z,-33.7476,-177.748,4.64,12.0,no_coherent_solution,task 2,only 0 usable stations (minimum 3),0.0,v5
 2021p980239,2021-12-29T16:31:48.888Z,-47.3613,165.8572,3.71,12.0,no_coherent_solution,task 2,only 0 usable stations (minimum 3),0.0,v5
 2021p980598,2021-12-29T19:42:48,-37.747,176.202,3.8,277.1,not_attempted,processing floor,depth 277.1 km > 50 km (below GF library; no surface displacement possible),,
 2022p000896,2022-01-01T07:56:45,-33.176,-179.861,4.3,100.0,not_attempted,processing floor,depth 100 km > 50 km (below GF library; no surface displacement possible),,
