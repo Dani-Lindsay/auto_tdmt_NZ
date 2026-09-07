@@ -2,8 +2,10 @@
 
 House rules: cartopy geographic axes with OCEAN, LAND, COASTLINE features
 and labelled gridlines; cmcrameri 'vik' for diverging fields; fonts sized
-for an A4 page or a slide. No PyGMT — matplotlib keeps the toolchain to one
-plotting stack and matches the mttime waveform figures.
+for an A4 page or a slide. The per-event figures stay in matplotlib so they
+match the mttime waveform figures; the one exception is the README
+overview map (figure.make_overview_map), drawn with PyGMT for its shaded
+relief and beachball transparency.
 """
 
 from __future__ import annotations

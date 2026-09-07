@@ -317,114 +317,128 @@ def make_share_figure(
 
 
 def make_overview_map(events_dir: Path, out_path: Path) -> Path:
-    """Standalone NZ map of every archived solution: full-MT beachballs
-    (size = Mw, solid = grade A/B, washed = C/D) over the NZ Active Faults
-    Database, with an in-figure legend. No lat/lon grid clutter."""
+    """The README map, in PyGMT: shaded relief (GMT earth_relief 01m,
+    Wikipedia topographic colours), a neutral blue sea, the NZ Active
+    Faults Database, and every solved event as a full deviatoric-MT
+    beachball sized by Mw. Opacity follows the grade — A solid, B slightly
+    faded, C faint, D almost transparent — and the grades are drawn D
+    first and A last, so the well-constrained mechanisms sit on top.
+    The recipe (relief + gradient shading + wiki-france.cpt) follows the
+    author's NC_ALOS-2 intro map."""
     import json
+    import math
 
-    import cartopy.crs as ccrs
-    from obspy.imaging.beachball import beach
+    import numpy as np
+    import pandas as pd
+    import pygmt
 
     import config as _config
 
-    sols, n_nosol = [], 0
+    rows, n_nosol = [], 0
     for p in sorted(events_dir.glob("*/solution.json")):
         try:
             sol = json.loads(p.read_text())
         except Exception:  # noqa: BLE001
             continue
-        # events with no coherent solution have no mechanism to plot
         if not _config.is_solved(sol):
-            n_nosol += 1
+            n_nosol += 1          # no mechanism to plot
             continue
-        sols.append(sol)
-    region = [163.5, 183.0, -50.7, -33.3]
-    fig = plt.figure(figsize=(7.5, 8.7))
-    # bottom margin leaves room for the longitude labels below the frame
-    ax = map_style.geo_axes(fig, [0.07, 0.08, 0.9, 0.85], region,
-                            grid=False, label_size=11)
-    map_style.draw_context(ax, region, ccrs, gnss=False)
-    dates = []
-    for sol in sols:
-        ev = sol["event"]
-        pref = sol["preferred"]
-        lon = ev["longitude"] % 360.0
-        grade = sol["quality"].get("grade", "?")
-        width = 0.018 + 0.010 * max(0.0, pref["mw"] - 4.0)
-        try:
-            rtp = pref["tensor_rtp_dyne_cm"]
-        except KeyError:
+        ev, pref = sol["event"], sol["preferred"]
+        rtp = pref.get("tensor_rtp_dyne_cm")
+        if not rtp:
             continue
-        x, y = ax.projection.transform_point(lon, ev["latitude"],
-                                             ccrs.PlateCarree())
-        xe0, xe1, _, _ = ax.get_extent(crs=ax.projection)
-        if grade in ("A", "B"):
-            # well-constrained: show the mechanism (filled beachball)
-            fm = [rtp["MRR"], rtp["MTT"], rtp["MPP"],
-                  rtp["MRT"], rtp["MRP"], rtp["MTP"]]
-            ax.add_collection(beach(
-                fm, xy=(x, y), width=width * (xe1 - xe0),
-                linewidth=0.4, facecolor="black"))
-        else:
-            # poorly constrained: open circle — location and size only,
-            # no mechanism the data cannot support
-            ax.add_patch(plt.Circle(
-                (x, y), radius=0.5 * width * (xe1 - xe0),
-                facecolor="none", edgecolor="black", linewidth=0.9,
-                zorder=8))
-        dates.append(ev["origin_time"][:10])
-    ax.set_title(
-        f"Catalogue Solutions\n"
-        f"{len(sols)} events, {min(dates)} to {max(dates)}"
-        + (f" (+{n_nosol} with no coherent solution)" if n_nosol else ""),
-        fontsize=13,
-    )
+        m = max(abs(v) for v in rtp.values()) or 1.0
+        exp = int(math.floor(math.log10(m)))
+        s = 10.0 ** exp
+        rows.append({
+            "longitude": ev["longitude"] % 360.0, "latitude": ev["latitude"],
+            "depth": pref["depth_km"],
+            "mrr": rtp["MRR"] / s, "mtt": rtp["MTT"] / s, "mff": rtp["MPP"] / s,
+            "mrt": rtp["MRT"] / s, "mrf": rtp["MRP"] / s, "mtf": rtp["MTP"] / s,
+            "exponent": exp,
+            "grade": sol["quality"].get("grade", "?"), "mw": pref["mw"],
+            "date": ev["origin_time"][:10],
+        })
+    df = pd.DataFrame(rows)
+    mt_cols = ["longitude", "latitude", "depth", "mrr", "mtt", "mff",
+               "mrt", "mrf", "mtf", "exponent"]
 
-    # in-figure legend, bottom-right (empty ocean), strike-slip demo balls
-    xe0, xe1, ye0, ye1 = ax.get_extent(crs=ax.projection)
-    w_ax, h_ax = xe1 - xe0, ye1 - ye0
-    lx, ly = xe0 + 0.595 * w_ax, ye0 + 0.045 * h_ax
-    import matplotlib.patches as mpatches
-    ax.add_patch(mpatches.Rectangle(
-        (lx - 0.015 * w_ax, ly - 0.030 * h_ax), 0.40 * w_ax,
-        0.33 * h_ax, facecolor="white", edgecolor="0.4",
-        linewidth=0.6, zorder=200))
-    ss = [0.0, 90.0, 0.0]  # clean strike-slip DC for the demo balls
-    for i, (mw, lab) in enumerate([(4.0, "Mw 4"), (5.0, "Mw 5"),
-                                   (6.0, "Mw 6")]):
-        bx = lx + (0.055 + 0.125 * i) * w_ax
-        by = ly + 0.245 * h_ax
-        bw = (0.018 + 0.010 * (mw - 4.0)) * w_ax
-        ax.add_collection(beach(ss, xy=(bx, by), width=bw,
-                                linewidth=0.4, facecolor="black",
-                                zorder=210))
-        ax.text(bx, by - 0.055 * h_ax, lab, ha="center",
-                fontsize=10, zorder=220)
-    b1 = beach(ss, xy=(lx + 0.045 * w_ax, ly + 0.125 * h_ax),
-               width=0.024 * w_ax, linewidth=0.4, facecolor="black",
-               zorder=210)
-    ax.add_collection(b1)
-    ax.text(lx + 0.075 * w_ax, ly + 0.125 * h_ax,
-            "grade A/B (mechanism shown)", fontsize=10, va="center",
-            zorder=220)
-    ax.add_patch(plt.Circle(
-        (lx + 0.045 * w_ax, ly + 0.062 * h_ax), radius=0.012 * w_ax,
-        facecolor="none", edgecolor="black", linewidth=0.9, zorder=210))
-    ax.text(lx + 0.075 * w_ax, ly + 0.062 * h_ax,
-            "grade C/D (poorly constrained)", fontsize=10, va="center",
-            zorder=220)
-    ax.plot([lx + 0.03 * w_ax, lx + 0.075 * w_ax],
-            [ly + 0.005 * h_ax] * 2, "-", color="#8B3A3A", linewidth=1.4,
-            zorder=210)
-    ax.text(lx + 0.09 * w_ax, ly + 0.005 * h_ax,
-            "active faults (NZAFD, GNS)", fontsize=10, va="center",
-            zorder=220)
+    region = [163.5, 183.0, -50.7, -33.3]
+    cpt = str(_config.REPO_DIR / "src" / "data" / "wiki-france.cpt")
+    grid = pygmt.datasets.load_earth_relief(resolution="01m", region=region)
+    shade = pygmt.grdgradient(grid=grid, radiance=[315, 45])
+
+    fig = pygmt.Figure()
+    pygmt.config(FONT="10p", FONT_TITLE="13p,Helvetica", MAP_FRAME_TYPE="plain",
+                 FORMAT_GEO_MAP="dddF", MAP_GRID_PEN_PRIMARY="0.25p,gray55,.",
+                 MAP_TITLE_OFFSET="0.15c")
+    fig.grdimage(grid=grid, region=region, projection="M15c", cmap=cpt,
+                 shading=shade, transparency=35,
+                 frame=["WSen+tAutomated regional moment tensors, New Zealand",
+                        "xa5g5", "ya5g5"])
+    sea = "#dce9f5"
+    fig.coast(water=sea, lakes=sea, shorelines="0.35p,gray25",
+              resolution="h")
+
+    # active faults as one multi-segment line (NaN breaks the segments)
+    xs, ys = [], []
+    for lons, lats in map_style.load_faults():
+        xs += list(lons) + [np.nan]
+        ys += list(lats) + [np.nan]
+    if xs:
+        fig.plot(x=np.array(xs), y=np.array(ys), pen="0.35p,#8B3A3A",
+                 transparency=35)
+
+    # beachballs, least constrained first so A ends up on top
+    opacity = {"D": 88, "C": 65, "B": 25, "A": 0}
+    counts = {}
+    for grade in ("D", "C", "B", "A"):
+        sub = df[df.grade == grade]
+        counts[grade] = len(sub)
+        if sub.empty:
+            continue
+        fig.meca(spec=sub[mt_cols], convention="mt", component="deviatoric",
+                 scale="0.34c", compressionfill="black",
+                 extensionfill="white", pen="0.25p,black",
+                 transparency=opacity[grade])
+
+    # in-figure legend, in the empty sea south-east of the Chathams
+    lx0, lx1, ly0, ly1 = 175.3, 182.6, -50.4, -44.3
+    fig.plot(x=[lx0, lx1, lx1, lx0, lx0], y=[ly0, ly0, ly1, ly1, ly0],
+             fill="white", pen="0.5p,gray40", transparency=8)
+    ss = {"strike": 0, "dip": 90, "rake": 0}
+    for i, mw in enumerate((4.0, 5.0, 6.0)):
+        x = lx0 + 1.3 + 2.3 * i
+        fig.meca(spec={**ss, "magnitude": mw}, longitude=x, latitude=-45.4,
+                 depth=10, convention="aki", scale="0.34c",
+                 compressionfill="black", pen="0.25p,black")
+        fig.text(x=x, y=-46.35, text=f"Mw {mw:.0f}", font="9p", justify="CM")
+    for i, grade in enumerate(("A", "B", "C", "D")):
+        x = lx0 + 1.3 + 1.55 * i
+        fig.meca(spec={**ss, "magnitude": 5.0}, longitude=x, latitude=-47.5,
+                 depth=10, convention="aki", scale="0.34c",
+                 compressionfill="black", pen="0.25p,black",
+                 transparency=opacity[grade])
+        fig.text(x=x, y=-48.35, text=grade, font="9p", justify="CM")
+    fig.text(x=lx0 + 3.6, y=-48.95, text="grade: opacity", font="8p,gray20",
+             justify="CM")
+    fig.plot(x=[lx0 + 0.6, lx0 + 1.9], y=[-49.75, -49.75],
+             pen="0.9p,#8B3A3A")
+    fig.text(x=lx0 + 2.2, y=-49.75, text="active faults (NZAFD, GNS)",
+             font="8p", justify="LM")
+
+    dates = sorted(df.date) if len(df) else ["", ""]
+    n_ab = counts.get("A", 0) + counts.get("B", 0)
+    fig.text(position="TC", offset="0/-0.25c", no_clip=True,
+             text=f"{len(df)} events {dates[0][:7]} to {dates[-1][:7]}  |  "
+                  f"{n_ab} grade A/B, {len(df) - n_ab} grade C/D"
+                  + (f", {n_nosol} no solution" if n_nosol else "")
+                  + "  |  preliminary, unreviewed",
+             font="8.5p,gray20", fill="white", transparency=20)
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out_path, dpi=150)
-    plt.close(fig)
+    fig.savefig(str(out_path), dpi=150)
     return out_path
-
 
 def plot_depth_sensitivity(solution: dict, out_path: Path) -> Path:
     """Depth-sensitivity summary in the user's classic 2x3 layout
