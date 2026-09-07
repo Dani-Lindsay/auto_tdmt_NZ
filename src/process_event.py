@@ -118,6 +118,22 @@ def process_band(event, band: tuple[float, float], band_dir: Path,
     return solution
 
 
+def _purge_previous_run(event_dir: Path, pid: str) -> None:
+    """A reprocessed event starts clean: the previous run's figures, draft
+    email and per-band working directories are removed first, so a run
+    that ends with no solution can never sit beside an older run's
+    displacement field and waveform fits. The previous solution.json is
+    left in place until the new one overwrites it, so a crash mid-run
+    does not drop the event from the catalogue."""
+    for f in event_dir.glob(f"{pid}_*.jpg"):
+        f.unlink()
+    draft = event_dir / "draft_email.txt"
+    if draft.exists():
+        draft.unlink()
+    for band_dir_ in event_dir.glob("band_*"):
+        shutil.rmtree(band_dir_, ignore_errors=True)
+
+
 def _cleanup(event_dir: Path) -> None:
     """Staged Green's functions and SAC data are regenerable; mtinv.in,
     per-band solution.json and figures stay as provenance."""
@@ -172,6 +188,7 @@ def process_event(public_id: str, debug: bool = False,
     event_dir = (config.find_event_dir(event.public_id)
                  or config.EVENTS_DIR / event.public_id)
     event_dir.mkdir(parents=True, exist_ok=True)
+    _purge_previous_run(event_dir, event.public_id)
     model = config.model_for_event(event.latitude, event.longitude)
     print(f"velocity model: {model}")
 

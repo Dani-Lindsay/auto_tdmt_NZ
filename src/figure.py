@@ -364,16 +364,18 @@ def make_overview_map(events_dir: Path, out_path: Path) -> Path:
                "mrt", "mrf", "mtf", "exponent"]
 
     region = [163.5, 183.0, -50.7, -33.3]
-    cpt = str(_config.REPO_DIR / "src" / "data" / "wiki-france.cpt")
-    grid = pygmt.datasets.load_earth_relief(resolution="01m", region=region)
-    shade = pygmt.grdgradient(grid=grid, radiance=[315, 45])
+    # grey hillshade only (no elevation colours): 15 arc-second relief,
+    # gradient-shaded, drawn with a grey ramp and lightened over white
+    grid = pygmt.datasets.load_earth_relief(resolution="15s", region=region)
+    shade = pygmt.grdgradient(grid=grid, radiance=[315, 45], normalize="e0.7")
 
     fig = pygmt.Figure()
     pygmt.config(FONT="10p", FONT_TITLE="13p,Helvetica", MAP_FRAME_TYPE="plain",
                  FORMAT_GEO_MAP="dddF", MAP_GRID_PEN_PRIMARY="0.25p,gray55,.",
                  MAP_TITLE_OFFSET="0.15c")
-    fig.grdimage(grid=grid, region=region, projection="M15c", cmap=cpt,
-                 shading=shade, transparency=35,
+    pygmt.makecpt(cmap="gray", series=[-1.0, 1.0])
+    fig.grdimage(grid=shade, region=region, projection="M15c", cmap=True,
+                 transparency=45,
                  frame=["WSen+tAutomated regional moment tensors, New Zealand",
                         "xa5g5", "ya5g5"])
     sea = "#dce9f5"
@@ -386,8 +388,8 @@ def make_overview_map(events_dir: Path, out_path: Path) -> Path:
         xs += list(lons) + [np.nan]
         ys += list(lats) + [np.nan]
     if xs:
-        fig.plot(x=np.array(xs), y=np.array(ys), pen="0.35p,#8B3A3A",
-                 transparency=35)
+        fig.plot(x=np.array(xs), y=np.array(ys), pen="0.6p,#8B3A3A",
+                 transparency=25)
 
     # beachballs, least constrained first so A ends up on top
     opacity = {"D": 88, "C": 65, "B": 25, "A": 0}
@@ -398,43 +400,35 @@ def make_overview_map(events_dir: Path, out_path: Path) -> Path:
         if sub.empty:
             continue
         fig.meca(spec=sub[mt_cols], convention="mt", component="deviatoric",
-                 scale="0.34c", compressionfill="black",
-                 extensionfill="white", pen="0.25p,black",
+                 scale="0.34c", compression_fill="black",
+                 extension_fill="white", pen="0.25p,black",
                  transparency=opacity[grade])
 
-    # in-figure legend, in the empty sea south-east of the Chathams
-    lx0, lx1, ly0, ly1 = 175.3, 182.6, -50.4, -44.3
-    fig.plot(x=[lx0, lx1, lx1, lx0, lx0], y=[ly0, ly0, ly1, ly1, ly0],
-             fill="white", pen="0.5p,gray40", transparency=8)
+    # legend: a second, Cartesian basemap laid over the empty sea in the
+    # bottom-right corner, so everything in it is placed in plain x/y
+    fig.shift_origin(xshift="9.45c", yshift="0.35c")
+    fig.basemap(region=[0, 10, 0, 10], projection="X5.3c/4.9c",
+                frame="+gwhite")
+    fig.plot(x=[0, 10, 10, 0, 0], y=[0, 0, 10, 10, 0], pen="0.5p,gray40")
     ss = {"strike": 0, "dip": 90, "rake": 0}
     for i, mw in enumerate((4.0, 5.0, 6.0)):
-        x = lx0 + 1.3 + 2.3 * i
-        fig.meca(spec={**ss, "magnitude": mw}, longitude=x, latitude=-45.4,
+        x = 2.0 + 3.0 * i
+        fig.meca(spec={**ss, "magnitude": mw}, longitude=x, latitude=8.2,
                  depth=10, convention="aki", scale="0.34c",
-                 compressionfill="black", pen="0.25p,black")
-        fig.text(x=x, y=-46.35, text=f"Mw {mw:.0f}", font="9p", justify="CM")
+                 compression_fill="black", pen="0.25p,black")
+        fig.text(x=x, y=6.6, text=f"Mw {mw:.0f}", font="9p", justify="CM")
     for i, grade in enumerate(("A", "B", "C", "D")):
-        x = lx0 + 1.3 + 1.55 * i
-        fig.meca(spec={**ss, "magnitude": 5.0}, longitude=x, latitude=-47.5,
+        x = 1.6 + 2.25 * i
+        fig.meca(spec={**ss, "magnitude": 5.0}, longitude=x, latitude=4.6,
                  depth=10, convention="aki", scale="0.34c",
-                 compressionfill="black", pen="0.25p,black",
+                 compression_fill="black", pen="0.25p,black",
                  transparency=opacity[grade])
-        fig.text(x=x, y=-48.35, text=grade, font="9p", justify="CM")
-    fig.text(x=lx0 + 3.6, y=-48.95, text="grade: opacity", font="8p,gray20",
+        fig.text(x=x, y=3.2, text=grade, font="9p", justify="CM")
+    fig.text(x=5.0, y=2.2, text="grade: opacity", font="8p,gray20",
              justify="CM")
-    fig.plot(x=[lx0 + 0.6, lx0 + 1.9], y=[-49.75, -49.75],
-             pen="0.9p,#8B3A3A")
-    fig.text(x=lx0 + 2.2, y=-49.75, text="active faults (NZAFD, GNS)",
-             font="8p", justify="LM")
-
-    dates = sorted(df.date) if len(df) else ["", ""]
-    n_ab = counts.get("A", 0) + counts.get("B", 0)
-    fig.text(position="TC", offset="0/-0.25c", no_clip=True,
-             text=f"{len(df)} events {dates[0][:7]} to {dates[-1][:7]}  |  "
-                  f"{n_ab} grade A/B, {len(df) - n_ab} grade C/D"
-                  + (f", {n_nosol} no solution" if n_nosol else "")
-                  + "  |  preliminary, unreviewed",
-             font="8.5p,gray20", fill="white", transparency=20)
+    fig.plot(x=[0.8, 2.4], y=[0.9, 0.9], pen="1p,#8B3A3A")
+    fig.text(x=2.8, y=0.9, text="active faults (NZAFD, GNS)", font="8p",
+             justify="LM")
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(str(out_path), dpi=150)
@@ -668,10 +662,11 @@ def plot_band_waveforms(band_dir: Path, solution: dict,
             if wend is not None:
                 tend = float(wend)
             else:
+                from config import P as _P
                 wlen = int(min(_config.INV_NPTS, max(
-                    _config.WINDOW_MIN_S,
+                    _P.station.windowMinS,
                     _config.TIME_BEFORE_S
-                    + e["dist"] / _config.WINDOW_GROUP_VEL_KMS + tail)))
+                    + e["dist"] / _P.station.groupVelKms + tail)))
                 tend = wlen - _config.TIME_BEFORE_S
             if tend < t[-1]:
                 ax.axvspan(tend, t[-1], color="0.92", zorder=0)
