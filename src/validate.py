@@ -253,80 +253,98 @@ def main() -> None:
     colors = {"NZ_CMT_Ristau": "#0072B2", "GlobalCMT": "#E69F00",
               "USGS_NEIC": "#CC79A7"}
 
-    # The Ristau set is large enough to draw as a density (hexagonal
-    # bins, one hue light -> dark) so the bulk of the distribution reads
-    # rather than its outliers; the two small independent references are
-    # overlaid as marks with a white ring. Every panel is split A/B vs
-    # C/D because the grade is what decides publication.
-    from cmcrameri import cm as _cmc
-    dens_cmap = _cmc.oslo_r
+    # Density-shaded scatter, as in the author's InSAR validation figures:
+    # the pairs are binned on a fine grid and every occupied cell is a small
+    # square shaded by its normalised count on a reversed grey ramp (light
+    # grey -> black, saturating at 0.3 so the dense core is black), dense
+    # cells drawn last; a 1:1 line; RMSE, R2 and slope in the corner. The
+    # two small independent references are overlaid as coloured marks.
+    # Every panel is split A/B vs C/D because the grade decides publication.
+    from scipy import stats as _stats
     rist = df[df.reference == "NZ_CMT_Ristau"]
     tiers = [("grade A/B (published tier)", rist[rist.grade.isin(["A", "B"])],
               df[df.grade.isin(["A", "B"])]),
              ("grade C/D (archive only)", rist[rist.grade.isin(["C", "D"])],
               df[df.grade.isin(["C", "D"])])]
 
+    def _density(ax, x, y, bin_size, xext, yext=None):
+        x = np.asarray(x, float); y = np.asarray(y, float)
+        yext = yext or xext
+        xe = np.arange(xext[0], xext[1] + bin_size, bin_size)
+        ye = np.arange(yext[0], yext[1] + bin_size, bin_size)
+        counts, _, _ = np.histogram2d(x, y, bins=[xe, ye])
+        ix, iy = np.nonzero(counts)
+        c = counts[ix, iy] / counts.max()
+        order = np.argsort(c)
+        cx = 0.5 * (xe[ix] + xe[ix + 1]); cy = 0.5 * (ye[iy] + ye[iy + 1])
+        # a few hundred events, so a single-count cell reads light grey
+        # and only the densest cells go black
+        ax.scatter(cx[order], cy[order], c=c[order], cmap="gray_r",
+                   vmin=-0.25, vmax=1.0, marker="s", s=14, linewidths=0,
+                   zorder=3)
+
+    def _fit_text(ax, x, y, unit):
+        x = np.asarray(x, float); y = np.asarray(y, float)
+        if len(x) < 3:
+            return
+        rmse = float(np.sqrt(np.sum((x - y) ** 2) / (len(x) - 1)))
+        lr = _stats.linregress(x, y)
+        ax.text(0.97, 0.10, f"RMSE {rmse:.2f} {unit}", transform=ax.transAxes,
+                ha="right", va="bottom", fontsize=9)
+        ax.text(0.97, 0.03, f"R\u00b2 {lr.rvalue ** 2:.2f}, slope {lr.slope:.2f}",
+                transform=ax.transAxes, ha="right", va="bottom", fontsize=9)
+
     def _overlay(ax, sub, xcol, ycol):
         for ref in ("USGS_NEIC", "GlobalCMT"):
             s = sub[sub.reference == ref]
             if len(s):
-                ax.scatter(s[xcol], s[ycol], s=34, c=colors[ref],
-                           edgecolors="white", linewidths=1.2,
+                ax.scatter(s[xcol], s[ycol], s=30, c=colors[ref],
+                           edgecolors="white", linewidths=1.0,
                            label=ref, zorder=5)
 
     # ---- figure 1: magnitude -------------------------------------------
-    fig, axes = plt.subplots(2, 2, figsize=(10, 8.4))
+    fig, axes = plt.subplots(2, 2, figsize=(9.6, 8.6))
     ext_mw = (3.4, 6.6)
     for row, (title, r, sub) in enumerate(tiers):
         ax = axes[row, 0]
-        hb = ax.hexbin(r.ref_Mw, r.our_Mw, gridsize=22, extent=ext_mw * 2,
-                       cmap=dens_cmap, mincnt=1, linewidths=0.2)
-        ax.plot(ext_mw, ext_mw, "-", color="0.55", linewidth=1, zorder=4)
+        _density(ax, r.ref_Mw, r.our_Mw, 0.05, ext_mw)
+        ax.plot(ext_mw, ext_mw, "-", color="black", linewidth=1, zorder=2)
         _overlay(ax, sub, "ref_Mw", "our_Mw")
-        ax.set_xlim(ext_mw); ax.set_ylim(ext_mw)
-        ax.set_xlabel("published Mw")
-        ax.set_ylabel("auto Mw")
+        _fit_text(ax, r.ref_Mw, r.our_Mw, "")
+        ax.set_xlim(ext_mw); ax.set_ylim(ext_mw); ax.set_aspect("equal")
+        ax.set_xlabel("published Mw"); ax.set_ylabel("auto Mw")
         ax.set_title(f"{title}, n = {len(r)} vs Ristau", fontsize=10)
-        fig.colorbar(hb, ax=ax, label="events per cell", shrink=0.85)
         ax = axes[row, 1]
-        hb = ax.hexbin(r.ref_Mw, r.dMw, gridsize=22,
-                       extent=(*ext_mw, -1.0, 1.0),
-                       cmap=dens_cmap, mincnt=1, linewidths=0.2)
-        ax.axhline(0, color="0.55", linewidth=1, zorder=4)
+        _density(ax, r.ref_Mw, r.dMw, 0.05, ext_mw, (-1.0, 1.0))
+        ax.axhline(0, color="black", linewidth=1, zorder=2)
         _overlay(ax, sub, "ref_Mw", "dMw")
         ax.set_xlim(ext_mw); ax.set_ylim(-1.0, 1.0)
-        ax.set_xlabel("published Mw")
-        ax.set_ylabel("auto - published Mw")
+        ax.set_xlabel("published Mw"); ax.set_ylabel("auto - published Mw")
         ax.set_title(f"residual: median |dMw| {r.dMw.abs().median():.2f}",
                      fontsize=10)
-        fig.colorbar(hb, ax=ax, label="events per cell", shrink=0.85)
     axes[0, 0].legend(fontsize=8, loc="upper left")
     fig.suptitle("moment magnitude vs published catalogues "
-                 "(density: Ristau NZ CMT; marks: USGS, GCMT)")
+                 "(shading: Ristau NZ CMT density; marks: USGS, GCMT)")
     fig.tight_layout()
     fig.savefig(out_dir / "comparison_mw.jpg", dpi=150)
     plt.close(fig)
 
     # ---- figure 2: depth ------------------------------------------------
-    fig, axes = plt.subplots(1, 2, figsize=(10.4, 5))
-    lim = float(max(df.ref_depth.max(), df.our_depth.max()) + 5)
+    fig, axes = plt.subplots(1, 2, figsize=(9.6, 4.9))
+    lim = float(np.ceil(max(df.ref_depth.max(), df.our_depth.max()) / 10) * 10)
     for ax, (title, r, sub) in zip(axes, tiers):
-        hb = ax.hexbin(r.ref_depth, r.our_depth, gridsize=20,
-                       extent=(0, lim, 0, lim), cmap=dens_cmap, mincnt=1,
-                       linewidths=0.2)
-        ax.plot([0, lim], [0, lim], "-", color="0.55", linewidth=1, zorder=4)
+        _density(ax, r.ref_depth, r.our_depth, 1.0, (0, lim))
+        ax.plot([0, lim], [0, lim], "-", color="black", linewidth=1, zorder=2)
         _overlay(ax, sub, "ref_depth", "our_depth")
-        ax.set_xlim(0, lim); ax.set_ylim(0, lim)
-        ax.set_aspect("equal")
-        ax.set_xlabel("published depth (km)")
-        ax.set_ylabel("auto depth (km)")
+        _fit_text(ax, r.ref_depth, r.our_depth, "km")
+        ax.set_xlim(0, lim); ax.set_ylim(0, lim); ax.set_aspect("equal")
+        ax.set_xlabel("published depth (km)"); ax.set_ylabel("auto depth (km)")
         ax.set_title(f"{title}, n = {len(r)} vs Ristau: "
                      f"median |dZ| {r.dDepth.abs().median():.0f} km",
                      fontsize=10)
-        fig.colorbar(hb, ax=ax, label="events per cell", shrink=0.8)
     axes[0].legend(fontsize=8, loc="upper left")
     fig.suptitle("centroid depth vs published catalogues "
-                 "(density: Ristau NZ CMT; marks: USGS, GCMT)")
+                 "(shading: Ristau NZ CMT density; marks: USGS, GCMT)")
     fig.tight_layout()
     fig.savefig(out_dir / "comparison_depth.jpg", dpi=150)
     plt.close(fig)

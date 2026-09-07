@@ -64,7 +64,9 @@ bins. The small-magnitude inflation is therefore carried by the C/D
 tier (mean +0.12), which is where noise fitting is expected to show
 up. Against the independent references the A/B tier is at mean ΔMw
 0.00 (USGS, n = 10) and −0.11 (GCMT, n = 5). The published (A/B)
-moment scale is unbiased at the 0.05 level.
+moment scale is unbiased at the 0.05 level. A linear fit of automated
+on published Mw for the A/B tier gives slope 1.01, R² 0.94 and RMSE
+0.15; for the C/D tier slope 0.77, R² 0.57 and RMSE 0.33.
 
 ## 3. Depth: ΔZ
 
@@ -85,8 +87,9 @@ grades and **4.0 km** for the A/B tier (mean ΔZ −1.0 km, 76 % within
 10 km); the reference depths are not an input to the search. By grade
 the median |ΔZ| steps A **3 km**, B **5 km**, C **7 km**, D **14 km**,
 and the share of events more than 20 km from the reference is 4 % for
-grade A and 34 % for grade D. Against USGS the A/B median is 5.2 km
-(n = 10) and against GCMT 4.3 km (n = 5). The largest A/B misses
+grade A and 34 % for grade D. A linear fit for the A/B tier gives slope 0.82, R² 0.68 and RMSE
+9.9 km (C/D: slope 0.63, R² 0.27, RMSE 17.6 km). Against USGS the A/B
+median is 5.2 km (n = 10) and against GCMT 4.3 km (n = 5). The largest A/B misses
 (25–36 km) are of two kinds: slab events at 60–80 km in the reference,
 where the Green's-function library ends at 58 km, and events whose
 GeoNet depth is a fixed default (5, 12 or 33 km), where the full grid is
