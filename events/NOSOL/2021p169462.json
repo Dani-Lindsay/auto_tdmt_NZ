@@ -1,0 +1,405 @@
+{
+  "status": "no_coherent_solution",
+  "event": {
+    "public_id": "2021p169462",
+    "origin_time": "2021-03-04T16:49:27.083Z",
+    "longitude": -179.8882446,
+    "latitude": -37.52971268,
+    "depth_km": 33.0,
+    "prelim_mag": 4.179163931,
+    "mag_type": "M",
+    "locality": "150 km east of Te Araroa",
+    "quality": "best",
+    "depth_unc_km": null,
+    "eval_mode": "manual",
+    "eval_status": "confirmed",
+    "depth_type": "operator assigned"
+  },
+  "abort": {
+    "stage": "task 2",
+    "reason": "only 0 usable stations (minimum 3)",
+    "best_vr": 0.0,
+    "band": "band_10-50s"
+  },
+  "stations_used": [],
+  "stations_dropped": [
+    {
+      "network": "NZ",
+      "station": "NZ.MXZ.10",
+      "location": "10",
+      "band": "HH",
+      "latitude": -37.562258507,
+      "longitude": 178.306631253,
+      "distance_km": 159.6,
+      "azimuth": 268.1528752428336,
+      "back_azimuth": 89.2529717375695,
+      "sector": 5,
+      "snr": {
+        "Z": 1.13,
+        "R": 0.64,
+        "T": 1.18
+      },
+      "snr_med": 1.13,
+      "snr_best": 1.18,
+      "window_end_s": 93,
+      "filter_hz": [
+        0.02,
+        0.1
+      ],
+      "peak_x_dist": 0.11514301032686416,
+      "reason": "low SNR: best component SNR 1.18 < 2 (Z 1.13 R 0.64 T 1.18)"
+    },
+    {
+      "network": "NZ",
+      "station": "NZ.PUZ.10",
+      "location": "10",
+      "band": "HH",
+      "latitude": -38.071547867,
+      "longitude": 178.257209049,
+      "distance_km": 174.0,
+      "azimuth": 249.2190273228096,
+      "back_azimuth": 70.35578294713207,
+      "sector": 5,
+      "snr": {
+        "Z": 0.76,
+        "R": 0.36,
+        "T": 1.7
+      },
+      "snr_med": 0.76,
+      "snr_best": 1.7,
+      "window_end_s": 99,
+      "filter_hz": [
+        0.02,
+        0.1
+      ],
+      "peak_x_dist": 0.11314869112304708,
+      "reason": "low SNR: best component SNR 1.7 < 2 (Z 0.76 R 0.36 T 1.7)"
+    },
+    {
+      "network": "NZ",
+      "station": "NZ.HAZ.10",
+      "location": "10",
+      "band": "HH",
+      "latitude": -37.7561,
+      "longitude": 177.7826,
+      "distance_km": 207.1,
+      "azimuth": 262.3207684165411,
+      "back_azimuth": 83.74339897391299,
+      "sector": 5,
+      "snr": {
+        "Z": 0.98,
+        "R": 0.69,
+        "T": 1.17
+      },
+      "snr_med": 0.98,
+      "snr_best": 1.17,
+      "window_end_s": 112,
+      "filter_hz": [
+        0.02,
+        0.1
+      ],
+      "peak_x_dist": 0.11122324335759447,
+      "reason": "low SNR: best component SNR 1.17 < 2 (Z 0.98 R 0.69 T 1.17)"
+    },
+    {
+      "network": "NZ",
+      "station": "NZ.MWZ.10",
+      "location": "10",
+      "band": "HH",
+      "latitude": -38.334001396,
+      "longitude": 177.527779304,
+      "distance_km": 244.1,
+      "azimuth": 247.75528161617964,
+      "back_azimuth": 69.34392077578883,
+      "sector": 5,
+      "snr": {
+        "Z": 0.38,
+        "R": 0.73,
+        "T": 1.29
+      },
+      "snr_med": 0.73,
+      "snr_best": 1.29,
+      "window_end_s": 127,
+      "filter_hz": [
+        0.02,
+        0.1
+      ],
+      "peak_x_dist": 0.20377299390513387,
+      "reason": "low SNR: best component SNR 1.29 < 2 (Z 0.38 R 0.73 T 1.29)"
+    },
+    {
+      "network": "NZ",
+      "station": "NZ.WIZ.10",
+      "location": "10",
+      "band": "HH",
+      "latitude": -37.524510539,
+      "longitude": 177.189301882,
+      "distance_km": 258.3,
+      "azimuth": 269.23782244018685,
+      "back_azimuth": 91.01824012571238,
+      "sector": 5,
+      "snr": {
+        "Z": 0.8,
+        "R": 1.82,
+        "T": 1.12
+      },
+      "snr_med": 1.12,
+      "snr_best": 1.82,
+      "window_end_s": 133,
+      "filter_hz": [
+        0.02,
+        0.1
+      ],
+      "peak_x_dist": 0.17478152912575232,
+      "reason": "low SNR: best component SNR 1.82 < 2 (Z 0.8 R 1.82 T 1.12)"
+    },
+    {
+      "network": "NZ",
+      "station": "NZ.WSRZ.10",
+      "location": "10",
+      "band": "HH",
+      "latitude": -37.51811,
+      "longitude": 177.177805,
+      "distance_km": 259.3,
+      "azimuth": 269.3907761353039,
+      "back_azimuth": 91.17806992635701,
+      "sector": 5,
+      "snr": {
+        "Z": 0.91,
+        "R": 1.75,
+        "T": 1.02
+      },
+      "snr_med": 1.02,
+      "snr_best": 1.75,
+      "window_end_s": 133,
+      "filter_hz": [
+        0.02,
+        0.1
+      ],
+      "peak_x_dist": 0.18007842789608877,
+      "reason": "low SNR: best component SNR 1.75 < 2 (Z 0.91 R 1.75 T 1.02)"
+    },
+    {
+      "network": "NZ",
+      "station": "NZ.KNZ.10",
+      "location": "10",
+      "band": "HH",
+      "latitude": -39.021755222,
+      "longitude": 177.673668799,
+      "distance_km": 270.1,
+      "azimuth": 231.42677998956452,
+      "back_azimuth": 52.93731387824766,
+      "sector": 5,
+      "snr": {
+        "Z": 1.08,
+        "R": 1.1,
+        "T": 0.66
+      },
+      "snr_med": 1.08,
+      "snr_best": 1.1,
+      "window_end_s": 138,
+      "filter_hz": [
+        0.02,
+        0.1
+      ],
+      "peak_x_dist": 0.1705201516527672,
+      "reason": "low SNR: best component SNR 1.1 < 2 (Z 1.08 R 1.1 T 0.66)"
+    },
+    {
+      "network": "NZ",
+      "station": "NZ.URZ.10",
+      "location": "10",
+      "band": "HH",
+      "latitude": -38.259249093,
+      "longitude": 177.110894471,
+      "distance_km": 276.1,
+      "azimuth": 252.0271186550423,
+      "back_azimuth": 73.87057598141797,
+      "sector": 5,
+      "snr": {
+        "Z": 0.75,
+        "R": 0.63,
+        "T": 0.54
+      },
+      "snr_med": 0.63,
+      "snr_best": 0.75,
+      "window_end_s": 140,
+      "filter_hz": [
+        0.02,
+        0.1
+      ],
+      "peak_x_dist": 0.1273066199079358,
+      "reason": "low SNR: best component SNR 0.75 < 2 (Z 0.75 R 0.63 T 0.54)"
+    }
+  ],
+  "filter_band_hz": [
+    0.02,
+    0.1
+  ],
+  "chosen_band": "band_10-50s",
+  "quality": {
+    "grade": "X",
+    "passed": false,
+    "checks": {},
+    "warnings": {
+      "no_coherent_solution": true
+    },
+    "n_stations_used": 0,
+    "azimuthal_gap_deg": 360.0
+  },
+  "publish_decision": {
+    "publish": false,
+    "reason_tags": [
+      "no_coherent_solution"
+    ],
+    "reasons": [
+      "only 0 usable stations (minimum 3)"
+    ]
+  },
+  "provenance": {
+    "velocity_model": "nz_north_ristau2008",
+    "gf_version": "v1",
+    "selection_version": "v5",
+    "code_commit": "28669987-dirty",
+    "mttime_version": "1.1.dev0",
+    "obspy_version": "1.5.1",
+    "params": {
+      "geonet": {
+        "minPrelimMag": 3.7,
+        "maxDepthKm": 50.0,
+        "placeholderDepthsKm": [
+          5.0,
+          12.0,
+          33.0
+        ],
+        "bbox": [
+          -50.5,
+          -33.0,
+          164.0,
+          182.5
+        ]
+      },
+      "station": {
+        "minDistKm": 20.0,
+        "maxDistKm": [
+          120.0,
+          180.0,
+          250.0,
+          300.0
+        ],
+        "maxStations": 16,
+        "sectors": 8,
+        "snrMin": 2.0,
+        "snrWindowS": 200.0,
+        "amplitudeMaxRatio": 3.0,
+        "magBreaks": [
+          4.5,
+          5.5
+        ],
+        "periodsSmallS": [
+          [
+            10.0,
+            50.0
+          ]
+        ],
+        "periodsMediumS": [
+          [
+            10.0,
+            50.0
+          ],
+          [
+            20.0,
+            50.0
+          ]
+        ],
+        "periodsLargeS": [
+          [
+            20.0,
+            100.0
+          ],
+          [
+            30.0,
+            100.0
+          ]
+        ],
+        "filterCorners": 3,
+        "groupVelKms": 2.5,
+        "windowTailS": [
+          30.0,
+          40.0,
+          60.0
+        ],
+        "windowMinS": 60.0,
+        "maxWindowS": 200.0,
+        "windowExtendMaxS": 60.0
+      },
+      "invert": {
+        "depthWindowKm": 30.0,
+        "depthUncPct": 10.0,
+        "degree": 5,
+        "weight": "distance",
+        "components": "ZRT",
+        "correlate": 1,
+        "stationVRDrop": 0.0,
+        "stationVRFloor": 25.0,
+        "maxTimeShiftS": 8.0,
+        "maxRounds": 8,
+        "maxDropPerRound": 3,
+        "minStations": 3,
+        "jackknife": 1,
+        "gradeA_VR": [
+          999.0,
+          60.0,
+          60.0,
+          50.0
+        ],
+        "gradeB_VR": [
+          70.0,
+          40.0,
+          40.0,
+          30.0
+        ],
+        "gradeC_VR": [
+          20.0,
+          20.0,
+          15.0,
+          15.0
+        ],
+        "dcMinPublish": 60.0,
+        "jackknifeMaxDeg": 25.0
+      },
+      "forward": {
+        "shearModulusPa": 30000000000.0,
+        "poissonRatio": 0.25,
+        "wcLength": [
+          -2.44,
+          0.59
+        ],
+        "wcWidth": [
+          -1.01,
+          0.32
+        ],
+        "gridHalfwidthKm": "auto",
+        "gridPoints": 120
+      },
+      "publish": {
+        "minGrade": "B",
+        "minMw": 5.0,
+        "minDisplacementM": 0.01,
+        "maxPerDay": 3,
+        "aftershockRadiusKm": 75.0,
+        "aftershockWindowDays": 14.0,
+        "aftershockMwMargin": 0.5
+      }
+    },
+    "params_file": "/Users/dlindsay/tools/internal/auto_tdmt_NZ/auto_tdmt.cfg",
+    "preferred_rule": "maximum VR over the depth grid (mttime argmax)"
+  },
+  "band_search": {
+    "band_10-50s": {
+      "status": "no_coherent_solution",
+      "stage": "task 2",
+      "best_vr": 0.0
+    }
+  }
+}
