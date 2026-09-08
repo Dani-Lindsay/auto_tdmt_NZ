@@ -26,7 +26,9 @@ plt.rcParams.update({
 def event_region(event: dict, stations: list[dict], pad_deg: float = 0.4) -> list:
     """[lon0, lon1, lat0, lat1] covering epicentre + stations, padded, with
     a minimum 1.5 deg span so sparse geometries stay plottable."""
-    lons = [r["longitude"] for r in stations] + [event["longitude"]]
+    # 0-360 so an event east of the antimeridian (East Cape, -179.8) and
+    # its stations at +178 span 2 degrees, not 358
+    lons = [r["longitude"] % 360.0 for r in stations] + [event["longitude"] % 360.0]
     lats = [r["latitude"] for r in stations] + [event["latitude"]]
     lon0, lon1 = min(lons) - pad_deg, max(lons) + pad_deg
     lat0, lat1 = min(lats) - pad_deg, max(lats) + pad_deg
