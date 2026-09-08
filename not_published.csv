@@ -39,7 +39,14 @@ PublicID,Date,Latitude,Longitude,GeoNet_M,GeoNet_depth,Outcome,Stage,Reason,Best
 2021p152734,2021-02-26T12:16:57,-34.206,179.76,3.7,234.3,not_attempted,processing floor,depth 234.3 km > 50 km (below GF library; no surface displacement possible),,
 2021p155373,2021-02-27T11:42:55,-38.783,175.681,4.8,112.9,not_attempted,processing floor,depth 112.9 km > 50 km (below GF library; no surface displacement possible),,
 2021p167370,2021-03-03T22:14:06,-33.092,179.27,4.0,433.2,not_attempted,processing floor,depth 433.2 km > 50 km (below GF library; no surface displacement possible),,
+2021p174221,2021-03-06T11:05:10.797Z,-37.5283,179.7674,3.79,12.0,no_coherent_solution,task 2,only 0 usable stations (minimum 3),0.0,v5
+2021p174226,2021-03-06T11:07:44.760Z,-37.3533,179.9861,3.86,12.0,no_coherent_solution,task 2,only 1 usable stations (minimum 3),0.0,v5
+2021p174236,2021-03-06T11:13:06.482Z,-37.4521,179.7484,3.72,12.0,no_coherent_solution,task 2,only 0 usable stations (minimum 3),0.0,v5
+2021p174311,2021-03-06T11:53:15.425Z,-37.6138,179.7603,4.03,12.0,no_coherent_solution,task 2,only 1 usable stations (minimum 3),0.0,v5
+2021p174321,2021-03-06T11:58:22.426Z,-37.4663,179.7978,3.86,12.0,no_coherent_solution,task 2,only 0 usable stations (minimum 3),0.0,v5
 2021p175698,2021-03-07T00:11:01,-35.012,178.827,4.4,284.8,not_attempted,processing floor,depth 284.8 km > 50 km (below GF library; no surface displacement possible),,
+2021p176243,2021-03-07T05:02:41.162Z,-37.3364,-179.8709,4.44,12.0,no_coherent_solution,task 2,only 0 usable stations (minimum 3),0.0,v5
+2021p176293,2021-03-07T05:28:57.156Z,-37.4137,179.7747,3.86,12.0,no_coherent_solution,task 2,only 0 usable stations (minimum 3),0.0,v5
 2021p176315,2021-03-07T05:41:13.644Z,-37.4257,179.8526,4.02,12.0,no_coherent_solution,task 2,only 0 usable stations (minimum 3),0.0,v5
 2021p176321,2021-03-07T05:44:16.969Z,-37.6145,179.6994,4.27,12.0,no_coherent_solution,task 2,only 0 usable stations (minimum 3),0.0,v5
 2021p176323,2021-03-07T05:45:22.555Z,-37.3785,179.7865,4.04,12.0,no_coherent_solution,task 2,only 2 usable stations (minimum 3),0.0,v5
