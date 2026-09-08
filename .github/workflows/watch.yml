@@ -79,8 +79,8 @@ jobs:
           git config user.email "actions@github.com"
           # the tables and overview map are build products of events/:
           # never merged as files — dropped, rebased, rebuilt from the union
-          PRODUCTS="catalogue.csv not_published.csv station_ledger.jsonl station_performance.csv events/solutions_map.jpg"
-          git add events/ ':!events/solutions_map.jpg'
+          PRODUCTS="catalogue.csv not_published.csv station_ledger.jsonl station_performance.csv events/solutions_map.jpg events/latest_stations_displacement_field.jpg"
+          git add events/ ':!events/solutions_map.jpg' ':!events/latest_stations_displacement_field.jpg'
           git diff --cached --quiet && exit 0
           git commit -m "auto: solutions $(date -u +%Y-%m-%dT%H:%MZ)"
           git checkout -- $PRODUCTS

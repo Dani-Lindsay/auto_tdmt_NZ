@@ -58,8 +58,8 @@ jobs:
           git config user.email "actions@github.com"
           # tables and overview map are build products: rebuilt after the
           # rebase from the merged archive, never merged as files
-          PRODUCTS="catalogue.csv not_published.csv station_ledger.jsonl station_performance.csv events/solutions_map.jpg"
-          git add events/ ':!events/solutions_map.jpg'
+          PRODUCTS="catalogue.csv not_published.csv station_ledger.jsonl station_performance.csv events/solutions_map.jpg events/latest_stations_displacement_field.jpg"
+          git add events/ ':!events/solutions_map.jpg' ':!events/latest_stations_displacement_field.jpg'
           git diff --cached --quiet && exit 0
           git commit -m "auto: reprocess ${{ inputs.event_id }}"
           git checkout -- $PRODUCTS

@@ -24,6 +24,14 @@ settings from these solutions.
 
 <p align="center"><img src="events/solutions_map.jpg" width="480" alt="All automated moment tensor solutions to date: beachballs sized by Mw (solid = grade A/B, washed = C/D) over the NZ Active Faults Database"></p>
 
+**Latest automated solution** — the figure below is regenerated whenever
+a new event is processed: station map with the deviatoric mechanism,
+Okada displacement for both nodal planes, the jackknife stability panel
+and the NISAR pass table. The event ID, Mw, depth and grade are in the
+panel titles; the full archive entry is under [`events/`](events/).
+
+<p align="center"><img src="events/latest_stations_displacement_field.jpg" width="900" alt="Stations and predicted surface displacement for the most recent automated solution"></p>
+
 ## The five tasks
 
 All code is in [`src/`](src/). The pipeline is five tasks, each a
