@@ -287,6 +287,9 @@ def main() -> None:
         from cmcrameri import cm as _cmc
         ax.scatter(x[order], y[order], c=z[order], cmap=_cmc.devon_r,
                    vmin=-0.15, vmax=1.0, s=18, linewidths=0, zorder=3)
+        # legend handle for the shaded points (the references get their own)
+        ax.scatter([], [], s=18, color=_cmc.devon_r(0.75), linewidths=0,
+                   label="NZ CMT (Ristau), shaded by density")
 
     def _fit_text(ax, x, y, unit):
         x = np.asarray(x, float); y = np.asarray(y, float)

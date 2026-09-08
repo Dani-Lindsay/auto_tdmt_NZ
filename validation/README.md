@@ -18,9 +18,9 @@ pixi run validate        # = python src/validate.py; sync_repo.py runs it too
 > §3, §5, §6 and [`docs/lit_review/`](../docs/lit_review/)). The
 > archive was cleared on 2026-09-07 and is being regenerated from the
 > GeoNet event list (M ≥ 3.7 since 2021) under one code version, newest
-> first. Numbers below are a snapshot taken at 09:50 on 2026-09-08,
-> with the resweep still running: about 510 solved solutions covering
-> 2022-08 to 2026-09, plus 770 attempted events with no coherent
+> first. Numbers below are a snapshot taken at 19:30 on 2026-09-08,
+> with the resweep still running: about 730 solved solutions covering
+> 2021-03 to 2026-09, plus 1290 attempted events with no coherent
 > solution (`not_published.csv`). They will be refreshed when the sweep
 > completes.
 
@@ -33,7 +33,7 @@ Outputs: `comparison.csv` (one row per matched event–reference pair),
 
 | Reference | What it is | What agreement tests |
 |---|---|---|
-| **NZ regional CMTs** (Ristau 2008 method; [GeoNet/data moment-tensor](https://github.com/GeoNet/data/tree/main/moment-tensor)) | Published regional MT solutions using the same method family and the same published velocity models as this pipeline | The *automation*: with method and models shared, disagreement isolates the effect of the automated station selection, band choice and depth search. The largest sample (n = 370 matches: 136 grade A/B, 234 grade C/D) and the primary benchmark. |
+| **NZ regional CMTs** (Ristau 2008 method; [GeoNet/data moment-tensor](https://github.com/GeoNet/data/tree/main/moment-tensor)) | Published regional MT solutions using the same method family and the same published velocity models as this pipeline | The *automation*: with method and models shared, disagreement isolates the effect of the automated station selection, band choice and depth search. The largest sample (n = 471 matches: 154 grade A/B, 317 grade C/D) and the primary benchmark. |
 | **USGS NEIC** moment tensors (ComCat) | Independent agency, independent methods (regional W-phase / body-wave MT), independent software | *Method independence*: agreement here cannot be inherited from shared models or shared processing choices. Smaller sample (n = 13, of which 10 A/B), larger events only. |
 | **Global CMT** (Ekström et al. 2012) | The global long-period standard | The *moment scale and mechanism at long period* for the largest events (n = 7, of which 5 A/B). Long-period centroid depths for shallow events have limited resolution, so depth differences below ~15 km are not diagnostic here. |
 
@@ -55,18 +55,18 @@ contamination, not calibration error).
 
 ![Moment magnitude comparison](comparison_mw.jpg)
 
-**Current standing (vs Ristau, n = 370)**: mean ΔMw **+0.08**,
-median |ΔMw| **0.10** over all grades; the A/B tier alone (n = 136) has
+**Current standing (vs Ristau, n = 471)**: mean ΔMw **+0.11**,
+median |ΔMw| **0.11** over all grades; the A/B tier alone (n = 154) has
 mean **+0.01** and median |ΔMw| **0.06**. By reference-magnitude bin
-the all-grade mean is +0.18 (Mw < 4.0), +0.01 (4.0–4.5) and +0.04
-(≥ 4.5), while the A/B tier sits at +0.03, −0.01 and +0.03 in the same
+the all-grade mean is +0.22 (Mw < 4.0), +0.02 (4.0–4.5) and +0.06
+(≥ 4.5), while the A/B tier sits at +0.03, −0.01 and +0.02 in the same
 bins. The small-magnitude inflation is therefore carried by the C/D
-tier (mean +0.12), which is where noise fitting is expected to show
+tier (mean +0.15), which is where noise fitting is expected to show
 up. Against the independent references the A/B tier is at mean ΔMw
 0.00 (USGS, n = 10) and −0.11 (GCMT, n = 5). The published (A/B)
 moment scale is unbiased at the 0.05 level. A linear fit of automated
 on published Mw for the A/B tier gives slope 1.01, R² 0.94 and RMSE
-0.15; for the C/D tier slope 0.77, R² 0.57 and RMSE 0.33.
+0.14; for the C/D tier slope 0.79, R² 0.56 and RMSE 0.37.
 
 ## 3. Depth: ΔZ
 
@@ -82,19 +82,19 @@ purpose).
 
 ![Centroid depth comparison](comparison_depth.jpg)
 
-**Current standing (vs Ristau)**: median |ΔZ| **7.0 km** over all
-grades and **4.0 km** for the A/B tier (mean ΔZ −1.0 km, 76 % within
+**Current standing (vs Ristau)**: median |ΔZ| **8.0 km** over all
+grades and **4.0 km** for the A/B tier (mean ΔZ −1.1 km, 75 % within
 10 km); the reference depths are not an input to the search. By grade
-the median |ΔZ| steps A **3 km**, B **5 km**, C **7 km**, D **14 km**,
-and the share of events more than 20 km from the reference is 4 % for
-grade A and 34 % for grade D. A linear fit for the A/B tier gives slope 0.82, R² 0.68 and RMSE
-9.9 km (C/D: slope 0.63, R² 0.27, RMSE 17.6 km). Against USGS the A/B
+the median |ΔZ| steps A **3 km**, B **5.5 km**, C **7 km**, D **14 km**,
+and the share of events more than 20 km from the reference is 3 % for
+grade A and 36 % for grade D. A linear fit for the A/B tier gives slope 0.80, R² 0.67 and RMSE
+9.9 km (C/D: slope 0.50, R² 0.20, RMSE 19.9 km). Against USGS the A/B
 median is 5.2 km (n = 10) and against GCMT 4.3 km (n = 5). The largest A/B misses
 (25–36 km) are of two kinds: slab events at 60–80 km in the reference,
 where the Green's-function library ends at 58 km, and events whose
 GeoNet depth is a fixed default (5, 12 or 33 km), where the full grid is
-searched and the pick ran to its shallow edge (16 of the 136 A/B
-matches sit on a grid edge; 29 of the 234 C/D matches). Both are
+searched and the pick ran to its shallow edge (17 of the 154 A/B
+matches sit on a grid edge; 42 of the 317 C/D matches). Both are
 identifiable from the catalogue (`GeoNet_depth`, `Depth_lo`,
 `Depth_hi`).
 
@@ -137,11 +137,11 @@ as published catalogues are with each other".
 ![Mechanism rotation by grade](comparison_rotation.jpg)
 
 **Current standing**: results are reported by grade. The A/B tier has
-a median of **20°** vs Ristau (upper quartile 34°), 24° vs USGS and
-40° vs GCMT (n = 5); the C/D tier has a median of **54°** (upper
-quartile 79°). By grade: A **19°**, B **22°**, C **41°**, D **73°**.
-The all-grades median of 37° reflects the composition of the matched
-set, which is nearly two-thirds C/D. Three A/B solutions rotate by more
+a median of **20°** vs Ristau (upper quartile 35°), 24° vs USGS and
+40° vs GCMT (n = 5); the C/D tier has a median of **58°** (upper
+quartile 81°). By grade: A **20°**, B **20°**, C **46°**, D **73°**.
+The all-grades median of 43° reflects the composition of the matched
+set, which is two-thirds C/D. Five A/B solutions rotate by more
 than 85°; they are small-station-count or shallow-edge cases (for
 example a four-station grade A at 1 km against 12 km in the reference)
 and are the cases the jackknife and depth flags are meant to catch.
