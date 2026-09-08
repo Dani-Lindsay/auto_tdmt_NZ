@@ -43,6 +43,16 @@ PublicID,Date,Latitude,Longitude,GeoNet_M,GeoNet_depth,Outcome,Stage,Reason,Best
 2021p177901,2021-03-07T19:44:50,-33.683,-179.112,4.2,177.3,not_attempted,processing floor,depth 177.3 km > 50 km (below GF library; no surface displacement possible),,
 2021p180496,2021-03-08T18:48:17,-33.606,179.682,4.8,300.0,not_attempted,processing floor,depth 300 km > 50 km (below GF library; no surface displacement possible),,
 2021p181592,2021-03-09T04:32:19,-35.105,178.961,3.9,255.5,not_attempted,processing floor,depth 255.5 km > 50 km (below GF library; no surface displacement possible),,
+2021p186460,2021-03-10T23:44:50.036Z,-33.4079,-178.0318,5.2,33.0,no_coherent_solution,task 2,only 0 usable stations (minimum 3),0.0,v5
+2021p186729,2021-03-11T02:09:46.644Z,-37.36,-179.8678,4.2,33.0,no_coherent_solution,task 2,only 1 usable stations (minimum 3),0.0,v5
+2021p186894,2021-03-11T03:36:07.740Z,-33.1812,-178.1001,4.9,33.0,no_coherent_solution,task 2,only 0 usable stations (minimum 3),0.0,v5
+2021p187188,2021-03-11T06:14:13.868Z,-37.4989,-179.988,3.95,33.0,no_coherent_solution,task 2,only 0 usable stations (minimum 3),0.0,v5
+2021p187474,2021-03-11T08:46:21.115Z,-37.3276,-179.8474,3.85,33.0,no_coherent_solution,task 2,only 0 usable stations (minimum 3),0.0,v5
+2021p187485,2021-03-11T08:52:10.659Z,-37.3158,-179.8945,4.32,33.0,no_coherent_solution,task 2,only 1 usable stations (minimum 3),0.0,v5
+2021p187495,2021-03-11T08:57:31.329Z,-37.4076,-179.9407,3.8,12.0,no_coherent_solution,task 2,only 0 usable stations (minimum 3),0.0,v5
+2021p187518,2021-03-11T09:09:38.083Z,-37.3455,-179.8455,4.26,33.0,no_coherent_solution,task 2,only 1 usable stations (minimum 3),0.0,v5
+2021p187577,2021-03-11T09:40:04.096Z,-33.5626,-177.8787,4.39,12.0,no_coherent_solution,task 2,only 0 usable stations (minimum 3),0.0,v5
+2021p187588,2021-03-11T09:47:12.443Z,-37.3398,-179.8929,3.87,33.0,no_coherent_solution,task 2,only 0 usable stations (minimum 3),0.0,v5
 2021p187844,2021-03-11T12:03:24.065Z,-37.3576,-179.8779,3.88,33.0,no_coherent_solution,task 2,only 0 usable stations (minimum 3),0.0,v5
 2021p187853,2021-03-11T12:08:21.362Z,-37.4114,179.9612,4.01,12.0,no_coherent_solution,task 2,only 0 usable stations (minimum 3),0.0,v5
 2021p187899,2021-03-11T12:32:54.634Z,-37.5545,179.8539,3.95,12.0,no_coherent_solution,task 2,only 0 usable stations (minimum 3),0.0,v5
