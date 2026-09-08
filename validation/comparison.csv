@@ -1,4 +1,5 @@
 PublicID,GeoNet_M,GeoNet_depth,our_Mw,our_depth,our_VR,our_DC,grade,n_stations,reference,ref_Mw,dMw,ref_depth,dDepth,rotation_angle_deg
+2021p169401,4.62,12.0,4.99,58.0,15.3,24.0,D,3,NZ_CMT_Ristau,4.5,0.49,4.0,54.0,38.3
 2021p170865,4.68,12.0,4.37,34.0,5.2,54.0,D,3,NZ_CMT_Ristau,4.4,-0.03,2.0,32.0,81.3
 2021p171587,4.8,12.0,4.98,1.0,6.5,83.0,D,3,NZ_CMT_Ristau,4.8,0.18,13.0,-12.0,50.8
 2021p172039,4.9,33.0,5.0,10.0,8.2,22.0,D,3,NZ_CMT_Ristau,5.1,-0.1,16.0,-6.0,68.3

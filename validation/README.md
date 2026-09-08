@@ -26,7 +26,8 @@ pixi run validate        # = python src/validate.py; sync_repo.py runs it too
 
 Outputs: `comparison.csv` (one row per matched event–reference pair),
 `comparison_mw.jpg`, `comparison_depth.jpg`, `comparison_rotation.jpg`
-(one figure per metric, embedded below), `validation_report.txt`
+(one figure per metric, embedded below), `comparison_geonet_mag.jpg`
+(Mw against GeoNet's reported magnitude, §2b), `validation_report.txt`
 (console log).
 
 ## 1. Reference catalogues, and what each one tests
@@ -67,6 +68,30 @@ up. Against the independent references the A/B tier is at mean ΔMw
 moment scale is unbiased at the 0.05 level. A linear fit of automated
 on published Mw for the A/B tier gives slope 1.01, R² 0.94 and RMSE
 0.14; for the C/D tier slope 0.79, R² 0.56 and RMSE 0.37.
+
+## 2b. Mw against GeoNet's reported magnitude
+
+GeoNet's summary magnitude (MLv for most events, M for some, mB-based
+Mw for the largest) is the magnitude of the public feed and the one the
+processing floor is applied to, so its relation to the inverted Mw is
+worth knowing in its own right. This comparison uses every solved
+event, not only those with a reference moment tensor.
+
+![Mw vs GeoNet summary magnitude](comparison_geonet_mag.jpg)
+
+**Current standing (grade A/B, n = 174)**: the inverted Mw is a median
+**0.29 below** GeoNet's summary magnitude (MAD 0.18), with a linear fit
+of slope 0.93, R² 0.80 and RMSE 0.39. The offset depends on magnitude
+rather than on type: near zero below M 4.0 (+0.02), then −0.31 (4.0–4.5),
+−0.40 (4.5–5.0) and −0.49 (5.0–5.5), closing again above M 5.5 (−0.21,
+where the summary magnitude is increasingly mB-based). MLv and M give
+the same picture (medians −0.29 and −0.37). This is the NZ local
+magnitude to Mw relationship discussed by Ristau (2008): the local
+magnitude runs above Mw through the M 4–5.5 range, which is why the
+publication gate is applied to the inverted Mw and the processing
+floor to the summary magnitude with a deliberately low threshold. In
+the C/D tier the offset is masked by noise-driven Mw inflation of the
+smallest events, so the two effects cancel in the median (−0.02).
 
 ## 3. Depth: ΔZ
 

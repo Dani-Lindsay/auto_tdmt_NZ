@@ -127,6 +127,113 @@ def match_gcmt(cat, origin_time, lat, lon):
     return best
 
 
+def load_geonet_magtypes() -> pd.DataFrame:
+    """PublicID -> GeoNet summary magnitude type (M, MLv, mB, ...) for every
+    NZ event M >= 3.5 since 2021, from one FDSN event query (two longitude
+    windows across the antimeridian). Empty on network failure."""
+    import requests
+    b = config.NZ_BBOX
+    rows = []
+    for lon0, lon1 in [(b["lon_min"], 180.0), (-180.0, b["lon_max"] - 360.0)]:
+        url = (f"{config.FDSN_ARCHIVE}/fdsnws/event/1/query?starttime=2021-01-01"
+               f"&minmagnitude=3.5&minlatitude={b['lat_min']}&maxlatitude={b['lat_max']}"
+               f"&minlongitude={lon0}&maxlongitude={lon1}&format=text")
+        try:
+            r = requests.get(url, timeout=120,
+                             headers={"User-Agent": config.USER_AGENT})
+        except Exception as e:  # noqa: BLE001
+            print(f"GeoNet magnitude-type query failed: {e}")
+            continue
+        if r.status_code != 200:
+            continue
+        for line in r.text.splitlines()[1:]:
+            f = line.split("|")
+            rows.append((f[0], f[9]))
+    return pd.DataFrame(rows, columns=["PublicID", "magtype"]).drop_duplicates("PublicID")
+
+
+def geonet_magnitude_comparison(sol: pd.DataFrame, out_dir) -> None:
+    """Figure 4: our Mw against GeoNet's reported summary magnitude (the
+    magnitude the processing floor and the public feed use), for every
+    solved event, split by GeoNet magnitude type. Shows the systematic
+    offset and where on the magnitude scale the two agree."""
+    from cmcrameri import cm as _cmc
+    from scipy import stats as _stats
+    if sol.empty:
+        return
+    types = load_geonet_magtypes()
+    sol = sol.merge(types, on="PublicID", how="left")
+    sol["magtype"] = sol.magtype.fillna("unknown")
+    sol["d"] = sol.our_Mw - sol.geonet_M
+    ab = sol[sol.grade.isin(["A", "B"])]
+    cd = sol[~sol.grade.isin(["A", "B"])]
+    bins = np.arange(3.5, 7.01, 0.5)
+    type_colors = {"MLv": "#0072B2", "M": "#E69F00", "Mw(mB)": "#009E73",
+                   "mB": "#009E73", "unknown": "0.5"}
+
+    print("\n[GeoNet summary magnitude] Mw - M, grade A/B:")
+    for t, g in ab.groupby("magtype"):
+        print(f"  {t:8s} n={len(g):4d}  median {g.d.median():+.2f}  "
+              f"MAD {(g.d - g.d.median()).abs().median():.2f}")
+    print("  by GeoNet magnitude bin (A/B):")
+    for lo, hi in zip(bins[:-1], bins[1:]):
+        g = ab[(ab.geonet_M >= lo) & (ab.geonet_M < hi)]
+        if len(g):
+            print(f"    M {lo:.1f}-{hi:.1f}  n={len(g):3d}  median {g.d.median():+.2f}")
+
+    fig, axes = plt.subplots(1, 3, figsize=(14.4, 4.8))
+    # (a) A/B: our Mw vs GeoNet M, density-shaded
+    ax = axes[0]
+    ext = (3.4, 6.6)
+    x = ab.geonet_M.to_numpy(float); y = ab.our_Mw.to_numpy(float)
+    if len(x) >= 4:
+        xs = (x - ext[0]) / (ext[1] - ext[0]); ys = (y - ext[0]) / (ext[1] - ext[0])
+        z = _stats.gaussian_kde(np.vstack([xs, ys]), bw_method=0.12)(np.vstack([xs, ys]))
+        z = z / z.max(); o = np.argsort(z)
+        ax.scatter(x[o], y[o], c=z[o], cmap=_cmc.devon_r, vmin=-0.15, vmax=1.0,
+                   s=18, linewidths=0, zorder=3,
+                   label="grade A/B, shaded by density")
+        lr = _stats.linregress(x, y)
+        rmse = float(np.sqrt(np.sum((x - y) ** 2) / (len(x) - 1)))
+        ax.text(0.97, 0.10, f"RMSE {rmse:.2f}", transform=ax.transAxes,
+                ha="right", va="bottom", fontsize=9)
+        ax.text(0.97, 0.03, f"R\u00b2 {lr.rvalue ** 2:.2f}, slope {lr.slope:.2f}",
+                transform=ax.transAxes, ha="right", va="bottom", fontsize=9)
+    ax.plot(ext, ext, "-", color="black", linewidth=1, zorder=2)
+    ax.set_xlim(ext); ax.set_ylim(ext); ax.set_aspect("equal")
+    ax.set_xlabel("GeoNet summary magnitude"); ax.set_ylabel("auto Mw")
+    ax.set_title(f"grade A/B, n = {len(ab)}", fontsize=10)
+    ax.legend(fontsize=8, loc="upper left")
+
+    # (b) residual vs GeoNet M by magnitude type, with binned medians
+    def _resid_panel(ax, sub, title):
+        for t, g in sub.groupby("magtype"):
+            c = type_colors.get(t, "0.5")
+            ax.scatter(g.geonet_M, g.d, s=14, c=c, alpha=0.45, linewidths=0,
+                       label=f"{t} (n = {len(g)})", zorder=3)
+            med = [(0.5 * (lo + hi), g[(g.geonet_M >= lo) & (g.geonet_M < hi)].d.median())
+                   for lo, hi in zip(bins[:-1], bins[1:])
+                   if ((g.geonet_M >= lo) & (g.geonet_M < hi)).sum() >= 3]
+            if med:
+                ax.plot([m[0] for m in med], [m[1] for m in med], "-o", color=c,
+                        markersize=5, markeredgecolor="white", linewidth=1.8,
+                        zorder=5)
+        ax.axhline(0, color="black", linewidth=1, zorder=2)
+        ax.set_xlim(ext); ax.set_ylim(-1.2, 1.2)
+        ax.set_xlabel("GeoNet summary magnitude")
+        ax.set_ylabel("auto Mw - GeoNet magnitude")
+        ax.set_title(title, fontsize=10)
+        ax.legend(fontsize=8, loc="upper right")
+    _resid_panel(axes[1], ab, f"grade A/B: median {ab.d.median():+.2f} "
+                              "(lines: binned medians per type)")
+    _resid_panel(axes[2], cd, f"grade C/D: median {cd.d.median():+.2f}")
+    fig.suptitle("automated Mw vs GeoNet's reported magnitude "
+                 "(the magnitude of the public feed and the processing floor)")
+    fig.tight_layout()
+    fig.savefig(out_dir / "comparison_geonet_mag.jpg", dpi=150)
+    plt.close(fig)
+
+
 def main() -> None:
     usgs = load_usgs()
     print(f"USGS/NEIC: {len(usgs)} candidate events with MT products")
@@ -140,6 +247,7 @@ def main() -> None:
 
     rows = []
     origins = {}
+    allsol = []
     for path in config.solution_paths():
         sol = json.loads(path.read_text())
         if not config.is_solved(sol):
@@ -148,6 +256,9 @@ def main() -> None:
         pid = ev["public_id"]
         origins[pid] = (ev["origin_time"], ev["latitude"], ev["longitude"])
         pref = sol["preferred"]
+        allsol.append({"PublicID": pid, "geonet_M": ev["prelim_mag"],
+                       "our_Mw": pref["mw"],
+                       "grade": sol["quality"].get("grade", "?")})
         p1 = pref["plane1"]
         base = {
             "PublicID": pid,
@@ -378,6 +489,8 @@ def main() -> None:
     fig.tight_layout()
     fig.savefig(out_dir / "comparison_rotation.jpg", dpi=150)
     plt.close(fig)
+
+    geonet_magnitude_comparison(pd.DataFrame(allsol), out_dir)
 
     print(f"\nwrote {out_dir}/comparison.csv and comparison_mw/"
           "comparison_depth/comparison_rotation .jpg")
