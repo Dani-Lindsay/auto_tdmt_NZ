@@ -33,6 +33,7 @@ review = "jupyter notebook human_review.ipynb"
 # rebuild the per-task walkthrough notebooks (docs/task_*.ipynb); --execute runs them
 notebooks = "python tools/build_task_notebooks.py"
 params = "python src/params.py"
+sequence = "python tools/plot_sequence.py"     # spider plot of a sequence: --start <publicID>
 
 [dependencies]
 python = "3.12.*"
