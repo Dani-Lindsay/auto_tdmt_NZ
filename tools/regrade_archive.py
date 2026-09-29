@@ -8,6 +8,7 @@ before any resweep.
 
     pixi run python tools/regrade_archive.py            # dry run, report
     pixi run python tools/regrade_archive.py --apply    # rewrite grades
+                                                        # (and rename dirs)
 """
 
 from __future__ import annotations
@@ -48,6 +49,13 @@ def main(apply: bool, events_dir: Path) -> None:
         if apply:
             sol["quality"] = quality
             p.write_text(json.dumps(sol, indent=2))
+            # the directory name carries the grade: keep it in step
+            ev, pref = sol["event"], sol["preferred"]
+            name = config.event_dir_name(
+                ev["public_id"], pref["mw"], pref["depth_km"],
+                ev["locality"], ev["origin_time"], after)
+            if p.parent.name != name:
+                p.parent.rename(p.parent.with_name(name))
     total = sum(moves.values())
     print(f"{total} solved solutions re-graded"
           + (f" ({unsolved} with no coherent solution skipped)" if unsolved else ""))

@@ -83,11 +83,17 @@ def slugify(text: str) -> str:
 
 
 def event_dir_name(public_id: str, mw: float, depth_km: float,
-                   locality: str, origin_time: str = "") -> str:
-    """<publicID>_<YYYY-MM-DD>_Mw<mw>_<depth>km_<locality>."""
+                   locality: str, origin_time: str = "",
+                   grade: str = "") -> str:
+    """<publicID>_<YYYY-MM-DD>_Mw<mw>_<depth>km_<locality>_grade<A-D>.
+
+    Everything that looks an event up globs on the leading publicID, so
+    the suffixes are for people browsing the archive. The grade can change
+    on a re-grade (tools/regrade_archive.py renames the directory then)."""
     date = f"_{origin_time[:10]}" if origin_time else ""
+    suffix = f"_grade{grade}" if grade else ""
     return (f"{public_id}{date}_Mw{mw:.1f}_{depth_km:g}km_"
-            f"{slugify(locality)[:40]}")
+            f"{slugify(locality)[:40]}{suffix}")
 
 
 NOSOL_DIR_NAME = "NOSOL"

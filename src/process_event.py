@@ -275,7 +275,7 @@ def process_event(public_id: str, debug: bool = False,
         _cleanup(event_dir)
     canonical = config.EVENTS_DIR / config.event_dir_name(
         pid, best["preferred"]["mw"], best["preferred"]["depth_km"],
-        event.locality, event.origin_time)
+        event.locality, event.origin_time, best["quality"]["grade"])
     if event_dir != canonical:
         if canonical.exists():
             shutil.rmtree(canonical)

@@ -263,3 +263,14 @@ def test_min_rotation_known_values():
     # symmetric in argument order
     assert abs(a - invert.min_rotation_angle_deg((30, 90, 0),
                                                  (0, 90, 0))) < 1e-6
+
+
+def test_event_dir_name_carries_the_grade():
+    name = config.event_dir_name("2026p660160", 5.08, 6.0,
+                                 "40 km north-east of Milford Sound",
+                                 "2026-09-02T06:13:32.546Z", "A")
+    assert name == ("2026p660160_2026-09-02_Mw5.1_6km_"
+                    "40-km-north-east-of-Milford-Sound_gradeA")
+    # lookups glob on the leading publicID, so they are unaffected
+    assert name.split("_")[0] == "2026p660160"
+    assert not config.event_dir_name("2026p1", 4.0, 5.0, "x").endswith("grade")
