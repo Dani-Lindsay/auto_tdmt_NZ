@@ -39,3 +39,6 @@ events/**/2026p4[0-7]*.jpg
 events/**/2026p48[0-8]*.jpg
 events/**/2026p4890*.jpg
 events/**/2026p4891[0-8]*.jpg
+
+# Claude Code worktrees and local settings (never part of the repo)
+.claude/
