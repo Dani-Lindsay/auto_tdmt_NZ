@@ -173,10 +173,15 @@ cd auto_tdmt_NZ               # --depth 1: current files only (~60 MB),
 pixi install
 pixi run test                 # anchor tests, including one that checks
                               # auto_tdmt.cfg and params.py agree
-pixi run get-gfs              # one-time Green's function download (~1 GB)
+pixi run get-gfs              # one-time Green's function download (~60 MB)
+                              # manual fallback: gf_library.tar.zst from the
+                              # gf-latest release, then in the repo folder:
+                              # pixi run tar --use-compress-program=unzstd -xf gf_library.tar.zst
 pixi run process --event 2026p669681 --debug    # = python src/process_event.py
 pixi run params               # print every resolved parameter
 ```
+
+Green's functions: [gf-latest release](https://github.com/Dani-Lindsay/auto_tdmt_NZ/releases/tag/gf-latest) (`gf_library.tar.zst`, unpacks to `gf_cache/`, ~240 MB).
 
 Outputs default to `~/work/proj_tdmt_NZ`; override with `AUTO_TDMT_OUTPUT`,
 `AUTO_TDMT_EVENTS`, `AUTO_TDMT_GF`, and `AUTO_TDMT_CFG` for an alternative
