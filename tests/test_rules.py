@@ -56,7 +56,16 @@ def test_band_menu_is_ordered_and_magnitude_binned():
 
 def test_window_cap_fits_the_greens_functions():
     assert config.INV_NPTS <= config.GF_NPTS
-    assert config.INV_NPTS - config.TIME_BEFORE_S == P.station.maxWindowS == 200
+
+
+def test_fitted_window_leaves_room_to_shift_both_ways():
+    # the window starts at ts = TIME_BEFORE_S; mttime must be able to slide
+    # it by maxTimeShiftS either way inside the record (a window that fills
+    # the record forces a -29/-30 s shift: the 2026-09-29 selection study)
+    room = config.RECORD_NPTS - (config.TIME_BEFORE_S + config.INV_NPTS)
+    assert room >= P.invert.maxTimeShiftS / config.DT
+    assert config.TIME_BEFORE_S >= P.invert.maxTimeShiftS / config.DT
+    assert config.RECORD_NPTS == 231 and config.INV_NPTS == 193
 
 
 # --- task 2: selection ------------------------------------------------------

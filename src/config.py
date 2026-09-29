@@ -204,13 +204,22 @@ def sector(azimuth: float) -> int:
 # following the mttime example notebooks (Chiang) exactly: data trimmed
 # origin-30 s .. origin+200 s at dt=1 s; GFs computed with npts=256 (FK
 # needs a power of 2), vred=0 and t0=0 so they start at origin; station-
-# table ts=30 samples. The inversion window per station ends at
-# station.maxWindowS after origin at most (INV_NPTS).
+# table ts=30 samples, i.e. the fitted window starts at the origin.
+# INV_NPTS caps the fitted window so it always fits in the record WITH
+# room for mttime to slide it by maxTimeShiftS either way: the record has
+# RECORD_NPTS samples, the window starts at sample TIME_BEFORE_S, so it
+# may be at most RECORD_NPTS - TIME_BEFORE_S - maxTimeShiftS long. (Before
+# 2026-09-29 the cap was TIME_BEFORE_S + maxWindowS = 230 samples: a long
+# window then overran the record and mttime could only place it at the
+# start, a forced -29/-30 s shift; 160 of 198 archived stations with
+# windows >= 195 s sat there. Selection study, 2026-09-29.)
 DT = 1.0  # s
 GF_NPTS = 256
 TIME_BEFORE_S = 30
 TIME_AFTER_S = 200
-INV_NPTS = int(TIME_BEFORE_S + P.station.maxWindowS)
+RECORD_NPTS = int(round((TIME_BEFORE_S + TIME_AFTER_S) / DT)) + 1
+INV_NPTS = int(min(TIME_BEFORE_S + P.station.maxWindowS,
+                   RECORD_NPTS - TIME_BEFORE_S - P.invert.maxTimeShiftS / DT))
 assert INV_NPTS <= GF_NPTS, (
     f"station.maxWindowS {P.station.maxWindowS:g} s exceeds the Green's "
     f"functions ({GF_NPTS - TIME_BEFORE_S} s after origin)")
