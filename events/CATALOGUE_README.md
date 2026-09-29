@@ -5,6 +5,10 @@ the per-event `solution.json` archives after every processed event — it is
 derived data, never hand-edited; `events/<dir>/solution.json` is the full
 record (stations used/dropped with reasons, depth-search table, band
 search, per-station zcor/VR, provenance) if you need more than a row.
+Per-event figures are in the event folders for events from 1 July 2026
+onward; earlier events' figures are in the
+[`figures-pre-2026-07`](https://github.com/Dani-Lindsay/auto_tdmt_NZ/releases/tag/figures-pre-2026-07)
+release.
 
 All solutions are PRELIMINARY, deviatoric-only (no isotropic component)
 and produced without human review; do not interpret mechanisms in

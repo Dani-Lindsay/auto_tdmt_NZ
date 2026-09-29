@@ -29,6 +29,10 @@ a new event is processed: station map with the deviatoric mechanism,
 Okada displacement for both nodal planes, the jackknife stability panel
 and the NISAR pass table. The event ID, Mw, depth and grade are in the
 panel titles; the full archive entry is under [`events/`](events/).
+Every event keeps its `solution.json`; the figures for events **before
+1 July 2026** are in the
+[`figures-pre-2026-07`](https://github.com/Dani-Lindsay/auto_tdmt_NZ/releases/tag/figures-pre-2026-07)
+release (one tar file; extract it at the repository root).
 
 <p align="center"><img src="events/latest_stations_displacement_field.jpg" width="900" alt="Stations and predicted surface displacement for the most recent automated solution"></p>
 
