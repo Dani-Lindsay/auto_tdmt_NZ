@@ -47,7 +47,8 @@ their reasoning. It grows gradually as events receive human eyes.
 follow it from installation to your first Pull Request. The automated
 figures are kept for events from 1 July 2026 onward; for earlier
 events, the notebook regenerates them when you process the event. Read
-`docs/METHOD.md` and `docs/REVIEW_LEARNINGS.md` first.
+`docs/METHOD.md` first; `docs/REVIEW_LEARNINGS.md` is useful once you
+have done a review or two.
 
 Data: GeoNet (CC BY 3.0 NZ). Method credits as in the repository README
 — cite the original authors (Ristau 2008; Dreger; Chiang/mttime;

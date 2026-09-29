@@ -161,8 +161,9 @@ catalogue, watch a seismogram travel from raw counts to inversion-ready
 displacement, run the inversion with full manual control, and submit
 your reviewed solution by Pull Request. The human catalogue carries the
 same columns as the automated one (including the full moment tensor)
-plus the review fields. Read [docs/METHOD.md](docs/METHOD.md) and
-[docs/REVIEW_LEARNINGS.md](docs/REVIEW_LEARNINGS.md) first.
+plus the review fields. Read [docs/METHOD.md](docs/METHOD.md) first;
+[docs/REVIEW_LEARNINGS.md](docs/REVIEW_LEARNINGS.md) is useful once you
+have done a review or two.
 
 ## Local setup (macOS / Linux)
 
