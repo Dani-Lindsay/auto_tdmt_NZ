@@ -7,11 +7,16 @@ re-committing a gigabyte of figures."""
 import json
 import math
 import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
-FIGURES_FROM = datetime(2026, 7, 1, tzinfo=timezone.utc)
+sys.path.insert(0, str(REPO / "src"))
+import config  # noqa: E402
+
+EVENTS = REPO / "events"
+FIGURES_FROM = datetime.fromisoformat(config.ARCHIVE_BEFORE).replace(tzinfo=timezone.utc)
 
 
 def _origin(sol: dict) -> datetime:
@@ -34,8 +39,7 @@ CUTOFF_ID = 489190        # first ID on/after 2026-07-01 00:00 UTC
 def test_publicid_encodes_origin_time():
     # the patterns rely on publicID = <year>p<~seconds since 1 Jan UTC / 31.968>;
     # the scatter (a few steps) is GeoNet's detection-to-origin lag
-    sol_paths = sorted((REPO / "events").glob("*/solution.json")) + \
-        sorted((REPO / "events" / "NOSOL").glob("*.json"))
+    sol_paths = config.solution_paths(EVENTS)
     assert sol_paths, "no events in the repo archive"
     for p in sol_paths:
         sol = json.loads(p.read_text())
@@ -49,13 +53,11 @@ def test_publicid_encodes_origin_time():
 
 def test_gitignore_splits_figures_at_the_cutoff():
     expect = {}
-    for p in sorted((REPO / "events").glob("*/solution.json")):
+    for p in config.solution_paths(EVENTS):
         sol = json.loads(p.read_text())
-        fig = f"events/{p.parent.name}/{sol['event']['public_id']}_depth_sensitivity.jpg"
-        expect[fig] = _origin(sol) < FIGURES_FROM
-    for p in sorted((REPO / "events" / "NOSOL").glob("*.json")):
-        sol = json.loads(p.read_text())
-        fig = f"events/NOSOL/{sol['event']['public_id']}_station_map.jpg"
+        name = ("station_map" if p.parent.name == config.NOSOL_DIR_NAME
+                else "depth_sensitivity")
+        fig = f"{p.parent.relative_to(REPO)}/{sol['event']['public_id']}_{name}.jpg"
         expect[fig] = _origin(sol) < FIGURES_FROM
     # the boundary itself, independent of which events happen to exist
     expect[f"events/X/2026p{CUTOFF_ID - 1}_a.jpg"] = True
@@ -76,3 +78,12 @@ def test_no_tracked_figure_before_the_cutoff():
                              text=True, cwd=REPO, check=True).stdout.split()
     old = _ignored([f for f in tracked if f.endswith(".jpg")])
     assert not old, f"{len(old)} pre-cutoff figures are tracked, e.g. {sorted(old)[:3]}"
+
+
+def test_solved_events_sit_on_their_side_of_the_archive_date():
+    for p in config.solution_paths(EVENTS):
+        if p.parent.name == config.NOSOL_DIR_NAME:
+            continue
+        sol = json.loads(p.read_text())
+        assert p.parent.parent == config.event_parent(
+            sol["event"]["origin_time"], EVENTS), p.parent.name

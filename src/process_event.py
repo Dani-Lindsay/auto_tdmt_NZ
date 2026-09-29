@@ -273,12 +273,13 @@ def process_event(public_id: str, debug: bool = False,
     # CI commit step, sync_repo) rather than after every event
     if not debug:
         _cleanup(event_dir)
-    canonical = config.EVENTS_DIR / config.event_dir_name(
+    canonical = config.event_parent(event.origin_time) / config.event_dir_name(
         pid, best["preferred"]["mw"], best["preferred"]["depth_km"],
         event.locality, event.origin_time, best["quality"]["grade"])
     if event_dir != canonical:
         if canonical.exists():
             shutil.rmtree(canonical)
+        canonical.parent.mkdir(parents=True, exist_ok=True)
         event_dir.rename(canonical)
         print(f"archived as {canonical.name}")
     # a solved event supersedes any earlier no-solution record

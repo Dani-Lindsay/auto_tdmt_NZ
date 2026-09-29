@@ -15,9 +15,9 @@ __pycache__/
 
 # per-event working files: regenerable from solution.json + the GF release
 # (the CI watcher must not commit staged Green's functions or SAC data)
-events/*/band_*/
-events/*/*.dat
-events/*/greens/
+events/**/band_*/
+events/**/*.dat
+events/**/greens/
 # student review scratch (human_review.ipynb)
 review_work/
 .ipynb_checkpoints/

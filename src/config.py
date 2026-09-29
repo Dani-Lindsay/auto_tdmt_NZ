@@ -107,21 +107,39 @@ def no_solution_path(public_id: str, events_dir: Path | None = None) -> Path:
     return (events_dir or EVENTS_DIR) / NOSOL_DIR_NAME / f"{public_id}.json"
 
 
+# Solved events from before this date (UTC) live in <events>/archive/:
+# the back-processed 2021-2026 catalogue, kept out of the way of the live
+# events. It is the same date as the figure cutoff in .gitignore (older
+# events keep solution.json + draft only). NOSOL/ is not split.
+ARCHIVE_DIR_NAME = "archive"
+ARCHIVE_BEFORE = "2026-07-01"
+
+
+def event_parent(origin_time: str, events_dir: Path | None = None) -> Path:
+    """Where a solved event's directory belongs: <events>/archive/ before
+    ARCHIVE_BEFORE, <events>/ from then on."""
+    events_dir = events_dir or EVENTS_DIR
+    return (events_dir / ARCHIVE_DIR_NAME if origin_time[:10] < ARCHIVE_BEFORE
+            else events_dir)
+
+
 def solution_paths(events_dir: Path | None = None) -> list[Path]:
-    """Every archived record: <events>/<event_dir>/solution.json for the
-    solved events, then <events>/NOSOL/<publicID>.json."""
+    """Every archived record: <events>/[archive/]<event_dir>/solution.json
+    for the solved events, then <events>/NOSOL/<publicID>.json."""
     events_dir = events_dir or EVENTS_DIR
     solved = sorted(p for p in events_dir.glob("*/solution.json")
                     if p.parent.name != NOSOL_DIR_NAME)
+    solved += sorted((events_dir / ARCHIVE_DIR_NAME).glob("*/solution.json"))
     return solved + sorted((events_dir / NOSOL_DIR_NAME).glob("*.json"))
 
 
 def find_event_dir(public_id: str, events_dir: Path | None = None):
     """Locate a solved event's directory whether plain or canonically
-    named (events with no solution have no directory: see
-    no_solution_path)."""
+    named, in <events>/ or <events>/archive/ (events with no solution
+    have no directory: see no_solution_path)."""
     events_dir = events_dir or EVENTS_DIR
-    matches = sorted(p for p in events_dir.glob(f"{public_id}*") if p.is_dir())
+    matches = sorted(p for d in (events_dir, events_dir / ARCHIVE_DIR_NAME)
+                     for p in d.glob(f"{public_id}*") if p.is_dir())
     return matches[0] if matches else None
 
 # ---------------------------------------------------------------------------

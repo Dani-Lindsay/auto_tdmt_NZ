@@ -30,11 +30,11 @@ def sync_events() -> int:
     n = 0
     repo_nosol = repo_events / config.NOSOL_DIR_NAME
     for p in config.solution_paths():
-        pid = json.loads(p.read_text())["event"]["public_id"]
-        # whichever form the event had in the repo before, remove it
-        for old in repo_events.glob(f"{pid}*"):
-            if old.is_dir():
-                shutil.rmtree(old)
+        ev = json.loads(p.read_text())["event"]
+        pid = ev["public_id"]
+        # whichever form (and place) the event had in the repo, remove it
+        while (old := config.find_event_dir(pid, repo_events)) is not None:
+            shutil.rmtree(old)
         for old in repo_nosol.glob(f"{pid}*") if repo_nosol.exists() else []:
             old.unlink()
         if p.parent.name == config.NOSOL_DIR_NAME:
@@ -42,8 +42,8 @@ def sync_events() -> int:
             for f in [p, *p.parent.glob(f"{pid}_*.jpg")]:
                 shutil.copy(f, repo_nosol / f.name)
         else:
-            dst = repo_events / p.parent.name
-            dst.mkdir()
+            dst = config.event_parent(ev["origin_time"], repo_events) / p.parent.name
+            dst.mkdir(parents=True)
             for f in [p, p.parent / "draft_email.txt",
                       *p.parent.glob("*_*.jpg")]:
                 if f.exists():

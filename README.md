@@ -29,8 +29,9 @@ a new event is processed: station map with the deviatoric mechanism,
 Okada displacement for both nodal planes, the jackknife stability panel
 and the NISAR pass table. The event ID, Mw, depth and grade are in the
 panel titles; the full archive entry is under [`events/`](events/).
-Every event keeps its `solution.json`; the figures for events **before
-1 July 2026** are in the
+Events **before 1 July 2026** (the back-processed 2021–2026 catalogue)
+are in [`events/archive/`](events/archive/) with their `solution.json`;
+their figures are in the
 [`figures-pre-2026-07`](https://github.com/Dani-Lindsay/auto_tdmt_NZ/releases/tag/figures-pre-2026-07)
 release (one tar file; extract it at the repository root).
 
@@ -123,7 +124,8 @@ are not rows of `catalogue.csv`; their stage and reason are listed in
 - `events/NOSOL/<publicID>.json` — every event attempted without a
   coherent solution, in one directory, with its station map and
   all-station waveform figure beside it.
-- `events/<publicID>_<date>_Mw…/solution.json` — everything: origin,
+- `events/<publicID>_<date>_Mw…_grade<X>/solution.json` (events before
+  2026-07-01 under `events/archive/`) — everything: origin,
   depth search, preferred solution, both tensors, every station used or
   not with its SNR, own VR, time shift and reason, the jackknife, the
   quality block, the forward model, and `provenance.params` (the
