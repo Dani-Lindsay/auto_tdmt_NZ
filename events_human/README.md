@@ -31,7 +31,7 @@ their reasoning. It grows gradually as events receive human eyes.
    The two catalogues coexist: `events/` is what the machine said,
    `events_human/` is what a person concluded.
 2. Contributions arrive by Pull Request touching **only** this
-   directory (see the notebook, step 8). PRs touching anything else are
+   directory (see the notebook, Step 7). PRs touching anything else are
    closed unmerged.
 3. Every solution names its reviewer and states its reasoning. "The
    automated solution is correct" and "no defensible solution exists"
@@ -40,8 +40,13 @@ their reasoning. It grows gradually as events receive human eyes.
    `events_human/<event>/<your-name>/`. Never include
    `catalogue_human.csv` — the Action rebuilds it after the merge.
 
-**Getting started**: open `human_review.ipynb` in the repository root
-and follow it from installation to your first Pull Request. Read
+**Getting started**: fork the repository, then clone your fork with
+`git clone --depth 1 https://github.com/<YOUR-USERNAME>/auto_tdmt_NZ.git`
+(`--depth 1` downloads the current files only, ~60 MB, instead of the
+~1 GB history). Open `human_review.ipynb` in the repository root and
+follow it from installation to your first Pull Request. The automated
+figures are kept for events from 1 July 2026 onward; for earlier
+events, the notebook regenerates them when you process the event. Read
 `docs/METHOD.md` and `docs/REVIEW_LEARNINGS.md` first.
 
 Data: GeoNet (CC BY 3.0 NZ). Method credits as in the repository README

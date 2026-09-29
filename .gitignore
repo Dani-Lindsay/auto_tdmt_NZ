@@ -21,3 +21,21 @@ events/*/greens/
 # student review scratch (human_review.ipynb)
 review_work/
 .ipynb_checkpoints/
+
+# REPO-SIZE POLICY (2026-09-29): per-event figures are committed only for
+# events from 2026-07-01 00:00 UTC onward. Older figures live in the
+# GitHub release figures-pre-2026-07; their solution.json and
+# draft_email.txt stay here, so catalogue.csv stays complete. Every
+# figure name starts with the GeoNet publicID, <year>p<n> with n rising
+# one step per ~31.968 s from 1 Jan UTC (fitted to every archived event,
+# scatter a few steps), so 2026-07-01 00:00 UTC is 2026p489190 (+/- a
+# few minutes). tests/test_repo_policy.py checks these patterns against
+# every event's origin time.
+events/**/19*p*.jpg
+events/**/20[01]*p*.jpg
+events/**/202[0-5]p*.jpg
+events/**/2026p[0-3]*.jpg
+events/**/2026p4[0-7]*.jpg
+events/**/2026p48[0-8]*.jpg
+events/**/2026p4890*.jpg
+events/**/2026p4891[0-8]*.jpg
