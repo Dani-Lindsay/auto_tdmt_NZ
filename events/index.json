@@ -212,6 +212,15 @@
       "pdc": 90.0642250264696,
       "publish": false,
       "run_utc": "2026-10-02T18:04:37.387829+00:00"
+    },
+    "2026p744986": {
+      "status": "ok",
+      "mw": 3.897646436104637,
+      "depth_km": 1.0,
+      "vr": 45.685426645124835,
+      "pdc": 75.06064938640527,
+      "publish": false,
+      "run_utc": "2026-10-03T16:41:54.501996+00:00"
     }
   },
   "published": [
@@ -253,7 +262,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.5 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955899+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797887+00:00"
     },
     "2026p673247": {
       "public_id": "2026p673247",
@@ -270,7 +279,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.9 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955905+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797894+00:00"
     },
     "2026p673226": {
       "public_id": "2026p673226",
@@ -287,7 +296,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "deleted by GeoNet",
-      "seen_utc": "2026-10-03T12:27:47.955910+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797900+00:00"
     },
     "2026p671088": {
       "public_id": "2026p671088",
@@ -304,7 +313,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.0 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955915+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797907+00:00"
     },
     "2026p670986": {
       "public_id": "2026p670986",
@@ -321,7 +330,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "deleted by GeoNet",
-      "seen_utc": "2026-10-03T12:27:47.955920+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797913+00:00"
     },
     "2026p669634": {
       "public_id": "2026p669634",
@@ -338,7 +347,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M3.3 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955926+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797919+00:00"
     },
     "2026p669176": {
       "public_id": "2026p669176",
@@ -355,7 +364,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.3 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955936+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797933+00:00"
     },
     "2026p669165": {
       "public_id": "2026p669165",
@@ -372,7 +381,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.5 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955941+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797939+00:00"
     },
     "2026p669108": {
       "public_id": "2026p669108",
@@ -389,7 +398,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M1.9 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955946+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797946+00:00"
     },
     "2026p666426": {
       "public_id": "2026p666426",
@@ -406,7 +415,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M3.4 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955952+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797952+00:00"
     },
     "2026p666226": {
       "public_id": "2026p666226",
@@ -423,7 +432,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "deleted by GeoNet",
-      "seen_utc": "2026-10-03T12:27:47.955957+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797958+00:00"
     },
     "2026p665931": {
       "public_id": "2026p665931",
@@ -440,7 +449,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.1 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955962+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797965+00:00"
     },
     "2026p664697": {
       "public_id": "2026p664697",
@@ -18094,7 +18103,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "deleted by GeoNet",
-      "seen_utc": "2026-10-03T12:27:47.955894+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797880+00:00"
     },
     "2026p675487": {
       "public_id": "2026p675487",
@@ -18111,7 +18120,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.4 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955888+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797874+00:00"
     },
     "2026p675770": {
       "public_id": "2026p675770",
@@ -18128,7 +18137,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.2 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955883+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797868+00:00"
     },
     "2026p677300": {
       "public_id": "2026p677300",
@@ -18145,7 +18154,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.9 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955877+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797861+00:00"
     },
     "2026p680553": {
       "public_id": "2026p680553",
@@ -18196,7 +18205,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M3.5 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955872+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797855+00:00"
     },
     "2026p680843": {
       "public_id": "2026p680843",
@@ -18213,7 +18222,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M3.5 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955861+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797841+00:00"
     },
     "2026p680752": {
       "public_id": "2026p680752",
@@ -18230,7 +18239,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.8 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955867+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797848+00:00"
     },
     "2026p682274": {
       "public_id": "2026p682274",
@@ -18247,7 +18256,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.5 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955855+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797834+00:00"
     },
     "2026p683464": {
       "public_id": "2026p683464",
@@ -18264,7 +18273,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.1 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955849+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797827+00:00"
     },
     "2026p684533": {
       "public_id": "2026p684533",
@@ -18281,7 +18290,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M3.0 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955840+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797820+00:00"
     },
     "2026p684998": {
       "public_id": "2026p684998",
@@ -18298,7 +18307,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "deleted by GeoNet",
-      "seen_utc": "2026-10-03T12:27:47.955835+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797811+00:00"
     },
     "2026p685589": {
       "public_id": "2026p685589",
@@ -18315,7 +18324,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.7 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955830+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797805+00:00"
     },
     "2026p686210": {
       "public_id": "2026p686210",
@@ -18332,7 +18341,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "deleted by GeoNet",
-      "seen_utc": "2026-10-03T12:27:47.955824+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797798+00:00"
     },
     "2026p688001": {
       "public_id": "2026p688001",
@@ -18349,7 +18358,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M3.3 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955818+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797792+00:00"
     },
     "2026p689399": {
       "public_id": "2026p689399",
@@ -18366,7 +18375,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M3.1 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955812+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797785+00:00"
     },
     "2026p690041": {
       "public_id": "2026p690041",
@@ -18383,7 +18392,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "deleted by GeoNet",
-      "seen_utc": "2026-10-03T12:27:47.955806+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797779+00:00"
     },
     "2026p691800": {
       "public_id": "2026p691800",
@@ -18400,7 +18409,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.6 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955801+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797772+00:00"
     },
     "2026p693097": {
       "public_id": "2026p693097",
@@ -18417,7 +18426,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.6 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955796+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797765+00:00"
     },
     "2026p693835": {
       "public_id": "2026p693835",
@@ -18434,7 +18443,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.6 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955791+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797758+00:00"
     },
     "2026p694453": {
       "public_id": "2026p694453",
@@ -18451,7 +18460,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "depth 79.9967 km > 50 km (below GF library; no surface displacement possible)",
-      "seen_utc": "2026-10-03T12:27:47.955786+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797751+00:00"
     },
     "2026p696463": {
       "public_id": "2026p696463",
@@ -18468,7 +18477,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.1 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955780+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797744+00:00"
     },
     "2026p700473": {
       "public_id": "2026p700473",
@@ -18485,7 +18494,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "deleted by GeoNet",
-      "seen_utc": "2026-10-03T12:27:47.955774+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797737+00:00"
     },
     "2026p701939": {
       "public_id": "2026p701939",
@@ -18502,7 +18511,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.3 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955769+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797730+00:00"
     },
     "2026p703318": {
       "public_id": "2026p703318",
@@ -18519,7 +18528,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.7 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955763+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797724+00:00"
     },
     "2026p704522": {
       "public_id": "2026p704522",
@@ -18536,7 +18545,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "deleted by GeoNet",
-      "seen_utc": "2026-10-03T12:27:47.955757+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797717+00:00"
     },
     "2026p704808": {
       "public_id": "2026p704808",
@@ -18553,7 +18562,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M3.2 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955752+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797710+00:00"
     },
     "2026p705337": {
       "public_id": "2026p705337",
@@ -18570,7 +18579,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "deleted by GeoNet",
-      "seen_utc": "2026-10-03T12:27:47.955735+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797689+00:00"
     },
     "2026p705336": {
       "public_id": "2026p705336",
@@ -18587,7 +18596,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "deleted by GeoNet",
-      "seen_utc": "2026-10-03T12:27:47.955740+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797697+00:00"
     },
     "2026p705332": {
       "public_id": "2026p705332",
@@ -18604,7 +18613,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "deleted by GeoNet",
-      "seen_utc": "2026-10-03T12:27:47.955746+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797703+00:00"
     },
     "2026p706596": {
       "public_id": "2026p706596",
@@ -18621,7 +18630,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.1 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955724+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797674+00:00"
     },
     "2026p706349": {
       "public_id": "2026p706349",
@@ -18638,7 +18647,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M3.5 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955730+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797681+00:00"
     },
     "2026p707060": {
       "public_id": "2026p707060",
@@ -18672,7 +18681,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.7 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955718+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797667+00:00"
     },
     "2026p709169": {
       "public_id": "2026p709169",
@@ -18689,7 +18698,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "deleted by GeoNet",
-      "seen_utc": "2026-10-03T12:27:47.955712+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797660+00:00"
     },
     "2026p709296": {
       "public_id": "2026p709296",
@@ -18706,7 +18715,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.7 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955707+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797653+00:00"
     },
     "2026p709968": {
       "public_id": "2026p709968",
@@ -18723,7 +18732,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.6 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955701+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797646+00:00"
     },
     "2026p710372": {
       "public_id": "2026p710372",
@@ -18740,7 +18749,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.7 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955695+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797640+00:00"
     },
     "2026p711345": {
       "public_id": "2026p711345",
@@ -18757,7 +18766,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.6 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955668+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797606+00:00"
     },
     "2026p711318": {
       "public_id": "2026p711318",
@@ -18774,7 +18783,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "deleted by GeoNet",
-      "seen_utc": "2026-10-03T12:27:47.955674+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797613+00:00"
     },
     "2026p711315": {
       "public_id": "2026p711315",
@@ -18791,7 +18800,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "depth 195.047 km > 50 km (below GF library; no surface displacement possible)",
-      "seen_utc": "2026-10-03T12:27:47.955681+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797626+00:00"
     },
     "2026p711149": {
       "public_id": "2026p711149",
@@ -18808,7 +18817,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M3.4 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955690+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797633+00:00"
     },
     "2026p712493": {
       "public_id": "2026p712493",
@@ -18825,7 +18834,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.3 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955662+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797572+00:00"
     },
     "2026p713458": {
       "public_id": "2026p713458",
@@ -18842,7 +18851,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.1 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955656+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797565+00:00"
     },
     "2026p715082": {
       "public_id": "2026p715082",
@@ -18859,7 +18868,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.6 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955649+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797559+00:00"
     },
     "2026p716614": {
       "public_id": "2026p716614",
@@ -18876,7 +18885,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M3.3 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955643+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797552+00:00"
     },
     "2026p717812": {
       "public_id": "2026p717812",
@@ -18893,7 +18902,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.7 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955637+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797545+00:00"
     },
     "2026p719052": {
       "public_id": "2026p719052",
@@ -18910,7 +18919,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.6 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955632+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797538+00:00"
     },
     "2026p720495": {
       "public_id": "2026p720495",
@@ -18927,7 +18936,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.6 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955613+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797517+00:00"
     },
     "2026p720486": {
       "public_id": "2026p720486",
@@ -18944,7 +18953,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.1 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955620+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797524+00:00"
     },
     "2026p720071": {
       "public_id": "2026p720071",
@@ -18961,7 +18970,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M3.1 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955626+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797531+00:00"
     },
     "2026p721145": {
       "public_id": "2026p721145",
@@ -18978,7 +18987,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M3.3 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955607+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797510+00:00"
     },
     "2026p721645": {
       "public_id": "2026p721645",
@@ -18995,7 +19004,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.7 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955595+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797497+00:00"
     },
     "2026p721448": {
       "public_id": "2026p721448",
@@ -19012,7 +19021,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "deleted by GeoNet",
-      "seen_utc": "2026-10-03T12:27:47.955601+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797503+00:00"
     },
     "2026p722468": {
       "public_id": "2026p722468",
@@ -19029,7 +19038,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "depth 94.2484 km > 50 km (below GF library; no surface displacement possible)",
-      "seen_utc": "2026-10-03T12:27:47.955584+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797482+00:00"
     },
     "2026p722340": {
       "public_id": "2026p722340",
@@ -19046,7 +19055,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M3.5 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955590+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797490+00:00"
     },
     "2026p723438": {
       "public_id": "2026p723438",
@@ -19063,7 +19072,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.8 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955564+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797459+00:00"
     },
     "2026p723396": {
       "public_id": "2026p723396",
@@ -19080,7 +19089,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.3 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955569+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797466+00:00"
     },
     "2026p723352": {
       "public_id": "2026p723352",
@@ -19097,7 +19106,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.5 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955574+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797472+00:00"
     },
     "2026p723913": {
       "public_id": "2026p723913",
@@ -19114,7 +19123,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "deleted by GeoNet",
-      "seen_utc": "2026-10-03T12:27:47.955558+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797452+00:00"
     },
     "2026p724380": {
       "public_id": "2026p724380",
@@ -19131,7 +19140,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.6 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955547+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797439+00:00"
     },
     "2026p724318": {
       "public_id": "2026p724318",
@@ -19148,7 +19157,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.9 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955554+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797446+00:00"
     },
     "2026p725951": {
       "public_id": "2026p725951",
@@ -19165,7 +19174,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.9 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955542+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797432+00:00"
     },
     "2026p726926": {
       "public_id": "2026p726926",
@@ -19182,7 +19191,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.8 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955536+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797425+00:00"
     },
     "2026p728425": {
       "public_id": "2026p728425",
@@ -19199,7 +19208,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M3.5 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955529+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797417+00:00"
     },
     "2026p729110": {
       "public_id": "2026p729110",
@@ -19216,7 +19225,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.3 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955524+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797410+00:00"
     },
     "2026p731984": {
       "public_id": "2026p731984",
@@ -19233,7 +19242,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.9 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955518+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797403+00:00"
     },
     "2026p660273": {
       "public_id": "2026p660273",
@@ -19267,7 +19276,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M3.1 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955513+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797396+00:00"
     },
     "2026p669178": {
       "public_id": "2026p669178",
@@ -19284,7 +19293,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M1.8 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955931+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797926+00:00"
     },
     "2026p735757": {
       "public_id": "2026p735757",
@@ -19301,7 +19310,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M3.2 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955507+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797388+00:00"
     },
     "2026p737624": {
       "public_id": "2026p737624",
@@ -19318,7 +19327,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.1 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955501+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797380+00:00"
     },
     "2026p738531": {
       "public_id": "2026p738531",
@@ -19335,7 +19344,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.5 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955482+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797359+00:00"
     },
     "2026p738331": {
       "public_id": "2026p738331",
@@ -19352,7 +19361,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.7 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955489+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797367+00:00"
     },
     "2026p738288": {
       "public_id": "2026p738288",
@@ -19369,7 +19378,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M2.9 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955495+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797373+00:00"
     },
     "2026p739786": {
       "public_id": "2026p739786",
@@ -19386,7 +19395,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M3.1 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955475+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797350+00:00"
     },
     "2026p742767": {
       "public_id": "2026p742767",
@@ -19403,7 +19412,7 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "deleted by GeoNet",
-      "seen_utc": "2026-10-03T12:27:47.955430+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797324+00:00"
     },
     "2026p742115": {
       "public_id": "2026p742115",
@@ -19420,7 +19429,24 @@
       "eval_status": null,
       "depth_type": null,
       "reason": "prelim M3.2 < 3.7",
-      "seen_utc": "2026-10-03T12:27:47.955463+00:00"
+      "seen_utc": "2026-10-03T16:39:25.797339+00:00"
+    },
+    "2026p744810": {
+      "public_id": "2026p744810",
+      "origin_time": "2026-10-03T13:55:19.292Z",
+      "longitude": 178.374771118,
+      "latitude": -37.585418701,
+      "depth_km": 5.0,
+      "prelim_mag": 2.484807542456561,
+      "mag_type": "M",
+      "locality": "Within 5 km of Te Araroa",
+      "quality": "deleted",
+      "depth_unc_km": null,
+      "eval_mode": null,
+      "eval_status": null,
+      "depth_type": null,
+      "reason": "deleted by GeoNet",
+      "seen_utc": "2026-10-03T16:39:25.797305+00:00"
     }
   }
 }
