@@ -3099,3 +3099,4 @@ PublicID,Date,Latitude,Longitude,GeoNet_M,GeoNet_depth,Outcome,Stage,Reason,Best
 2026p774994,2026-10-14T17:56:54.899Z,-42.317783356,173.792327881,2.5627631816611505,21.851993560791016,not_attempted,processing floor,prelim M2.6 < 3.7,,
 2026p775989,2026-10-15T02:47:15.180Z,-37.824176788,176.932891846,2.939847013150371,3.091970443725586,not_attempted,processing floor,prelim M2.9 < 3.7,,
 2026p776286,2026-10-15T05:25:34.163Z,-38.622787476,175.451507568,5.658060024388448,268.6524658203125,not_attempted,processing floor,depth 268.652 km > 50 km (below GF library; no surface displacement possible),,
+2026p778831,2026-10-16T04:01:26.968Z,-40.025283813,175.460510254,3.016609804698144,10.0,not_attempted,processing floor,deleted by GeoNet,,
