@@ -3124,3 +3124,4 @@ PublicID,Date,Latitude,Longitude,GeoNet_M,GeoNet_depth,Outcome,Stage,Reason,Best
 2026p800033,2026-10-24T00:17:57.883Z,-41.866355896,174.128738403,2.980597509735456,6.798021793365479,not_attempted,processing floor,prelim M3.0 < 3.7,,
 2026p800453,2026-10-24T04:01:47.680Z,-36.7424,178.9517,4.3,33.0,no_coherent_solution,task 2,only 0 usable stations (minimum 3),0.0,v5
 2026p801234,2026-10-24T10:57:42.929Z,-40.408943176,176.537628174,2.559376487561715,16.548067092895508,not_attempted,processing floor,prelim M2.6 < 3.7,,
+2026p801609,2026-10-24T14:17:32.874Z,-40.269989014,175.993041992,2.3072213799047026,10.0,not_attempted,processing floor,deleted by GeoNet,,
