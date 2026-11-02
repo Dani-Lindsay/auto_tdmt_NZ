@@ -3151,3 +3151,4 @@ PublicID,Date,Latitude,Longitude,GeoNet_M,GeoNet_depth,Outcome,Stage,Reason,Best
 2026p823465,2026-11-01T16:22:13.682Z,-38.965358734,175.259231567,2.4024295338373154,7.90415620803833,not_attempted,processing floor,prelim M2.4 < 3.7,,
 2026p823989,2026-11-01T21:01:32.137Z,-39.55279541,176.9296875,2.784700671965527,5.0,not_attempted,processing floor,deleted by GeoNet,,
 2026p824644,2026-11-02T02:50:43.015Z,-44.840126038,167.553390503,4.300108977353487,100.12541961669922,not_attempted,processing floor,depth 100.125 km > 50 km (below GF library; no surface displacement possible),,
+2026p826016,2026-11-02T15:01:30.511Z,-38.02456665,176.975784302,2.75332916120605,4.873359203338623,not_attempted,processing floor,prelim M2.8 < 3.7,,
