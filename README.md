@@ -1,5 +1,7 @@
 # auto_tdmt_NZ
 
+*THIS REPO IS NOT FUNCTIONAL RIGHT NOW. I NEED TO FIX THINGS.....*
+
 **A personal tool for rapid InSAR response.** When a New Zealand earthquake
 happens, the question I need answered within minutes is: *has this event
 likely produced measurable surface displacement, and do I need to act as an
