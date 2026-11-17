@@ -320,7 +320,9 @@ def make_overview_map(events_dir: Path, out_path: Path) -> Path:
     """The README map, in PyGMT: shaded relief (GMT earth_relief 01m,
     Wikipedia topographic colours), a neutral blue sea, the NZ Active
     Faults Database, and every solved event as a full deviatoric-MT
-    beachball sized by Mw. Opacity follows the grade — A solid, B slightly
+    beachball sized by Mw, for events from config.ARCHIVE_BEFORE
+    (2026-07-01) on - the live catalogue, not the back-processed archive.
+    Opacity follows the grade — A solid, B slightly
     faded, C faint, D almost transparent — and the grades are drawn D
     first and A last, so the well-constrained mechanisms sit on top.
     The recipe (relief + gradient shading + wiki-france.cpt) follows the
@@ -336,6 +338,9 @@ def make_overview_map(events_dir: Path, out_path: Path) -> Path:
 
     rows, n_nosol = [], 0
     for p in _config.solution_paths(events_dir):
+        if p.parent.parent.name == _config.ARCHIVE_DIR_NAME:
+            continue              # the README map shows the live catalogue only:
+                                  # events from ARCHIVE_BEFORE (2026-07-01) on
         try:
             sol = json.loads(p.read_text())
         except Exception:  # noqa: BLE001

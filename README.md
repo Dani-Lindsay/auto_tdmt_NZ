@@ -27,7 +27,7 @@ records both the GeoNet values and the revisions in
 human review** — do not interpret mechanisms in volcanic/geothermal
 settings from these solutions.
 
-<p align="center"><img src="events/solutions_map.jpg" width="480" alt="All automated moment tensor solutions to date: beachballs sized by Mw (solid = grade A/B, washed = C/D) over the NZ Active Faults Database"></p>
+<p align="center"><img src="events/solutions_map.jpg" width="480" alt="Automated moment tensor solutions since 1 July 2026: beachballs sized by Mw (solid = grade A/B, washed = C/D) over the NZ Active Faults Database"></p>
 
 **Latest automated solution** — the figure below is regenerated whenever
 a new event is processed: station map with the deviatoric mechanism,
