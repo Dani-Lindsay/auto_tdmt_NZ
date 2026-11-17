@@ -29,6 +29,7 @@ import diagnostics
 import figure
 import greens
 import invert
+import sweep_select
 import nisar_dates
 import okada_forward
 import publish
@@ -75,9 +76,16 @@ def process_band(event, band: tuple[float, float], band_dir: Path,
     greens.stage_event_greens(model, pool, depths, band, green_dir)
     cwd = os.getcwd()
     os.chdir(band_dir)
+    shifts = None
     try:
-        inv, used, rejected, rounds = invert.clinton_loop(
-            event, pool, depths, band_dir, green_dir)
+        if config.P.invert.selection == "sweep":
+            inv, used, rejected, info = sweep_select.select(
+                event, pool, depths, band_dir, green_dir)
+            rounds = [info]
+            shifts = info["shifts_s"]
+        else:
+            inv, used, rejected, rounds = invert.clinton_loop(
+                event, pool, depths, band_dir, green_dir)
         inv.plot(view="waveform", option="preferred", format="jpg", show=False)
     except invert.NoCoherentSolution as e:
         solution = invert.no_solution_record(
@@ -88,9 +96,12 @@ def process_band(event, band: tuple[float, float], band_dir: Path,
         solution = invert.summarize(inv, event, used, dropped + rejected,
                                     model, rounds)
         solution["filter_band_hz"] = list(band)
+        if shifts is not None:
+            solution["depth_pick_flags"]["preferred_rule"] = rounds[0]["depth_rule"]
+            solution["time_shifts_s"] = shifts
         jk = invert.jackknife(event, used, solution["preferred"]["depth_km"],
                               band_dir, green_dir,
-                              solution["preferred"]["plane1"])
+                              solution["preferred"]["plane1"], shifts=shifts)
         solution["jackknife"] = jk
         solution["quality"] = invert.quality_gates(solution)
         if jk.get("n_subsets"):
@@ -215,6 +226,48 @@ def process_event(public_id: str, debug: bool = False,
               + (", trying the next" if b is not bands[-1] else ""))
     assert solutions, "every filter band failed"
 
+    # --- Mw-consistent second pass ----------------------------------------
+    # The band menu, search radius and record windows were chosen from
+    # GeoNet's preliminary magnitude, which can sit a whole class above the
+    # true Mw (2026p866048: M 5.7 -> Mw 4.8, so the long-period 20-100 s
+    # menu and a 300 km pool were used for a Mw 4.8 event). When the solved
+    # Mw falls in a different magnitude bin, tasks 2-3 are repeated with
+    # that bin's menu and radius, and the Mw-consistent solution is taken.
+    pass1_solved = [t for t, s in solutions.items() if config.is_solved(s)]
+    escalation = None
+    if pass1_solved:
+        best1 = max(pass1_solved, key=lambda t: solutions[t]["preferred"]["vr"])
+        mw1 = solutions[best1]["preferred"]["mw"]
+        if config.P.mag_bin(mw1) != config.P.mag_bin(event.prelim_mag):
+            from dataclasses import replace
+            event2 = replace(event, prelim_mag=round(mw1, 2))
+            bands2 = [band] if band else config.band_candidates(mw1)
+            print(f"\nMw {mw1:.2f} is in a different magnitude class than GeoNet's "
+                  f"M {event.prelim_mag:.1f}: repeating tasks 2-3 with the "
+                  f"{', '.join(config.band_tag(b) for b in bands2)} menu and radius for Mw {mw1:.1f}")
+            escalation = {"prelim_mag": event.prelim_mag, "mw_pass1": round(mw1, 2),
+                          "band_pass1": best1, "bands_pass2": [config.band_tag(b) for b in bands2]}
+            sols2 = {}
+            for b in bands2:
+                tag = config.band_tag(b)
+                if tag in solutions:
+                    sols2[tag] = solutions[tag]
+                    continue
+                try:
+                    sols2[tag] = process_band(event2, b, event_dir / tag, debug, model)
+                except AssertionError as e:
+                    print(f"band {tag} failed: {e}")
+                    continue
+                sols2[tag]["event"] = event.to_dict()      # GeoNet's values stay the record
+                s = sols2[tag]
+                if config.is_solved(s) and s["quality"]["passed"]:
+                    break
+            if any(config.is_solved(s) for s in sols2.values()):
+                solutions = sols2                           # the Mw-consistent menu wins
+                bands = bands2
+            else:
+                print("second pass found no coherent solution: keeping the first pass")
+
     tags = [config.band_tag(b) for b in bands if config.band_tag(b) in solutions]
     solved = [t for t in tags if config.is_solved(solutions[t])]
     if not solved:
@@ -226,6 +279,7 @@ def process_event(public_id: str, debug: bool = False,
         solved, key=lambda t: solutions[t]["preferred"]["vr"])
     best = solutions[best_tag]
     best["chosen_band"] = best_tag
+    best["band_escalation"] = escalation
     best["band_search"] = {
         tag: ({"vr": s["preferred"]["vr"], "mw": s["preferred"]["mw"],
                "depth_km": s["preferred"]["depth_km"], "pdc": s["preferred"]["pdc"],
@@ -255,6 +309,20 @@ def process_event(public_id: str, debug: bool = False,
     pid = event.public_id
     fig_path = figure.make_share_figure(
         best, forward, passes, event_dir / f"{pid}_stations_displacement_field.jpg")
+    # the surface displacement at the max-VR depth as well, when the depth
+    # rule (max %DC on the VR plateau) picked a different depth: the reader
+    # sees both ends of the depth trade-off (D. Lindsay, 2026-11-18)
+    z_vr = best["depth_pick_flags"]["vr_max_depth_km"]
+    if z_vr != best["preferred"]["depth_km"]:
+        row_vr = next(r for r in best["depth_search"] if r["depth_km"] == z_vr)
+        alt = {**best, "preferred": {**best["preferred"], **row_vr}, "jackknife": {}}
+        fwd_vr = okada_forward.forward_both_planes(alt)
+        figure.make_share_figure(
+            alt, fwd_vr, passes, event_dir / f"{pid}_stations_displacement_field_maxVR.jpg")
+        best["forward_model_max_vr"] = {
+            "depth_km": z_vr, "mw": row_vr["mw"], "vr": row_vr["vr"], "pdc": row_vr["pdc"],
+            "peak_abs_cm": fwd_vr["peak_abs_m"] * 100.0, "detectable": fwd_vr["detectable"],
+            "plane1_fault": fwd_vr["plane1"]["fault"], "plane2_fault": fwd_vr["plane2"]["fault"]}
     depth_fig = figure.plot_depth_sensitivity(
         best, event_dir / f"{pid}_depth_sensitivity.jpg")
     for i, bb in enumerate(sorted((event_dir / best_tag).glob("bbwaves.*.jpg"))):

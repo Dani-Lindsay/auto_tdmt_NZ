@@ -84,9 +84,14 @@ def depth_uncertainty(rows: list[dict], pct: float | None = None
 
 def write_mtinv(event: Event, stations: list[dict], depths: list[float],
                 event_dir: Path, green_dir: Path,
-                correlate: bool | None = None) -> Path:
+                correlate: bool | None = None,
+                shifts: dict[str, float] | None = None) -> Path:
     """Write mttime's control file (exactly the mttime example format;
-    mttime reads it by LINE ORDER, 12 header lines then the table)."""
+    mttime reads it by LINE ORDER, 12 header lines then the table).
+    ``shifts`` {station id: seconds} forces each station's time shift
+    (ts = TIME_BEFORE_S + shift) with the cross-correlation off."""
+    if shifts:
+        correlate = False
     correlate = bool(P.invert.correlate) if correlate is None else correlate
     npts_col = []
     for r in stations:
@@ -100,7 +105,8 @@ def write_mtinv(event: Event, stations: list[dict], depths: list[float],
         "station": [station_id(r) for r in stations],
         "distance": [r["gf_distance_km"] for r in stations],
         "azimuth": [round(r["azimuth"], 2) for r in stations],
-        "ts": config.TIME_BEFORE_S,
+        "ts": [config.TIME_BEFORE_S + int(round((shifts or {}).get(station_id(r), 0.0) / config.DT))
+               for r in stations],
         "npts": npts_col,
         "dt": config.DT,
         "used": 1,
@@ -306,10 +312,14 @@ def min_rotation_angle_deg(a, b) -> float:
 
 
 def jackknife(event: Event, stations: list[dict], depth: float,
-              band_dir: Path, green_dir: Path, full_plane1: dict) -> dict:
+              band_dir: Path, green_dir: Path, full_plane1: dict,
+              shifts: dict[str, float] | None = None) -> dict:
     """Leave-one-station-out at the preferred depth. Stability = the
     largest minimum-rotation angle of any subset mechanism from the full
-    one. Restores the full mtinv.in afterwards."""
+    one. Restores the full mtinv.in afterwards. With ``shifts`` the forced
+    time shifts are kept in every subset (a free re-correlation of each
+    subset measures the shift search, not the set: 2026p866048 went from
+    30 deg to 3.7 deg)."""
     if len(stations) < 4 or not P.invert.jackknife:
         return {"n_subsets": 0, "note": "fewer than 4 stations or disabled"}
     ref = (full_plane1["strike"], full_plane1["dip"], full_plane1["rake"])
@@ -318,7 +328,7 @@ def jackknife(event: Event, stations: list[dict], depth: float,
         for i in range(len(stations)):
             subset = stations[:i] + stations[i + 1:]
             mt = run_inversion(write_mtinv(event, subset, [depth], band_dir,
-                                           green_dir)).moment_tensors[0]
+                                           green_dir, shifts=shifts)).moment_tensors[0]
             fps = np.asarray(mt.fps, dtype=float)
             subsets.append({
                 "left_out": stations[i]["station"],
@@ -330,7 +340,7 @@ def jackknife(event: Event, stations: list[dict], depth: float,
                                    [round(float(v), 1) for v in fps[0]])),
             })
     finally:
-        write_mtinv(event, stations, [depth], band_dir, green_dir)
+        write_mtinv(event, stations, [depth], band_dir, green_dir, shifts=shifts)
     rots = [s["tensor_rotation_deg"] for s in subsets]
     return {
         "n_subsets": len(subsets),
@@ -447,7 +457,7 @@ def summarize(inv, event: Event, stations: list[dict], dropped: list[dict],
         },
         "depth_search": rows,
         "depth_pick_flags": {
-            "vr_max_depth_km": float(pref.depth),
+            "vr_max_depth_km": max(rows, key=lambda r: r["vr"])["depth_km"],
             "dc_max_depth_km": best_dc["depth_km"],
             "depth_range_km": [lo, hi],
             "plateau_km": round(hi - lo, 1),

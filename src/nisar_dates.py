@@ -59,14 +59,22 @@ def nisar_passes(lon: float, lat: float, when: datetime | None = None) -> list[d
 
     out = []
     for (track, direction), last in sorted(latest.items()):
+        # 12-day cycles after the last granule: those already in the past
+        # were expected acquisitions that CMR does not (yet) hold - either
+        # not acquired or not yet published; said so rather than hidden
+        # (2026p866048: last granule 2026-10-20, 1 and 13 Nov absent).
         nxt = last
+        expected_missing = []
         while nxt <= now:
             nxt += timedelta(days=config.NISAR_REPEAT_DAYS)
+            if nxt <= now:
+                expected_missing.append(nxt.strftime("%Y-%m-%d"))
         out.append({
             "track": track,
             "direction": direction,
             "last_utc": last.strftime("%Y-%m-%d %H:%MZ"),
             "next_utc": nxt.strftime("%Y-%m-%d %H:%MZ"),
+            "expected_not_in_cmr": expected_missing,
         })
     out.sort(key=lambda d: d["next_utc"])
     return out

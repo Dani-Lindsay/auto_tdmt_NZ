@@ -1,6 +1,9 @@
 # auto_tdmt_NZ
 
-*THIS REPO IS NOT FUNCTIONAL RIGHT NOW. I NEED TO FIX THINGS.....*
+> **Selection v7 (18 Nov 2026).** Station sets are now searched exhaustively with a
+> per-station time-shift sweep, and the depth is the %DC maximum on the VR plateau,
+> with the surface displacement shown at both the preferred and the max-VR depth.
+> Built from the manual review of the 17 Nov Arthur's Pass event (2026p866048).
 
 **A personal tool for rapid InSAR response.** When a New Zealand earthquake
 happens, the question I need answered within minutes is: *has this event
@@ -89,9 +92,11 @@ archive is published.
 | 2 | filter bands | 10–50 s (M<4.5) · 10–50 then 20–50 s · 20–100 then 30–100 s (M≥5.5), ordered preference | Clinton et al. (2006); INGV |
 | 2 | record window | 30 s before origin to distance/2.5 km/s + tail, envelope-extended ≤ 60 s, cap 200 s | Herrmann's group-velocity cut; the 2026 figure review |
 | 3 | depth grid | GeoNet depth ± 30 km (full library for placeholders) | F-net ±30, Gisola ±31, W-phase/SCARDEC ±50 km |
-| 3 | preferred depth | maximum VR (mttime's own rule); uncertainty = range within 10% of max | every system reviewed; Vallée et al. (2011), Bernardi et al. (2004) |
-| 3 | station selection | invert all; drop \|shift\| > 8 s at once and own VR < 25 three per round, worst first; re-invert until stable | Clinton, Hauksson & Solanki (2006); NEIC SynDepth for the shift cap; gempa's fixed floor |
-| 3 | stability | leave-one-out jackknife, minimum rotation angle | Fukuyama et al. (1998); Townend et al. (2012) |
+| 3 | preferred depth | maximum %DC among depths within 5 VR points of the VR maximum (the plateau); the full sweep is kept in the depth figure; uncertainty = range within 10% of max | D. Lindsay (EPS207 practice); 2026p866048 review: VR flat over 2–12 km, %DC peaked at 4 km |
+| 3 | station selection | **v7**: every station set (≥ 4 stations, ≥ 4 sectors, every own VR ≥ 25) solved exactly at every depth from per-station normal-equation blocks; every station's time shift swept on a −8..+8 s grid and refined; the set within 3 VR of the maximum with most sectors, then most stations, wins; the chosen set is then inverted at every depth with its shifts fixed | 2026p866048 review; Fukuyama et al. (1998) on drop order; Triantafyllis et al. (2016) on VR vs station count; NEIC SynDepth shift cap |
+| 3 | magnitude class | when the solved Mw falls in a different class than GeoNet's preliminary M, tasks 2–3 are repeated with that class's band menu and radius | 2026p866048: M 5.7 → Mw 4.8 |
+| 4 | displacement | Okada at the preferred depth AND at the max-VR depth when they differ (`*_stations_displacement_field_maxVR.jpg`) | the depth trade-off decides InSAR detectability |
+| 3 | stability | leave-one-out jackknife with the time shifts kept, minimum rotation angle | Fukuyama et al. (1998); Townend et al. (2012) |
 | 3 | grade | INGV table (VR bar falls with station count) + DC ≥ 60 + rotation ≤ 25° for A/B | INGV TDMT quality legend; BSL; scisola |
 | 5 | publish | A/B and (Mw ≥ 5.0 or predicted displacement ≥ 1 cm); 3/day; aftershock throttle | this project |
 

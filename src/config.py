@@ -43,7 +43,7 @@ STATE_FILE = REPO_DIR / "events" / "index.json"
 #   selection-v4  the four-pass funnel       (git tag)
 #   v5            the published-rules version (Clinton loop, INGV grades)
 # ---------------------------------------------------------------------------
-SELECTION_VERSION = "v5"
+SELECTION_VERSION = "v7"
 
 
 def code_version() -> str:

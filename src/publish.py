@@ -79,13 +79,22 @@ def draft_text(solution: dict, forward: dict, passes: list[dict]) -> tuple[str, 
             f"Predicted peak surface displacement {forward['peak_abs_m'] * 100:.2f} cm "
             f"— no detectable surface deformation expected."
         )
+    alt = solution.get("forward_model_max_vr")
+    if alt:
+        lines.append(
+            f"Depth trade-off: the preferred depth is the maximum %DC on the VR plateau; "
+            f"at the maximum-VR depth ({alt['depth_km']:g} km, VR {alt['vr']:.0f}%, DC {alt['pdc']:.0f}%, "
+            f"Mw {alt['mw']:.2f}) the predicted peak displacement is {alt['peak_abs_cm']:.2f} cm "
+            f"(figure *_stations_displacement_field_maxVR.jpg)."
+        )
     if passes:
         lines.append("")
-        lines.append("NISAR passes over the epicentre:")
+        lines.append("NISAR passes over the epicentre (last = latest granule in NASA CMR):")
         for p in passes:
+            missing = p.get("expected_not_in_cmr") or []
             lines.append(
-                f"  track {p['track']:03d} {p['direction']}: last "
-                f"{p['last_utc']}, next ~{p['next_utc']}"
+                f"  track {p['track']:03d} {p['direction']}: last {p['last_utc']}, next ~{p['next_utc']}"
+                + (f"; expected but not in CMR: {', '.join(missing)}" if missing else "")
             )
     else:
         lines.append("")

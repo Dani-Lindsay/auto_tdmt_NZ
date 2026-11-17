@@ -70,6 +70,15 @@ DEFAULTS: dict[str, dict[str, object]] = {
         "maxDropPerRound": 3,
         "minStations": 3,
         "jackknife": 1,
+        # selection v7 (sweep_select.py): every station set x time-shift grid
+        "selection": "sweep",
+        "sweepShiftMaxS": 8.0,
+        "sweepMinStations": 4,
+        "sweepMinSectors": 4,
+        "sweepTopSets": 60,
+        "sweepVRTolerance": 3.0,
+        "depthRule": "maxdc",
+        "depthVRTolerance": 5.0,
         # INGV grade table, columns = N stations 3 | 4 | 5-8 | >8
         "gradeA_VR": [999.0, 60.0, 60.0, 50.0],
         "gradeB_VR": [70.0, 40.0, 40.0, 30.0],
