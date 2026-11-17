@@ -41,9 +41,12 @@ event processing ............................................ process_event.py
   2. station inventory + waveforms (FDSN NRT/archive)           waveforms.py
   3. pre-processing -> SAC displacement (cm), ZRT, 1 sps        waveforms.py
   4. Green's functions from precomputed CPS library             greens.py
-  5. mttime deviatoric inversion + depth search                 invert.py
-     station selection by FIT (the funnel, 3.1), grid-edge
-     depth guard, ordered filter-band preference
+  5. mttime deviatoric inversion + depth search                 invert.py, sweep_select.py
+     station selection v7: every station set x time-shift
+     grid, solved exactly from per-station blocks (subsets.py);
+     chosen set inverted at every depth; depth = max %DC on the
+     VR plateau; ordered filter-band preference, repeated with
+     the solved Mw's menu when GeoNet's M was a class off
   6. quality gates -> letter grade, or "no coherent solution"   invert.py
   7. Okada forward model of predicted surface displacement      okada_forward.py
   8. NISAR pass timing at the epicentre (NASA CMR)              nisar_dates.py
@@ -167,35 +170,67 @@ waveforms".
 
 - **Engine**: mttime deviatoric inversion (degree 5), ZRT components,
   distance weighting (F-net's published VR definition weights stations
-  proportional to distance), per-station cross-correlation time shifts.
-  mttime's own control file is written and read; nothing of the
-  inversion mathematics is reimplemented.
+  proportional to distance). mttime's own control file is written and
+  read. The station-set search (below) re-uses mttime's per-station
+  Green's functions, data vector and weights and only SUMS them per set
+  (`subsets.py`, equations (4)-(6) there, checked against mttime to
+  1e-11 in the October 2026 selection study); the final solution is
+  always a real mttime run of the chosen set.
 - **Depth grid**: the GeoNet hypocentre ± 30 km, clipped to the library;
   the full library when GeoNet's depth is a placeholder. The search is
   bounded, the answer is never forced — the same design as F-net
   (JMA ± 30 km), Gisola (± 31 km), W-phase and SCARDEC (± 50 km). An
   unbounded grid let VR climb monotonically into the smoothest Green's
   functions (2026p666955: 50 km against a 26 km hypocentre).
-- **Preferred depth**: the maximum VR, mttime's own pick and every
-  operational system's. Recomputing the pick over 343 archived events
-  with a Ristau reference depth showed a %DC tie-break adds nothing
-  (median |ΔZ| 8.0 km either way). **Depth uncertainty** is the range of
-  depths whose VR is within 10% of the maximum (SCARDEC: Vallée et al.
-  2011; Bernardi et al. 2004), reported as `Depth_lo`/`Depth_hi`.
-- **Station selection by fit — the Clinton loop** (Clinton, Hauksson &
-  Solanki 2006, BSSA 96): invert every selected station; drop any whose
-  own VR is below max(overall VR − 10, 25) **or whose solved time shift
-  exceeds 8 s**; re-invert; repeat until nothing drops or three stations
-  remain (at most five rounds). mttime's shift search is unbounded, so
-  the cap is what stops a noise trace sliding into a chance alignment
-  (NEIC SynDepth clips at 6/8/10 s by magnitude). No other selection
-  logic exists.
-- **Jackknife**: leave-one-station-out at the preferred depth; the
-  largest minimum-rotation angle (Townend et al. 2012) of any subset
-  from the full solution is the stability evidence. NIED state in print
+- **Station selection v7 — every set, every shift** (`sweep_select.py`;
+  from the manual review of 2026p866048, Arthur's Pass, 2026-11-17).
+  At every trial depth, every subset of the task-2 pool with at least
+  `sweepMinStations` (4) stations, at least `sweepMinSectors` (4) of the
+  8 azimuth sectors (relaxed automatically for one-sided offshore pools)
+  and every member's own VR ≥ `stationVRFloor` (25) is solved exactly
+  from the per-station blocks, first with mttime's cross-correlation
+  shifts (stage A), then the `sweepTopSets` (60) best sets per depth
+  have every station's time shift refined by coordinate descent on a
+  −`sweepShiftMaxS`..+`sweepShiftMaxS` s grid (−8..+8 s; stage B).
+  Why the sweep: mttime's correlation picks the largest |correlation|
+  peak, and a station close to a nodal plane then reads as bad data
+  (own VR −76 for DBHZ at 48 km in 2026p866048) when a +2 s shift fits
+  it at own VR 95; the v5 drop loop threw away three such stations and
+  the whole south-west quadrant. The set is chosen among those within
+  `sweepVRTolerance` (3) VR points of the best: most sectors first, then
+  most stations, then VR — because dropping stations always raises VR
+  (Triantafyllis et al. 2016) and the drop order of a loop decides the
+  answer (Fukuyama et al. 1998). Stations outside the set are recorded
+  with their best own VR under the chosen solution.
+- **Depth**: the chosen set with its shifts is inverted at EVERY depth
+  of the grid (the GeoNet hypocentre ± 30 km, the full library for
+  placeholders), which gives a smooth VR(depth) curve, and the
+  **preferred depth is the maximum %DC among depths within
+  `depthVRTolerance` (5) VR points of the VR maximum** (`depthRule
+  maxdc`; D. Lindsay's EPS207 practice; `maxvr` restores mttime's
+  argmax). For shallow events VR is flat over 10 km or more while %DC
+  peaks sharply (2026p866048: VR 84–90 from 1.5 to 14 km, %DC 99 at
+  4 km, 49 at 8 km). **Depth uncertainty** is still the range of depths
+  whose VR is within 10% of the maximum (Vallée et al. 2011; Bernardi et
+  al. 2004), reported as `Depth_lo`/`Depth_hi`, and the full sweep is
+  kept in `depth_search` and drawn in the depth figure with both the
+  max-VR and the preferred depth marked.
+- **Magnitude class**: the band menu, search radius and record windows
+  come from GeoNet's preliminary magnitude. When the solved Mw falls in
+  a different class (bins at 4.5 and 5.5), tasks 2–3 are repeated with
+  that class's menu and radius and the Mw-consistent solution is taken
+  (2026p866048: M 5.7 → Mw 4.8; the 20–100 s pass gave way to 20–50 s).
+- **Jackknife**: leave-one-station-out at the preferred depth **with the
+  time shifts kept**; the largest minimum-rotation angle (Townend et al.
+  2012) of any subset from the full solution is the stability evidence.
+  Re-correlating each subset freely measures the shift search, not the
+  set (30° versus 3.7° on the same six stations). NIED state in print
   that the jackknife is the only reliable detector of a station gone
   bad, because the misfit does not localise on the offending station
   (Fukuyama et al. 1998).
+- **v5 for reference**: `selection = clinton` in the cfg restores the
+  Clinton, Hauksson & Solanki (2006) drop loop (own VR < 25 or shift
+  > 8 s, three per round); tag `selection-v5` is the code before v7.
 
 ## 6. Quality grades and publication (`invert.py`, `trigger.py`)
 
@@ -220,10 +255,11 @@ unreachable with three stations by construction. F-net's flat rule
 (VR > 50%, M > 3.5) is the simpler alternative; the table agrees with
 it for typical station counts and is stricter for small ones.
 
-**No coherent solution.** When fewer than three stations survive the
-loop the event is archived with `"status": "no_coherent_solution"` and
-grade `X`: the full station ledger and every round's numbers, but no
-mechanism, magnitude or depth. F-net likewise does not publish below
+**No coherent solution.** When no station set passes the own-VR and
+sector gates at any depth (or fewer than four usable stations exist)
+the event is archived with `"status": "no_coherent_solution"` and
+grade `X`: the full station ledger, but no mechanism, magnitude or
+depth. F-net likewise does not publish below
 its station floor (Fukuyama et al. 1998). Warnings (recorded, never
 blocking): the preferred depth
 touching the ± 30 km window edge; the jackknife being impossible.
@@ -258,9 +294,13 @@ tensor beachball drawn from the actual tensor elements (obspy/mopad
 full-MT rendering, so any CLVD is represented honestly rather than
 collapsed to the closest DC) and the Okada-predicted E/N/U displacement
 over the modelled area (cmcrameri 'vik', modelled nodal plane outlined),
-with the NISAR pass table and provenance line; (3) a depth-sensitivity
-summary (VR, %DC/%CLVD, Mw vs depth) that also displays the
-selection-rule window. All plotting is matplotlib (one stack; maps
+with the NISAR pass table and provenance line — produced at the
+preferred depth and, when the depth rule chose a different depth than
+the VR maximum, a second copy at the max-VR depth
+(`*_stations_displacement_field_maxVR.jpg`) so both ends of the depth
+trade-off are visible; (3) a depth-sensitivity summary (VR, %DC/%CLVD,
+Mw vs depth) with the GeoNet, max-VR, max-DC and preferred depths
+marked. All plotting is matplotlib (one stack; maps
 via cartopy with ocean/land/coastline features and gridlines).
 
 `--debug` additionally saves stage-by-stage QC figures per band: raw
@@ -273,7 +313,25 @@ distance, azimuth) and dropped (with reasons), the band-search table,
 quality gates/warnings, forward-model parameters, NISAR passes, and the
 publication decision with reasons.
 
-## 9. Worked examples: Fiordland sequence, 2026-09-02 (Milford Sound)
+## 9. Worked examples
+
+### 9.0 Arthur's Pass, 2026-11-17 (2026p866048) — the event behind v7
+
+GeoNet: M 5.7, depth 5 km (operator assigned). The v5 automation ran
+away to Mw 6.4 at 1 km on three stations (grade C). A manual review
+(`events_human/2026p866048_*/dani-lindsay/`, scripts under
+`~/work/proj_tdmt_NZ/manual_2026p866048/` on the maintainer's machine)
+found: Mw 4.8 in every band and station set; an exhaustive subset
+search showing VR 90 is reachable only with four stations and falls
+~1.5 points per station added; the south-west stations (DBHZ, ERWZ,
+RPZ, 48–97 km) fitting only after a +2..+4 s shift; VR flat from 1.5 to
+14 km with %DC peaking at 4 km. Published review: 4 km, Mw 4.82,
+240/61/159, VR 88.5, %DC 99, six stations, jackknife 3.7°; 9.5° from
+the SKHASH first-motion mechanism and 18° from USGS Mwr 4.8 (13 km).
+The v7 automation, unattended: 20–50 s, five stations, 7 km, Mw 4.75,
+VR 85, %DC 99, grade A, 245/84/167.
+
+### 9.1 Fiordland sequence, 2026-09-02 (Milford Sound)
 
 Four events at the southern termination of the Alpine Fault / Fiordland
 subduction corner, all with GeoNet fixed 5 km placeholder depths. Processed

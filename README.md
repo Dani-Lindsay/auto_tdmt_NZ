@@ -42,6 +42,19 @@ release (one tar file; extract it at the repository root).
 
 <p align="center"><img src="events/latest_stations_displacement_field.jpg" width="900" alt="Stations and predicted surface displacement for the most recent automated solution"></p>
 
+## Worked example: Arthur's Pass, 17 November 2026 (2026p866048)
+
+GeoNet M 5.7 at a fixed 5 km. The earlier automation returned Mw 6.4 at
+1 km on three stations; the manual review that produced selection v7
+gives Mw 4.82 at 4 km, 240/61/159, VR 88.5, %DC 99 on six stations with
+swept time shifts (jackknife 3.7°; 9.5° from the first-motion mechanism,
+18° from USGS Mwr 4.8), and the v7 automation unattended gives Mw 4.75 at
+7 km, 245/84/167, VR 85, %DC 99, grade A. Review entry:
+[`events_human/`](events_human/); method: [docs/METHOD.md](docs/METHOD.md) §5 and §9.0.
+
+<p align="center"><img src="events_human/2026p866048_2026-11-17_Mw6.4_1km_15-km-south-east-of-Arthur-s-Pass_gradeC/dani-lindsay/2026p866048_human_stations_displacement_field.jpg" width="900" alt="Reviewed 2026p866048 solution: stations, mechanism and predicted surface displacement at 4 km"></p>
+<p align="center"><img src="events_human/2026p866048_2026-11-17_Mw6.4_1km_15-km-south-east-of-Arthur-s-Pass_gradeC/dani-lindsay/2026p866048_human_depth_sensitivity.jpg" width="800" alt="Reviewed 2026p866048 depth sweep: VR flat from 2 to 12 km, %DC peaking at 4 km"></p>
+
 ## The five tasks
 
 All code is in [`src/`](src/). The pipeline is five tasks, each a
@@ -50,8 +63,9 @@ module (or two) whose docstring opens with its task number:
 ```
  1  geonet    poll the quake API, apply the processing floor      geonet.py  trigger.py
  2  stations  select stations, download, process to SAC           waveforms.py
- 3  invert    bound the depth grid, run mttime, the selection      invert.py  (greens.py stages the GFs)
-              loop, jackknife, grade
+ 3  invert    bound the depth grid, search every station set and   invert.py  sweep_select.py  subsets.py
+              time shift, run mttime at every depth, DC-on-plateau   (greens.py stages the GFs)
+              depth, jackknife, grade
  4  forward   Okada displacement for both nodal planes            okada_forward.py
  5  publish   figures, catalogue tables, publish decision, email  figure.py catalogue.py trigger.py publish.py
 ```
@@ -118,8 +132,8 @@ the station count rises so that dropping stations can never buy a
 better grade (Triantafyllis et al. 2016 show two stations reaching
 VR 0.9 with a condition number above 10). Only A/B are emailed.
 
-**No coherent solution.** When fewer than three stations survive the
-loop, the event is recorded in `events/NOSOL/` with
+**No coherent solution.** When no station set passes the own-VR and
+sector gates at any depth, the event is recorded in `events/NOSOL/` with
 `"status": "no_coherent_solution"` — the full station ledger, no
 mechanism — rather than a number fitted to noise; F-net likewise does
 not publish below its station floor (Fukuyama et al. 1998). Such events
@@ -149,8 +163,9 @@ are not rows of `catalogue.csv`; their stage and reason are listed in
   class): the raw material for a station quality index.
   [`station_performance.csv`](station_performance.csv) is its
   per-station aggregate.
-- Figures per event: stations + displacement field, depth sensitivity,
-  mttime waveform fits, and the all-station waveform figure showing
+- Figures per event: stations + displacement field (at the preferred
+  depth, and at the max-VR depth when the two differ), depth sensitivity
+  with the full sweep, mttime waveform fits, and the all-station waveform figure showing
   every candidate's record with its SNR, own VR and time shift. To keep
   the repository small, figures are committed only for events from
   **2026-07-01** onward (enforced by `.gitignore`, checked by
@@ -257,7 +272,9 @@ hand; `pixi run sync` regenerates it as part of publishing the archive.
    the next change. `docs/METHOD.md` §10 lists what to add next
    (distance-dependent bandwidth, MouseTrap, the condition number, a
    distance-regressed time-shift residual), each with its citation.
-4. `git tag selection-v3` and `selection-v4` are the two earlier
+4. `git tag selection-v5` is the code before the v7 search (cfg
+   `selection = clinton` runs the v5 loop inside v7);
+   `selection-v3` and `selection-v4` are the two earlier
    designs; `docs/REVIEW_LEARNINGS.md` records why they were replaced.
 
 ## Data sources
