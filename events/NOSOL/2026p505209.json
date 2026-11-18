@@ -50,8 +50,8 @@
   "provenance": {
     "velocity_model": "nz_north_ristau2008",
     "gf_version": "v1",
-    "selection_version": "v5",
-    "code_commit": "ed3641fa-dirty",
+    "selection_version": "v7",
+    "code_commit": "061da416-dirty",
     "mttime_version": "1.1.dev0",
     "obspy_version": "1.5.1",
     "params": {
@@ -138,6 +138,14 @@
         "maxDropPerRound": 3,
         "minStations": 3,
         "jackknife": 1,
+        "selection": "sweep",
+        "sweepShiftMaxS": 8.0,
+        "sweepMinStations": 4,
+        "sweepMinSectors": 4,
+        "sweepTopSets": 60,
+        "sweepVRTolerance": 3.0,
+        "depthRule": "maxdc",
+        "depthVRTolerance": 5.0,
         "gradeA_VR": [
           999.0,
           60.0,

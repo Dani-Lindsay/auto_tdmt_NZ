@@ -46,7 +46,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.011307717975174854,
+      "peak_x_dist": 0.011302980222919848,
       "reason": "low SNR: best component SNR 1.48 < 2 (Z 1 R 1.48 T 0.72)"
     },
     {
@@ -72,7 +72,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.01663639638860744,
+      "peak_x_dist": 0.01662710192254407,
       "reason": "low SNR: best component SNR 0.97 < 2 (Z 0.75 R 0.97 T 0.44)"
     },
     {
@@ -98,7 +98,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.018381626869219056,
+      "peak_x_dist": 0.018373359162048287,
       "reason": "low SNR: best component SNR 0.95 < 2 (Z 0.89 R 0.95 T 0.83)"
     },
     {
@@ -124,7 +124,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.023144021408142767,
+      "peak_x_dist": 0.02313704243999441,
       "reason": "low SNR: best component SNR 1.21 < 2 (Z 1.17 R 1.21 T 0.73)"
     },
     {
@@ -150,7 +150,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.031846739980284304,
+      "peak_x_dist": 0.031840480273318456,
       "reason": "low SNR: best component SNR 1.21 < 2 (Z 1.21 R 1.08 T 0.92)"
     },
     {
@@ -176,7 +176,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.03923101090522677,
+      "peak_x_dist": 0.03921551439596986,
       "reason": "low SNR: best component SNR 0.97 < 2 (Z 0.93 R 0.97 T 0.83)"
     },
     {
@@ -202,7 +202,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.03233979211785346,
+      "peak_x_dist": 0.032327149609896286,
       "reason": "low SNR: best component SNR 1.35 < 2 (Z 0.88 R 0.88 T 1.35)"
     },
     {
@@ -228,7 +228,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.05142269124685033,
+      "peak_x_dist": 0.05139898285005087,
       "reason": "low SNR: best component SNR 1.2 < 2 (Z 1.2 R 0.74 T 0.61)"
     },
     {
@@ -267,7 +267,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.05620928581814121,
+      "peak_x_dist": 0.05618558338253918,
       "reason": "low SNR: best component SNR 1.46 < 2 (Z 1.46 R 0.95 T 1)"
     },
     {
@@ -293,7 +293,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.051828783986218416,
+      "peak_x_dist": 0.05181264836703305,
       "reason": "low SNR: best component SNR 0.8 < 2 (Z 0.61 R 0.8 T 0.78)"
     },
     {
@@ -319,7 +319,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.05044119272796838,
+      "peak_x_dist": 0.05042617072362488,
       "reason": "low SNR: best component SNR 1.71 < 2 (Z 1.71 R 1.04 T 0.68)"
     },
     {
@@ -345,7 +345,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.046684603427024934,
+      "peak_x_dist": 0.04678566046264822,
       "reason": "low SNR: best component SNR 1.25 < 2 (Z 0.62 R 1.25 T 0.8)"
     },
     {
@@ -371,7 +371,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.05565257359529974,
+      "peak_x_dist": 0.055631533322856926,
       "reason": "low SNR: best component SNR 0.77 < 2 (Z 0.46 R 0.56 T 0.77)"
     },
     {
@@ -397,7 +397,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.0362290387852155,
+      "peak_x_dist": 0.03621518866855997,
       "reason": "low SNR: best component SNR 1.14 < 2 (Z 1.14 R 0.73 T 0.45)"
     },
     {
@@ -413,18 +413,18 @@
       "sector": 1,
       "snr": {
         "Z": 0.65,
-        "R": 0.79,
+        "R": 0.8,
         "T": 1.02
       },
-      "snr_med": 0.79,
+      "snr_med": 0.8,
       "snr_best": 1.02,
       "window_end_s": 128,
       "filter_hz": [
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.06748920536609422,
-      "reason": "low SNR: best component SNR 1.02 < 2 (Z 0.65 R 0.79 T 1.02)"
+      "peak_x_dist": 0.06746275218411578,
+      "reason": "low SNR: best component SNR 1.02 < 2 (Z 0.65 R 0.8 T 1.02)"
     },
     {
       "network": "NZ",
@@ -449,7 +449,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.07577454946812805,
+      "peak_x_dist": 0.07575311031375802,
       "reason": "low SNR: best component SNR 0.79 < 2 (Z 0.74 R 0.79 T 0.78)"
     },
     {
@@ -475,7 +475,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.06254639944571734,
+      "peak_x_dist": 0.06251874818999076,
       "reason": "low SNR: best component SNR 1.28 < 2 (Z 1.28 R 0.58 T 0.69)"
     },
     {
@@ -501,7 +501,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.06042307647390242,
+      "peak_x_dist": 0.0604106845716,
       "reason": "low SNR: best component SNR 0.81 < 2 (Z 0.68 R 0.7 T 0.81)"
     },
     {
@@ -527,7 +527,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.009387519942045675,
+      "peak_x_dist": 0.00938477296060328,
       "reason": "aborted: only 1 usable stations (minimum 3)"
     }
   ],
@@ -558,8 +558,8 @@
   "provenance": {
     "velocity_model": "nz_south_ristau2008",
     "gf_version": "v1",
-    "selection_version": "v5",
-    "code_commit": "ed3641fa-dirty",
+    "selection_version": "v7",
+    "code_commit": "62160506",
     "mttime_version": "1.1.dev0",
     "obspy_version": "1.5.1",
     "params": {
@@ -646,6 +646,14 @@
         "maxDropPerRound": 3,
         "minStations": 3,
         "jackknife": 1,
+        "selection": "sweep",
+        "sweepShiftMaxS": 8.0,
+        "sweepMinStations": 4,
+        "sweepMinSectors": 4,
+        "sweepTopSets": 60,
+        "sweepVRTolerance": 3.0,
+        "depthRule": "maxdc",
+        "depthVRTolerance": 5.0,
         "gradeA_VR": [
           999.0,
           60.0,

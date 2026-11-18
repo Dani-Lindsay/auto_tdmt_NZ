@@ -46,7 +46,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.0018593249071775578,
+      "peak_x_dist": 0.0018584105588337323,
       "reason": "low SNR: best component SNR 1.64 < 2 (Z 1.64 R 1.17 T 1.6)"
     },
     {
@@ -72,7 +72,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.0024029393260514005,
+      "peak_x_dist": 0.00240124729193485,
       "reason": "low SNR: best component SNR 1.65 < 2 (Z 1.21 R 1.65 T 0.64)"
     },
     {
@@ -98,7 +98,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.004193800087753473,
+      "peak_x_dist": 0.00418763850323796,
       "reason": "low SNR: best component SNR 1.48 < 2 (Z 0.89 R 1.35 T 1.48)"
     },
     {
@@ -124,7 +124,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.005407916322482301,
+      "peak_x_dist": 0.005405594604733025,
       "reason": "low SNR: best component SNR 1.57 < 2 (Z 1.57 R 1.37 T 1.22)"
     },
     {
@@ -150,7 +150,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.004578713167152246,
+      "peak_x_dist": 0.004577025189373174,
       "reason": "low SNR: best component SNR 1.42 < 2 (Z 0.73 R 0.83 T 1.42)"
     },
     {
@@ -176,7 +176,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.004128358641317859,
+      "peak_x_dist": 0.004127432867315354,
       "reason": "low SNR: best component SNR 1.37 < 2 (Z 0.79 R 1.04 T 1.37)"
     },
     {
@@ -202,7 +202,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.0062430374376338795,
+      "peak_x_dist": 0.00624019826667363,
       "reason": "low SNR: best component SNR 1.76 < 2 (Z 1.76 R 1.57 T 1.45)"
     },
     {
@@ -219,17 +219,17 @@
       "snr": {
         "Z": 0.89,
         "R": 0.93,
-        "T": 1.24
+        "T": 1.25
       },
       "snr_med": 0.93,
-      "snr_best": 1.24,
+      "snr_best": 1.25,
       "window_end_s": 109,
       "filter_hz": [
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.006819892514213175,
-      "reason": "low SNR: best component SNR 1.24 < 2 (Z 0.89 R 0.93 T 1.24)"
+      "peak_x_dist": 0.006819575141041743,
+      "reason": "low SNR: best component SNR 1.25 < 2 (Z 0.89 R 0.93 T 1.25)"
     }
   ],
   "filter_band_hz": [
@@ -259,8 +259,8 @@
   "provenance": {
     "velocity_model": "nz_south_ristau2008",
     "gf_version": "v1",
-    "selection_version": "v5",
-    "code_commit": "90272b27-dirty",
+    "selection_version": "v7",
+    "code_commit": "62160506-dirty",
     "mttime_version": "1.1.dev0",
     "obspy_version": "1.5.1",
     "params": {
@@ -347,6 +347,14 @@
         "maxDropPerRound": 3,
         "minStations": 3,
         "jackknife": 1,
+        "selection": "sweep",
+        "sweepShiftMaxS": 8.0,
+        "sweepMinStations": 4,
+        "sweepMinSectors": 4,
+        "sweepTopSets": 60,
+        "sweepVRTolerance": 3.0,
+        "depthRule": "maxdc",
+        "depthVRTolerance": 5.0,
         "gradeA_VR": [
           999.0,
           60.0,

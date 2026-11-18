@@ -2,11 +2,11 @@
   "status": "no_coherent_solution",
   "event": {
     "public_id": "2026p593592",
-    "origin_time": "2026-08-08T15:06:00.222Z",
-    "longitude": 167.556564331,
-    "latitude": -45.06206131,
-    "depth_km": 42.461143493652344,
-    "prelim_mag": 4.141035841234685,
+    "origin_time": "2026-08-08T15:06:00.206Z",
+    "longitude": 167.556030273,
+    "latitude": -45.061275482,
+    "depth_km": 42.55946731567383,
+    "prelim_mag": 4.183560984112739,
     "mag_type": "M",
     "locality": "40 km north of Te Anau",
     "quality": "best",
@@ -31,8 +31,8 @@
       "latitude": -45.464713192,
       "longitude": 167.153533463,
       "distance_km": 54.8,
-      "azimuth": 215.11211159989585,
-      "back_azimuth": 35.39840687478561,
+      "azimuth": 215.02407323254954,
+      "back_azimuth": 35.30998719889038,
       "sector": 4,
       "snr": {
         "Z": 1.62,
@@ -46,7 +46,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.0009980994734517998,
+      "peak_x_dist": 0.0009978249202101798,
       "reason": "low SNR: best component SNR 1.62 < 2 (Z 1.62 R 0.98 T 1.55)"
     },
     {
@@ -56,9 +56,9 @@
       "band": "HH",
       "latitude": -45.892427899,
       "longitude": 167.947031165,
-      "distance_km": 97.2,
-      "azimuth": 161.83387933884225,
-      "back_azimuth": 341.5554795538091,
+      "distance_km": 97.3,
+      "azimuth": 161.82675628057245,
+      "back_azimuth": 341.54797758122413,
       "sector": 3,
       "snr": {
         "Z": 0.84,
@@ -72,7 +72,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.0010577217791116662,
+      "peak_x_dist": 0.0010834356370612607,
       "reason": "low SNR: best component SNR 1.4 < 2 (Z 0.84 R 1.4 T 1.24)"
     },
     {
@@ -83,13 +83,13 @@
       "latitude": -44.24764,
       "longitude": 168.356965,
       "distance_km": 110.5,
-      "azimuth": 35.33127345755602,
-      "back_azimuth": 214.7687054714761,
+      "azimuth": 35.37562706043498,
+      "back_azimuth": 214.8126876359238,
       "sector": 0,
       "snr": {
         "Z": 1.29,
         "R": 0.64,
-        "T": 0.5
+        "T": 0.51
       },
       "snr_med": 0.64,
       "snr_best": 1.29,
@@ -98,8 +98,8 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.001790873386522886,
-      "reason": "low SNR: best component SNR 1.29 < 2 (Z 1.29 R 0.64 T 0.5)"
+      "peak_x_dist": 0.0017889695896492483,
+      "reason": "low SNR: best component SNR 1.29 < 2 (Z 1.29 R 0.64 T 0.51)"
     },
     {
       "network": "NZ",
@@ -109,8 +109,8 @@
       "latitude": -44.827021353,
       "longitude": 169.017561979,
       "distance_km": 118.2,
-      "azimuth": 77.75300581910662,
-      "back_azimuth": 256.7208946294661,
+      "azimuth": 77.79905437658842,
+      "back_azimuth": 256.7665729933109,
       "sector": 1,
       "snr": {
         "Z": 1.06,
@@ -124,7 +124,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.001768861190178881,
+      "peak_x_dist": 0.001766854223627448,
       "reason": "low SNR: best component SNR 1.39 < 2 (Z 1.06 R 1.39 T 1.03)"
     },
     {
@@ -134,9 +134,9 @@
       "band": "HH",
       "latitude": -45.231053397,
       "longitude": 169.308253387,
-      "distance_km": 139.0,
-      "azimuth": 98.38347379641142,
-      "back_azimuth": 277.14162870614,
+      "distance_km": 139.1,
+      "azimuth": 98.4169109146787,
+      "back_azimuth": 277.1746956410681,
       "sector": 2,
       "snr": {
         "Z": 1.82,
@@ -150,7 +150,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.0022813145035707498,
+      "peak_x_dist": 0.0022819342827983223,
       "reason": "low SNR: best component SNR 1.82 < 2 (Z 1.82 R 0.81 T 1.8)"
     },
     {
@@ -161,8 +161,8 @@
       "latitude": -46.166251683,
       "longitude": 166.680692489,
       "distance_km": 140.5,
-      "azimuth": 208.79167782671354,
-      "back_azimuth": 29.41765082996676,
+      "azimuth": 208.75987837695766,
+      "back_azimuth": 29.385465531784074,
       "sector": 4,
       "snr": {
         "Z": 1.3,
@@ -176,7 +176,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.0030764827686413057,
+      "peak_x_dist": 0.0030761841198160005,
       "reason": "low SNR: best component SNR 1.37 < 2 (Z 1.3 R 1.37 T 0.96)"
     },
     {
@@ -186,9 +186,9 @@
       "band": "HH",
       "latitude": -44.049854,
       "longitude": 169.303678,
-      "distance_km": 178.7,
-      "azimuth": 51.59800351268093,
-      "back_azimuth": 230.37212259244498,
+      "distance_km": 178.6,
+      "azimuth": 51.62870545719846,
+      "back_azimuth": 230.40245839425262,
       "sector": 1,
       "snr": {
         "Z": 1.01,
@@ -202,7 +202,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.002600634259944452,
+      "peak_x_dist": 0.0026840384110675248,
       "reason": "low SNR: best component SNR 1.81 < 2 (Z 1.01 R 1.81 T 1.38)"
     },
     {
@@ -213,8 +213,8 @@
       "latitude": -43.87061,
       "longitude": 169.179505,
       "distance_km": 184.9,
-      "azimuth": 44.85902748320864,
-      "back_azimuth": 223.72207322098075,
+      "azimuth": 44.88772356269179,
+      "back_azimuth": 223.75040316630796,
       "sector": 0,
       "reason": "no data: response/rotation failed: The given directions are not linearly independent, at least within numerical precision. Determinant of the base change matrix: 0"
     },
@@ -225,9 +225,9 @@
       "band": "HH",
       "latitude": -45.953974846,
       "longitude": 169.631143307,
-      "distance_km": 190.0,
-      "azimuth": 122.18048171281356,
-      "back_azimuth": 300.7004592547897,
+      "distance_km": 190.1,
+      "azimuth": 122.1963809353296,
+      "back_azimuth": 300.7159873280311,
       "sector": 2,
       "snr": {
         "Z": 1.81,
@@ -241,7 +241,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.0038198898195538145,
+      "peak_x_dist": 0.0038224592840932076,
       "reason": "low SNR: best component SNR 1.81 < 2 (Z 1.81 R 1.11 T 0.93)"
     },
     {
@@ -251,9 +251,9 @@
       "band": "HH",
       "latitude": -46.83180552,
       "longitude": 167.988825498,
-      "distance_km": 199.5,
-      "azimuth": 170.48535847000477,
-      "back_azimuth": 350.1746562037976,
+      "distance_km": 199.6,
+      "azimuth": 170.47797578356597,
+      "back_azimuth": 350.1668916743337,
       "sector": 3,
       "snr": {
         "Z": 1.28,
@@ -267,7 +267,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.003185632826786027,
+      "peak_x_dist": 0.003188595604040574,
       "reason": "low SNR: best component SNR 1.49 < 2 (Z 1.28 R 0.58 T 1.49)"
     },
     {
@@ -277,9 +277,9 @@
       "band": "HH",
       "latitude": -46.536890349,
       "longitude": 169.138823018,
-      "distance_km": 204.9,
-      "azimuth": 143.6799907068199,
-      "back_azimuth": 322.5455334523208,
+      "distance_km": 205.0,
+      "azimuth": 143.68535078515433,
+      "back_azimuth": 322.5505180620739,
       "sector": 3,
       "snr": {
         "Z": 0.91,
@@ -288,12 +288,12 @@
       },
       "snr_med": 0.97,
       "snr_best": 1.0,
-      "window_end_s": 111,
+      "window_end_s": 112,
       "filter_hz": [
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.0026792023471258726,
+      "peak_x_dist": 0.002651012301801765,
       "reason": "low SNR: best component SNR 1 < 2 (Z 0.91 R 1 T 0.97)"
     },
     {
@@ -304,8 +304,8 @@
       "latitude": -43.90974,
       "longitude": 169.59314,
       "distance_km": 206.5,
-      "azimuth": 52.39469369222201,
-      "back_azimuth": 230.96744737554127,
+      "azimuth": 52.421385043145264,
+      "back_azimuth": 230.99377447968124,
       "sector": 1,
       "snr": {
         "Z": 1.2,
@@ -319,7 +319,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.0036314276527811347,
+      "peak_x_dist": 0.0036259950959462803,
       "reason": "low SNR: best component SNR 1.91 < 2 (Z 1.2 R 1.91 T 1.54)"
     },
     {
@@ -330,8 +330,8 @@
       "latitude": -44.385552844,
       "longitude": 170.184419859,
       "distance_km": 221.3,
-      "azimuth": 71.07333019653402,
-      "back_azimuth": 249.22393806860686,
+      "azimuth": 71.09861345354999,
+      "back_azimuth": 249.24885828839487,
       "sector": 1,
       "snr": {
         "Z": 1.32,
@@ -345,7 +345,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.0028198831459445143,
+      "peak_x_dist": 0.0028159552287471165,
       "reason": "low SNR: best component SNR 1.32 < 2 (Z 1.32 R 1.1 T 1.23)"
     },
     {
@@ -356,8 +356,8 @@
       "latitude": -45.043982113,
       "longitude": 170.644622213,
       "distance_km": 243.3,
-      "azimuth": 90.61982791116901,
-      "back_azimuth": 268.4339564970364,
+      "azimuth": 90.6406540721522,
+      "back_azimuth": 268.4544194986918,
       "sector": 2,
       "snr": {
         "Z": 1.69,
@@ -371,7 +371,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.0038214220250968865,
+      "peak_x_dist": 0.003810336574417918,
       "reason": "low SNR: best component SNR 1.69 < 2 (Z 1.69 R 0.61 T 1.17)"
     },
     {
@@ -381,9 +381,9 @@
       "band": "HH",
       "latitude": -43.532099313,
       "longitude": 169.815479827,
-      "distance_km": 247.8,
-      "azimuth": 47.472217490345905,
-      "back_azimuth": 225.89439278534786,
+      "distance_km": 247.7,
+      "azimuth": 47.494044710850595,
+      "back_azimuth": 225.91585815820255,
       "sector": 1,
       "snr": {
         "Z": 1.22,
@@ -397,7 +397,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.003257381080874011,
+      "peak_x_dist": 0.0032561944527445463,
       "reason": "low SNR: best component SNR 1.22 < 2 (Z 1.22 R 0.65 T 1.08)"
     },
     {
@@ -408,8 +408,8 @@
       "latitude": -43.7773,
       "longitude": 170.1055,
       "distance_km": 248.1,
-      "azimuth": 55.778862456884944,
-      "back_azimuth": 233.9945771676335,
+      "azimuth": 55.80136587276554,
+      "back_azimuth": 234.0167192979156,
       "sector": 1,
       "snr": {
         "Z": 1.18,
@@ -423,7 +423,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.0036381958876906696,
+      "peak_x_dist": 0.0036335064970619596,
       "reason": "low SNR: best component SNR 1.18 < 2 (Z 1.18 R 0.56 T 0.81)"
     },
     {
@@ -433,9 +433,9 @@
       "band": "HH",
       "latitude": -45.884355667,
       "longitude": 170.597766739,
-      "distance_km": 254.7,
-      "azimuth": 112.10160095842718,
-      "back_azimuth": 289.9331518500491,
+      "distance_km": 254.8,
+      "azimuth": 112.11660632805541,
+      "back_azimuth": 289.947790854416,
       "sector": 2,
       "snr": {
         "Z": 1.13,
@@ -449,7 +449,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.0037526933382133337,
+      "peak_x_dist": 0.003753519340610802,
       "reason": "low SNR: best component SNR 1.14 < 2 (Z 1.13 R 1.14 T 1.13)"
     },
     {
@@ -460,23 +460,23 @@
       "latitude": -43.453086,
       "longitude": 170.099275,
       "distance_km": 270.5,
-      "azimuth": 49.53012113573902,
-      "back_azimuth": 227.75527590751474,
+      "azimuth": 49.55034259644458,
+      "back_azimuth": 227.7751371885256,
       "sector": 1,
       "snr": {
         "Z": 0.82,
         "R": 1.06,
-        "T": 0.82
+        "T": 0.83
       },
-      "snr_med": 0.82,
+      "snr_med": 0.83,
       "snr_best": 1.06,
       "window_end_s": 138,
       "filter_hz": [
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.016473080222538745,
-      "reason": "low SNR: best component SNR 1.06 < 2 (Z 0.82 R 1.06 T 0.82)"
+      "peak_x_dist": 0.015679441284321104,
+      "reason": "low SNR: best component SNR 1.06 < 2 (Z 0.82 R 1.06 T 0.83)"
     },
     {
       "network": "NZ",
@@ -485,9 +485,9 @@
       "band": "HH",
       "latitude": -44.07321036,
       "longitude": 168.785473425,
-      "distance_km": 147.0,
-      "azimuth": 42.0506085926426,
-      "back_azimuth": 221.18817170018977,
+      "distance_km": 146.9,
+      "azimuth": 42.08596669987042,
+      "back_azimuth": 221.22316105365002,
       "sector": 0,
       "snr": {
         "Z": 1.83,
@@ -501,8 +501,8 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.004230020300411476,
-      "amp_ratio": 3.772,
+      "peak_x_dist": 0.004231490506667733,
+      "amp_ratio": 3.776,
       "reason": "amplitude outlier: 3.8x the network median"
     },
     {
@@ -512,9 +512,9 @@
       "band": "HH",
       "latitude": -44.673333781,
       "longitude": 167.92639864,
-      "distance_km": 52.15718346152104,
-      "azimuth": 34.21184804333949,
-      "back_azimuth": 213.95093829269058,
+      "distance_km": 52.10868173799068,
+      "azimuth": 34.304462290883855,
+      "back_azimuth": 214.04317757924764,
       "sector": 0,
       "snr": {
         "Z": 2.41,
@@ -528,7 +528,7 @@
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.0011213697559373493,
+      "peak_x_dist": 0.0011207504304314175,
       "amp_ratio": 1.0,
       "reason": "aborted: only 2 usable stations (minimum 3)"
     },
@@ -539,24 +539,24 @@
       "band": "HH",
       "latitude": -45.366543525,
       "longitude": 168.118406813,
-      "distance_km": 55.61349751231076,
-      "azimuth": 127.67761367433997,
-      "back_azimuth": 307.27884487652517,
+      "distance_km": 55.70018483546485,
+      "azimuth": 127.72264332029859,
+      "back_azimuth": 307.32349818025,
       "sector": 2,
       "snr": {
-        "Z": 0.99,
+        "Z": 0.98,
         "R": 0.74,
         "T": 2.63
       },
-      "snr_med": 0.99,
+      "snr_med": 0.98,
       "snr_best": 2.63,
       "window_end_s": 52,
       "filter_hz": [
         0.02,
         0.1
       ],
-      "peak_x_dist": 0.000880875088974612,
-      "amp_ratio": 0.786,
+      "peak_x_dist": 0.0008886127672585748,
+      "amp_ratio": 0.793,
       "reason": "aborted: only 2 usable stations (minimum 3)"
     }
   ],
@@ -587,8 +587,8 @@
   "provenance": {
     "velocity_model": "nz_south_ristau2008",
     "gf_version": "v1",
-    "selection_version": "v5",
-    "code_commit": "07d7a4ac-dirty",
+    "selection_version": "v7",
+    "code_commit": "ff663d78",
     "mttime_version": "1.1.dev0",
     "obspy_version": "1.5.1",
     "params": {
@@ -675,6 +675,14 @@
         "maxDropPerRound": 3,
         "minStations": 3,
         "jackknife": 1,
+        "selection": "sweep",
+        "sweepShiftMaxS": 8.0,
+        "sweepMinStations": 4,
+        "sweepMinSectors": 4,
+        "sweepTopSets": 60,
+        "sweepVRTolerance": 3.0,
+        "depthRule": "maxdc",
+        "depthVRTolerance": 5.0,
         "gradeA_VR": [
           999.0,
           60.0,

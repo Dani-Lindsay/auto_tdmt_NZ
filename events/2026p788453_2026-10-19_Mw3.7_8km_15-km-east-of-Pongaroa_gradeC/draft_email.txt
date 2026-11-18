@@ -1,0 +1,36 @@
+[auto-MT NZ] Mw 3.7 15 km east of Pongaroa (2026p788453), depth 8 km
+
+Automated regional moment tensor solution — PRELIMINARY
+
+Event: 2026p788453  2026-10-19T17:27:59.057Z
+Triggered from the GeoNet rapid earthquake solution; origin time, location, preliminary magnitude and initial depth are GeoNet's (geonet.org.nz).
+Location: 15 km east of Pongaroa (-40.538, 176.407)
+GeoNet preliminary magnitude: M 4.0
+
+Mw: 3.75
+Centroid depth: 8 km (GeoNet initial: 15.3741 km)
+Variance reduction: 40%  |  DC 94% / CLVD 6%
+Filter band: 10-50 s  |  Velocity model: nz_north_ristau2008
+Nodal plane 1 (strike/dip/rake): 168/89/-73
+Nodal plane 2 (strike/dip/rake): 262/17/-176
+Stations used: 4  |  Azimuthal gap: 186 deg  |  Quality grade: C
+
+Stability (leave-one-out jackknife, n=4): Mw +/-0.018  |  DC 94 +/-20.3%  |  mechanism rotation <= 8.6 deg
+
+LIMITATIONS: deviatoric-only inversion (no isotropic component) - these mechanisms must not be interpreted in volcanic or geothermal settings, where real isotropic components are forced into DC/CLVD. Large misfit (low VR or grade C-D) indicates the automated result is unreliable and additional processing is required.
+
+Predicted peak surface displacement 0.00 cm — no detectable surface deformation expected.
+Depth trade-off: the preferred depth is the maximum %DC on the VR plateau; at the maximum-VR depth (16 km, VR 44%, DC 90%, Mw 3.83) the predicted peak displacement is 0.00 cm (figure *_stations_displacement_field_maxVR.jpg).
+
+NISAR passes over the epicentre (last = latest granule in NASA CMR):
+  track 087 D: last 2026-10-18 06:13Z, next ~2026-11-23 06:13Z; expected but not in CMR: 2026-10-30, 2026-11-11
+  track 094 A: last 2026-10-06 18:20Z, next ~2026-11-23 18:20Z; expected but not in CMR: 2026-10-18, 2026-10-30, 2026-11-11
+  track 166 A: last 2026-10-11 18:12Z, next ~2026-11-28 18:12Z; expected but not in CMR: 2026-10-23, 2026-11-04, 2026-11-16
+
+--
+Automated solution (mttime 1.1.dev0, model nz_north_ristau2008, GF v1). Not reviewed by a human.
+
+This workflow was compiled with Claude (Anthropic) assistance.
+Credits: inversion by mttime, A. Chiang, LLNL (github.com/LLNL/mttime); Green's functions by Computer Programs in Seismology, R. B. Herrmann (rbherrmann.github.io/ComputerProgramsSeismology); waveform processing with ObsPy (obspy.org); waveforms and metadata from GeoNet / Earth Sciences New Zealand (geonet.org.nz, CC BY 3.0 NZ); velocity models from Ristau (2008), SRL 79(3); deformation modelling after Okada (1992) via okada4py, R. Jolivet (github.com/jolivetr/okada4py); fault dimensions from Wells & Coppersmith (1994); active faults from the NZ Active Faults Database, GNS Science (data.gns.cri.nz/af); GNSS marks from GeoNet delta (github.com/GeoNet/delta); NISAR timing from NASA CMR (cmr.earthdata.nasa.gov); colour maps by F. Crameri (fabiocrameri.ch/colourmaps).
+
+Solutions archive: github.com/Dani-Lindsay/auto_tdmt_NZ
